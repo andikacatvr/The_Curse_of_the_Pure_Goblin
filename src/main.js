@@ -4912,6 +4912,9 @@ class HomeScene extends BaseScene {
     }
 
     update() {
+        let found = null;
+        const inv = getInventory(this.registry);
+        const hasCure = inv.some(i => i.id === 'Ramuan Kesembuhan Asli');
         const hasWood = !!this.registry.get('hasCollectedFirewood');
 
         if (this.grandma && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.grandma.x, this.grandma.y) < 60) {
