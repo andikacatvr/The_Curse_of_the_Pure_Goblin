@@ -8,20 +8,23 @@
 ---
 
 ### 🟢 PROLOG: Niat Baik yang Salah
-* **Adegan:** Aksel melihat **Rachael** (adik perempuannya) duduk lemas di kursi goyang halaman rumah mereka dengan wajah sangat pucat. Rachael mengaku tubuhnya semakin lemah setiap hari.
+* **Adegan:** Aksel dan Rachael tinggal bersama Nenek mereka di pinggiran desa. Sore itu, Aksel baru saja kembali dari hutan membawa seikat kayu bakar untuk perapian nanti malam. Tiba-tiba Rachael yang duduk di kursi goyang terbatuk-batuk hebat hingga mengeluarkan darah. Aksel dan sang Nenek panik menghampirinya. Rachael mengaku tubuhnya semakin lemah setiap hari.
 * **Naskah Dialog Prolog:**
-  * **Rachael:** *"Kak, tubuhku rasanya semakin lemas setiap harinya…"*
-  * **Aksel:** *"Rachael, bertahanlah... Wajahmu semakin pucat hari ini."*
-  * **Rachael:** *(Bicara dengan suara parau dan sangat pelan)* *"Kak... aku lelah."*
-  * **Aksel:** *"Aku harus membeli obat untukmu! Aku akan ke kota—"*
-  * **Rachael:** *(Menggeleng lemah)* *"Jangan, Kak. Kita tidak punya uang sepeser pun. Biarkan saja... mungkin ini memang takdirku."*
-  * **Aksel:** *(Mengepalkan tangan, bertekad)* *"Tidak! Aku tidak akan membiarkan hal buruk terjadi padamu. Aku akan cari cara, apa pun caranya!"*
-  * **Aksel:** *(Dalam Hati)* *"Rachael, aku berjanji akan membawamu obat, tunggulah sebentar..."*
-  * **Aksel:** *"Rachael, aku sisakan kamu makanan dan minuman yang banyak nanti kamu jangan lupa makan ya, aku pergi sebentar untuk mencari obat untukmu, aku janji!"*
-  * **Aksel:** *"Aku pergi dulu ya Rachael adikku..."*
+  * **Aksel:** *"Nenek, Rachael, aku sudah pulang... Kayu bakar untuk perapian nanti malam sudah kutaruh di teras."*
+  * **Rachael:** *(Duduk lemas di kursi goyang, tiba-tiba terbatuk hebat)* *"Uhukk... uhukk!! Khh-..."*
+  * **Narator:** *(Setitik darah segar menetes di telapak tangan Rachael... Wajahnya semakin pucat pasi, nafasnya tercekat lemas.)*
+  * **Aksel:** *(Panik berlari mendekat)* *"Rachael! Bertahanlah! Rachael, kau baik-baik saja?!"*
+  * **Nenek:** *(Tergopoh-gopoh mendekat cemas)* *"Astaga, Rachael cucuku! Rachael... apa yang terasa sakit, Nak?!"*
+  * **Rachael:** *(Suara parau dan sangat pelan)* *"Kak Aksel... Nenek... tubuhku rasanya semakin lemas... dadaku sesak sekali..."*
+  * **Aksel:** *"Rachael, aku akan pergi ke kota untuk mencarikanmu obat!"*
+  * **Nenek:** *"Aksel.. jangan pergi, aku tahu niatmu ingin menyelamatkan adikmu ta tapi... jarak ke kota sangat jauh, kau akan kehabisan uang sebelum sampai sana."*
+  * **Aksel:** *"Nenek.. aku tahu kau mengkhawatirkanku tapi aku janji aku akan segera kembali. Tolong jaga Rachael ya."*
+  * **Nenek:** *(Mengusap air mata)* *"Baiklah, nenek akan menyiapkan bekal untukmu."*
+  * **Aksel:** *"Terima kasih nenek!"*
 * **Aksi & Persiapan Bawaan:** 
-  * Aksel memutuskan menyelinap ke kediaman **Madam Joanne** di tengah malam.
-  * Sebelum berangkat, Aksel mempersiapkan perbekalan sederhana di rumahnya: mengambil **Pisau Belati Bekas** (Senjata) dan **Roti Bekal** (Makanan) ke dalam **Inventory**.
+  * Sang Nenek menyerahkan **[Roti Bekal]** hangat ke dalam inventory Aksel.
+  * Aksel mengambil **[Pisau Belati]** di meja teras sebagai senjata perlindungan diri sebelum melangkah ke timur.
+  * Aksel sebenarnya berbohong soal pergi ke kota—ia berniat menyelinap ke kediaman **Madam Joanne** di tengah hutan terlarang karena tak punya uang.
 
 ---
 

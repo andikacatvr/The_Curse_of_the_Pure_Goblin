@@ -459,6 +459,47 @@ class BootScene extends Phaser.Scene {
         rachaelG.fillRect(14, 19, 6, 2);
         rachaelG.generateTexture('npc_rachael', 34, 42);
 
+        // 3b. NPC Nenek Aksel & Rachael (Nenek Penyayang di Rumah) - 34 x 44
+        const grandmaHomeG = this.make.graphics({ x: 0, y: 0, add: false });
+        // Cozy Indigo/Purple Dress
+        grandmaHomeG.fillStyle(0x4338ca, 1);
+        grandmaHomeG.fillRoundedRect(5, 18, 24, 20, 4);
+        // Warm Maroon Shawl around shoulders
+        grandmaHomeG.fillStyle(0x991b1b, 1);
+        grandmaHomeG.fillRect(6, 18, 22, 9);
+        grandmaHomeG.fillStyle(0xb91c1c, 1);
+        grandmaHomeG.fillRect(10, 24, 14, 5);
+        // Shoes
+        grandmaHomeG.fillStyle(0x1e293b, 1);
+        grandmaHomeG.fillRect(8, 38, 7, 4);
+        grandmaHomeG.fillRect(19, 38, 7, 4);
+        // Silver-Grey Hair Bun on Top
+        grandmaHomeG.fillStyle(0x94a3b8, 1);
+        grandmaHomeG.fillCircle(17, 4, 6);
+        grandmaHomeG.fillStyle(0xe2e8f0, 1);
+        grandmaHomeG.fillCircle(17, 4, 4);
+        // Silver Hair Around Head
+        grandmaHomeG.fillStyle(0xcbd5e1, 1);
+        grandmaHomeG.fillRoundedRect(5, 5, 24, 13, 5);
+        // Kind Elderly Face
+        grandmaHomeG.fillStyle(0xfed7aa, 1);
+        grandmaHomeG.fillRoundedRect(7, 8, 20, 15, 4);
+        // Rosy Cheeks
+        grandmaHomeG.fillStyle(0xfca5a5, 0.8);
+        grandmaHomeG.fillRect(8, 16, 4, 3);
+        grandmaHomeG.fillRect(22, 16, 4, 3);
+        // Kind Caring Eyes
+        grandmaHomeG.fillStyle(0xffffff, 1);
+        grandmaHomeG.fillRect(9, 13, 4, 3);
+        grandmaHomeG.fillRect(21, 13, 4, 3);
+        grandmaHomeG.fillStyle(0x1e293b, 1);
+        grandmaHomeG.fillRect(10, 13, 3, 3);
+        grandmaHomeG.fillRect(22, 13, 3, 3);
+        // Warm Caring Smile
+        grandmaHomeG.fillStyle(0xb91c1c, 1);
+        grandmaHomeG.fillRect(13, 19, 8, 2);
+        grandmaHomeG.generateTexture('npc_grandma_home', 34, 44);
+
         // 4. NPC Madam Joanne (Sang Penyihir Misterius) - 38 x 48
         const joanneG = this.make.graphics({ x: 0, y: 0, add: false });
         // Flowing Witch Robe
@@ -4088,40 +4129,32 @@ class HomeScene extends BaseScene {
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
 
+        // Rachael di Kursi Goyang
         this.rachael = this.physics.add.staticSprite(200, 395, 'npc_rachael').setDepth(5);
         this.rachael.type = 'npc';
         this.rachael.dialogue = [
-            { speaker: 'Rachael', text: 'Kak, tubuhku rasanya semakin lemas setiap harinya…' },
-            { speaker: 'Aksel', text: 'Rachael, bertahanlah... Wajahmu semakin pucat hari ini.' },
-            { speaker: 'Rachael', text: '(Bicara parau dan pelan) Kak... aku lelah.' },
-            { speaker: 'Aksel', text: 'Aku harus membeli obat untukmu! Aku akan ke kota—' },
-            { speaker: 'Rachael', text: '(Menggeleng lemah) Jangan, Kak. Kita tidak punya uang sepeser pun. Biarkan saja... mungkin ini memang takdirku.' },
-            { speaker: 'Aksel', text: '(Mengepalkan tangan, bertekad) Tidak! Aku tidak akan membiarkan hal buruk terjadi padamu. Aku akan cari cara, apa pun caranya!' },
-            { speaker: 'Aksel (Dalam Hati)', text: 'Rachael, aku berjanji akan membawamu obat, tunggulah sebentar...' },
-            { speaker: 'Aksel', text: 'Rachael, aku sisakan kamu makanan dan minuman yang banyak nanti kamu jangan lupa makan ya, aku pergi sebentar untuk mencari obat untukmu, aku janji!' },
-            { speaker: 'Aksel', text: 'Aku pergi dulu ya Rachael adikku...' }
+            { speaker: 'Rachael', text: '(Suara bergetar lemah) Kak Aksel... hati-hatilah di jalan... jangan memaksakan dirimu...' },
+            { speaker: 'Aksel', text: 'Tenanglah Rachael, bertahanlah demi kakak dan Nenek. Aku pasti kembali membawa obat!' }
         ];
+
+        // Nenek di Teras Rumah
+        this.grandma = this.physics.add.staticSprite(275, 393, 'npc_grandma_home').setDepth(5);
+        this.grandma.type = 'npc';
+
+        // Tumpukan Kayu Bakar yang baru saja dicari dan dibawa Aksel
+        this.firewoodStack = this.add.image(115, 412, 'special_firewood').setDepth(4).setScale(1.2);
 
         this.itemsGroup = this.physics.add.staticGroup();
 
         if (!hasCure) {
             const hasDagger = inv.some(i => i.id === 'Pisau Belati');
-            const hasBread = inv.some(i => i.id === 'Roti Bekal');
 
             if (!hasDagger) {
                 this.dagger = this.itemsGroup.create(380, 405, 'item_dagger');
                 this.dagger.type = 'item';
                 this.dagger.itemId = 'Pisau Belati';
-                this.dagger.itemDesc = 'Senjata tajam sederhana untuk bertarung di perjalanan.';
+                this.dagger.itemDesc = 'Senjata belati peninggalan keluarga untuk perlindungan di perjalanan.';
                 this.dagger.setDepth(5);
-            }
-
-            if (!hasBread) {
-                this.bread = this.itemsGroup.create(480, 405, 'item_bread');
-                this.bread.type = 'item';
-                this.bread.itemId = 'Roti Bekal';
-                this.bread.itemDesc = 'Roti gandum keras untuk perbekalan.';
-                this.bread.setDepth(5);
             }
 
             this.add.text(760, 350, 'Ke Pinggir Hutan ➔\n(Jalan ke Kanan)', { fontSize: '12px', fontStyle: 'bold', fill: '#60a5fa', align: 'right' }).setOrigin(1, 0.5).setDepth(20);
@@ -4150,7 +4183,44 @@ class HomeScene extends BaseScene {
         if (!hasCure && !data.from && !this.registry.get('prologueIntroPlayed')) {
             this.registry.set('prologueIntroPlayed', true);
             this.time.delayedCall(500, () => {
-                this.startDialogue(this.rachael.dialogue);
+                this.startDialogue([
+                    { speaker: 'Aksel', text: 'Nenek, Rachael, aku sudah pulang... Kayu bakar untuk perapian nanti malam sudah kutaruh di teras.' },
+                    { speaker: 'Rachael', text: '(Duduk lemas di kursi goyang, tiba-tiba terbatuk hebat) Uhukk... uhukk!! Khh-...' },
+                    { speaker: 'Narator', text: '(Setitik darah segar menetes di telapak tangan Rachael... Wajahnya semakin pucat pasi, nafasnya tercekat lemas.)' },
+                    { speaker: 'Aksel', text: '(Panik berlari mendekat) Rachael! Bertahanlah! Rachael, kau baik-baik saja?!' },
+                    { speaker: 'Nenek', text: '(Tergopoh-gopoh mendekat cemas) Astaga, Rachael cucuku! Rachael... apa yang terasa sakit, Nak?!' },
+                    { speaker: 'Rachael', text: '(Suara parau dan sangat pelan) Kak Aksel... Nenek... tubuhku rasanya semakin lemas... dadaku sesak sekali...' },
+                    { speaker: 'Aksel', text: 'Rachael, aku akan pergi ke kota untuk mencarikanmu obat!' },
+                    { speaker: 'Nenek', text: 'Aksel.. jangan pergi, aku tahu niatmu ingin menyelamatkan adikmu ta tapi... jarak ke kota sangat jauh, kau akan kehabisan uang sebelum sampai sana.' },
+                    { speaker: 'Aksel', text: 'Nenek.. aku tahu kau mengkhawatirkanku tapi aku janji aku akan segera kembali. Tolong jaga Rachael ya.' },
+                    { speaker: 'Nenek', text: 'Baiklah, nenek akan menyiapkan bekal untukmu.' },
+                    { speaker: 'Aksel', text: 'Terima kasih nenek!' }
+                ], () => {
+                    // Nenek memberikan item bekal makanan ke Aksel
+                    const curInv = getInventory(this.registry);
+                    if (!curInv.some(i => i.id === 'Roti Bekal')) {
+                        curInv.push({ id: 'Roti Bekal', desc: 'Roti bekal buatan Nenek tercinta untuk perjalanan Aksel.' });
+                        this.registry.set('inventory', curInv);
+                        this.renderInventorySlots();
+
+                        const notice = this.add.text(this.grandma.x, this.grandma.y - 32, '✨ + Roti Bekal (Dari Nenek)', {
+                            fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000bb', padding: { x: 5, y: 3 }
+                        }).setOrigin(0.5).setDepth(30);
+
+                        this.tweens.add({
+                            targets: notice, y: notice.y - 30, alpha: 0, duration: 1600,
+                            onComplete: () => notice.destroy()
+                        });
+                    }
+
+                    setQuestState(this.registry, {
+                        chapter: 'PROLOG',
+                        title: 'Persiapan Membawa Bekal',
+                        objective: 'Bekal dari Nenek sudah di tas! Ambil Pisau Belati di meja teras sebelum berangkat ke Timur.',
+                        questNumber: 0
+                    });
+                    this.updateQuestHUD();
+                });
             });
         }
 
@@ -4192,8 +4262,9 @@ class HomeScene extends BaseScene {
                 { speaker: 'Rachael', text: '(Meminum ramuan magis perlahan) ... *Glek... Glek...*' },
                 { speaker: 'Rachael', text: '✨ (Cahaya keemasan menyelimuti tubuhnya, rona merah segar kembali ke pipinya) K-kehangatan ini... Rasa lemas dan nyeri di dadaku... semuanya hilang, Abang?!' },
                 { speaker: 'Rachael', text: '(Perlahan bangkit berdiri dari kursi goyang, menangis bahagia sambil memeluk Aksel) Abang! Kakiku tidak gemetar lagi! Aku bisa berdiri tegak! Aku sembuh, Abang... Aku sembuh total!!' },
+                { speaker: 'Nenek', text: '(Menangis haru memeluk Aksel dan Rachael) Syukurlah ya Tuhan... Rachael cucuku sembuh! Aksel, kau cucu yang paling berani dan berbakti... Nenek bangga sekali padamu, Nak!' },
                 { speaker: 'Aksel (Dalam Hati)', text: '(Mengepalkan tangan dengan air mata kelegaan) Semua penderitaan menjadi Goblin, cemoohan, dan kerja keras tanpa henti itu... semuanya terbayar lunas. Rachael... adikku terselamatkan.' },
-                { speaker: 'Aksel', text: 'Alhamdulillah... Mulai hari ini, kita akan hidup bahagia bersama, Rachael. Dan abang berjanji, abang akan selalu menjagamu dengan jalan yang jujur dan benar!' }
+                { speaker: 'Aksel', text: 'Alhamdulillah... Mulai hari ini, kita akan hidup bahagia bersama, Rachael, Nenek. Dan abang berjanji, abang akan selalu menjaga keluarga kita dengan jalan yang jujur dan benar!' }
             ], () => {
                 this.showChapterBanner('🎉 TAMAT: THE GOOD GOBLIN 🎉', 'Kutukan Terlepas - Rachael Sembuh Total!');
                 setQuestState(this.registry, {
@@ -4798,11 +4869,19 @@ class HomeScene extends BaseScene {
         const inv = getInventory(this.registry);
         const hasCure = inv.some(i => i.id === 'Ramuan Kesembuhan Asli');
 
-        if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.rachael.x, this.rachael.y) < 65) {
+        if (this.grandma && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.grandma.x, this.grandma.y) < 60) {
+            const hasDagger = inv.some(i => i.id === 'Pisau Belati');
+            const grandmaDialogue = hasDagger ? [
+                { speaker: 'Nenek', text: 'Hati-hati di jalan ya cucuku tersayang... Bawakan obat penawar untuk adikmu dan kembalilah dengan selamat. Doa Nenek selalu menyertaimu.' }
+            ] : [
+                { speaker: 'Nenek', text: 'Aksel, jangan lupa bawa sebilah [Pisau Belati] di atas meja teras untuk melindungimu di perjalanan.' }
+            ];
+            found = { type: 'npc', dialogue: grandmaDialogue, x: this.grandma.x, y: this.grandma.y - 35, prompt: 'Tekan [E] Bicara dengan Nenek' };
+        } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.rachael.x, this.rachael.y) < 65) {
             if (hasCure) {
                 found = { type: 'cure', x: this.rachael.x, y: this.rachael.y - 35, prompt: 'Tekan [E] Minumkan Ramuan Kesembuhan ke Rachael' };
             } else {
-                found = { type: 'npc', dialogue: this.rachael.dialogue, x: this.rachael.x, y: this.rachael.y - 35, prompt: 'Tekan [E] Bicara' };
+                found = { type: 'npc', dialogue: this.rachael.dialogue, x: this.rachael.x, y: this.rachael.y - 35, prompt: 'Tekan [E] Bicara dengan Rachael' };
             }
         }
 
