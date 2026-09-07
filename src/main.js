@@ -236,9 +236,8 @@ class DisplayManager {
         if (!container) return;
         const res = this.resolutions[this.currentIdx];
         if (res.id === 'fit') {
-            const pad = 24;
-            const availW = Math.max(400, window.innerWidth - pad);
-            const availH = Math.max(225, window.innerHeight - pad);
+            const availW = window.innerWidth;
+            const availH = window.innerHeight;
             let targetW = availW;
             let targetH = availW * 9 / 16;
             if (targetH > availH) {
