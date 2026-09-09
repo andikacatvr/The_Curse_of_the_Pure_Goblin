@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
-import { getQuestState, MAX_PLAYER_HP, getPlayerHP } from '../utils/gameState.js';
+import { getInventory, getQuestState, MAX_PLAYER_HP, getPlayerHP } from '../utils/gameState.js';
 
 export class WaterfallGorgeScene extends BaseScene {
     constructor() {
