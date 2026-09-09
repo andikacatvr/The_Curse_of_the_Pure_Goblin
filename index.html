@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Curse of the Pure Goblin - 2D Adventure</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,9 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-        body {
+        html, body {
             background-color: #000000;
             display: flex;
             justify-content: center;
@@ -26,6 +27,8 @@
             font-family: 'Fredoka', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #ffffff;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
         #game-container {
             display: flex;
@@ -36,6 +39,9 @@
             border: none;
             box-shadow: none;
             transition: width 0.2s ease, height 0.2s ease;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
         }
         #game-container canvas {
             display: block;
@@ -45,6 +51,38 @@
             image-rendering: -webkit-crisp-edges;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
+            touch-action: none;
+        }
+        /* Mobile rotation hint banner */
+        #rotate-hint {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.94);
+            border: 1.5px solid #f59e0b;
+            color: #fef08a;
+            padding: 7px 18px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            pointer-events: none;
+            text-align: center;
+            align-items: center;
+            gap: 8px;
+            animation: pulseHint 2.4s ease-in-out infinite;
+        }
+        @keyframes pulseHint {
+            0%, 100% { opacity: 0.9; transform: translateX(-50%) translateY(0); }
+            50% { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+        }
+        @media (orientation: portrait) and (max-width: 900px) {
+            #rotate-hint {
+                display: flex;
+            }
         }
         /* Hidden font preloader to ensure canvas renders custom fonts instantly */
         .font-preload {
@@ -60,6 +98,7 @@
     </style>
 </head>
 <body>
+    <div id="rotate-hint">📱 Putar layar HP ke posisi mendatar (Landscape) untuk pengalaman terbaik!</div>
     <div class="font-preload">
         <span class="preload-pirata">Pirata One Font Preload</span>
         <span class="preload-fredoka">Fredoka Font Preload</span>
