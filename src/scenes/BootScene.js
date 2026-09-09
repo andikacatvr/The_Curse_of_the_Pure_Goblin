@@ -34,62 +34,8 @@ export class BootScene extends Phaser.Scene {
     }
 
     generateAllTextures() {
-        // 1. Player Human (Aksel Manusia) - 34 x 44
-        const humanG = this.make.graphics({ x: 0, y: 0, add: false });
-        // Body & Blue Tunic
-        humanG.fillStyle(0x2563eb, 1);
-        humanG.fillRoundedRect(5, 20, 24, 16, 4);
-        // Belt & Buckle
-        humanG.fillStyle(0x78350f, 1);
-        humanG.fillRect(5, 29, 24, 4);
-        humanG.fillStyle(0xf59e0b, 1);
-        humanG.fillRect(14, 28, 6, 6);
-        // Legs & Boots
-        humanG.fillStyle(0x334155, 1);
-        humanG.fillRect(7, 36, 8, 6);
-        humanG.fillRect(19, 36, 8, 6);
-        humanG.fillStyle(0x1e293b, 1);
-        humanG.fillRect(6, 40, 10, 4);
-        humanG.fillRect(18, 40, 10, 4);
-        // Head / Face
-        humanG.fillStyle(0xfed7aa, 1);
-        humanG.fillRoundedRect(6, 6, 22, 17, 5);
-        // Brown Hair & Bangs
-        humanG.fillStyle(0x78350f, 1);
-        humanG.fillRoundedRect(5, 2, 24, 9, 4);
-        humanG.fillRect(5, 8, 6, 5);
-        humanG.fillRect(23, 8, 6, 5);
-        humanG.fillRect(12, 8, 4, 3);
-        // Eyebrows
-        humanG.fillStyle(0x451a03, 1);
-        humanG.fillRect(9, 10, 5, 2);
-        humanG.fillRect(20, 10, 5, 2);
-        // Eyes (Whites)
-        humanG.fillStyle(0xffffff, 1);
-        humanG.fillRect(9, 13, 5, 5);
-        humanG.fillRect(20, 13, 5, 5);
-        // Pupils (Dark)
-        humanG.fillStyle(0x0f172a, 1);
-        humanG.fillRect(11, 14, 3, 4);
-        humanG.fillRect(22, 14, 3, 4);
-        // Eye Shine (Sparkle)
-        humanG.fillStyle(0xffffff, 1);
-        humanG.fillRect(12, 14, 2, 2);
-        humanG.fillRect(23, 14, 2, 2);
-        // Nose
-        humanG.fillStyle(0xf97316, 1);
-        humanG.fillRect(16, 17, 2, 2);
-        // Cheeks Blush
-        humanG.fillStyle(0xfca5a5, 0.7);
-        humanG.fillRect(7, 17, 3, 2);
-        humanG.fillRect(24, 17, 3, 2);
-        // Mouth (Warm Smile)
-        humanG.fillStyle(0x991b1b, 1);
-        humanG.fillRect(14, 20, 6, 2);
-        humanG.fillRect(15, 21, 4, 1);
-        if (!this.textures.exists('player_human')) {
-            humanG.generateTexture('player_human', 34, 44);
-        }
+        // 1. Player Human (Aksel Manusia) is loaded as spritesheet in preload()
+        // (Procedural generator removed to avoid overwriting spritesheet)
 
         // 2. Player Goblin (Aksel Goblin - Si Goblin Baik Hati) - 36 x 44
         const goblinG = this.make.graphics({ x: 0, y: 0, add: false });
