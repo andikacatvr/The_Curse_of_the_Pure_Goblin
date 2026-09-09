@@ -24,6 +24,12 @@ export class BootScene extends Phaser.Scene {
         this.load.image('portrait_bob', '/assets/karakter_pamanbob_npc.png');
         this.load.image('portrait_rachael_sembuh', '/assets/karakter_rachael_sembuh.png');
 
+        // Human Aksel Spritesheet (44x68 per frame, 7 frames)
+        this.load.spritesheet('player_human', '/assets/aksel_human_spritesheet.png', {
+            frameWidth: 44,
+            frameHeight: 68
+        });
+
         this.generateAllTextures();
     }
 
@@ -81,7 +87,9 @@ export class BootScene extends Phaser.Scene {
         humanG.fillStyle(0x991b1b, 1);
         humanG.fillRect(14, 20, 6, 2);
         humanG.fillRect(15, 21, 4, 1);
-        humanG.generateTexture('player_human', 34, 44);
+        if (!this.textures.exists('player_human')) {
+            humanG.generateTexture('player_human', 34, 44);
+        }
 
         // 2. Player Goblin (Aksel Goblin - Si Goblin Baik Hati) - 36 x 44
         const goblinG = this.make.graphics({ x: 0, y: 0, add: false });
@@ -1156,6 +1164,40 @@ export class BootScene extends Phaser.Scene {
 
     create() {
         this.generateBlurredBackground();
+
+        // Register Human Aksel Animations (from unified spritesheet)
+        if (this.textures.exists('player_human')) {
+            if (!this.anims.exists('aksel_human_idle')) {
+                this.anims.create({
+                    key: 'aksel_human_idle',
+                    frames: [{ key: 'player_human', frame: 0 }],
+                    frameRate: 1
+                });
+            }
+            if (!this.anims.exists('aksel_human_walk')) {
+                this.anims.create({
+                    key: 'aksel_human_walk',
+                    frames: this.anims.generateFrameNumbers('player_human', { start: 1, end: 4 }),
+                    frameRate: 8,
+                    repeat: -1
+                });
+            }
+            if (!this.anims.exists('aksel_human_jump')) {
+                this.anims.create({
+                    key: 'aksel_human_jump',
+                    frames: [{ key: 'player_human', frame: 5 }],
+                    frameRate: 1
+                });
+            }
+            if (!this.anims.exists('aksel_human_fall')) {
+                this.anims.create({
+                    key: 'aksel_human_fall',
+                    frames: [{ key: 'player_human', frame: 6 }],
+                    frameRate: 1
+                });
+            }
+        }
+
         this.scene.start('TitleScene');
     }
 }

@@ -1784,8 +1784,26 @@ export class BaseScene extends Phaser.Scene {
             this.player.setX(Phaser.Math.Clamp(this.player.x, 35, 765));
         }
 
+        // Sesuaikan ukuran physics body sesuai bentuk aktif (Aksel Manusia vs Goblin)
+        if (this.player.texture && this.player.texture.key === 'player_human') {
+            if (this.player._currentTextureKey !== 'player_human') {
+                this.player._currentTextureKey = 'player_human';
+                this.player.body.setSize(24, 52);
+                this.player.body.setOffset(10, 14);
+            }
+        } else if (this.player.texture && this.player.texture.key === 'player_goblin') {
+            if (this.player._currentTextureKey !== 'player_goblin') {
+                this.player._currentTextureKey = 'player_goblin';
+                this.player.body.setSize(36, 44);
+                this.player.body.setOffset(0, 0);
+            }
+        }
+
         if (this.isTalking || this.isInvOpen || this.isQuestModalOpen || this.isSettingsOpen) {
             this.player.setVelocityX(0);
+            if (this.player.texture && this.player.texture.key === 'player_human' && this.anims.exists('aksel_human_idle')) {
+                this.player.anims.play('aksel_human_idle', true);
+            }
             return;
         }
 
@@ -1799,16 +1817,35 @@ export class BaseScene extends Phaser.Scene {
         const right = (this.cursors && this.cursors.right && this.cursors.right.isDown) || (this.keys && this.keys.d && this.keys.d.isDown) || touchRight;
         const jump = (this.cursors && this.cursors.up && this.cursors.up.isDown) || (this.keys && this.keys.w && this.keys.w.isDown) || (this.keys && this.keys.space && this.keys.space.isDown) || touchJump;
 
+        const onGround = this.player.body.touching.down || this.player.body.blocked.down;
+
         if (left) {
             this.player.setVelocityX(-200);
+            this.player.setFlipX(true);
         } else if (right) {
             this.player.setVelocityX(200);
+            this.player.setFlipX(false);
         } else {
             this.player.setVelocityX(0);
         }
 
-        if (jump && (this.player.body.touching.down || this.player.body.blocked.down)) {
+        if (jump && onGround) {
             this.player.setVelocityY(-450);
+        }
+
+        // Animasi karakter Aksel Manusia
+        if (this.player.texture && this.player.texture.key === 'player_human' && this.anims.exists('aksel_human_idle')) {
+            if (!onGround) {
+                if (this.player.body.velocity.y < 0) {
+                    this.player.anims.play('aksel_human_jump', true);
+                } else {
+                    this.player.anims.play('aksel_human_fall', true);
+                }
+            } else if (left || right) {
+                this.player.anims.play('aksel_human_walk', true);
+            } else {
+                this.player.anims.play('aksel_human_idle', true);
+            }
         }
 
         // Batas Layar Kiri (Left Boundary)
