@@ -8,7 +8,7 @@ export class VillageResidentialScene extends BaseScene {
     }
 
     create(data = {}) {
-        this.cameras.main.setBackgroundColor('#0f172a');
+        this.cameras.main.setBackgroundColor('#38bdf8');
         this.createVillageResidentialAtmosphere();
 
         this.currentLocationName = 'Pemukiman Desa (3 Rumah Pemesan Roti)';
@@ -16,7 +16,11 @@ export class VillageResidentialScene extends BaseScene {
 
         this.platforms = this.physics.add.staticGroup();
         const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
-        mainPlatform.setDepth(2);
+        mainPlatform.setVisible(false);
+
+        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
+        groundSprite.setOrigin(0, 117 / 250);
+        groundSprite.setScale(800 / 770);
 
         let startX = 60;
         if (data && data.from === 'EastForestScene') {
@@ -30,17 +34,23 @@ export class VillageResidentialScene extends BaseScene {
         // House 1: Pak Thomas
         this.house1 = this.physics.add.staticSprite(200, 370, 'village_house1').setDepth(4);
         this.npc1 = this.physics.add.staticSprite(240, 395, 'npc_thomas').setDepth(5);
-        this.add.text(200, 305, 'Rumah 1\nPak Thomas', { fontSize: '11px', fontStyle: 'bold', fill: '#f8fafc', align: 'center' }).setOrigin(0.5).setDepth(20);
+        this.add.text(200, 305, 'Rumah 1\nPak Thomas', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#fef08a', align: 'center', backgroundColor: '#0f172acc', padding: { x: 8, y: 3 }
+        }).setOrigin(0.5).setDepth(20);
 
         // House 2: Ibu Sarah
         this.house2 = this.physics.add.staticSprite(420, 370, 'village_house2').setDepth(4);
         this.npc2 = this.physics.add.staticSprite(460, 395, 'npc_sarah').setDepth(5);
-        this.add.text(420, 305, 'Rumah 2\nIbu Sarah', { fontSize: '11px', fontStyle: 'bold', fill: '#f8fafc', align: 'center' }).setOrigin(0.5).setDepth(20);
+        this.add.text(420, 305, 'Rumah 2\nIbu Sarah', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#fef08a', align: 'center', backgroundColor: '#0f172acc', padding: { x: 8, y: 3 }
+        }).setOrigin(0.5).setDepth(20);
 
         // House 3: Paman Bob
         this.house3 = this.physics.add.staticSprite(640, 370, 'village_house3').setDepth(4);
         this.npc3 = this.physics.add.staticSprite(680, 395, 'npc_bob').setDepth(5);
-        this.add.text(640, 305, 'Rumah 3\nPaman Bob', { fontSize: '11px', fontStyle: 'bold', fill: '#f8fafc', align: 'center' }).setOrigin(0.5).setDepth(20);
+        this.add.text(640, 305, 'Rumah 3\nPaman Bob', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#fef08a', align: 'center', backgroundColor: '#0f172acc', padding: { x: 8, y: 3 }
+        }).setOrigin(0.5).setDepth(20);
 
         this.add.text(20, 65, '◀ Toko Roti Mr. Breado', {
             fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
@@ -210,13 +220,153 @@ export class VillageResidentialScene extends BaseScene {
                 const inv = getInventory(this.registry);
                 const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
 
-                if (delivered.length < 3 && !hasMagicBread) {
+                if (delivered.length < 3) {
                     this.showMapLockedNotice('Antarkan 3 keranjang roti ke 3 rumah warga desa dulu!');
+                    this.player.setX(740);
+                    this.player.setVelocityX(-150);
+                } else if (!hasMagicBread) {
+                    this.showMapLockedNotice('Kembali ke Toko Roti di kiri [◀] & temui Mr. Breado untuk terima Magic Bread!');
                     this.player.setX(740);
                     this.player.setVelocityX(-150);
                 } else {
                     this.scene.start('EastForestScene', { from: 'VillageResidentialScene' });
                 }
+            }
+        });
+    }
+
+    createVillageResidentialAtmosphere() {
+        // 1. High-fidelity Pixel Art Village Background
+        this.add.image(400, 225, 'village_residential_bg').setDisplaySize(800, 450).setDepth(0);
+
+        // 2. Sunrise Sunburst & Light Rays at horizon (Sun position in art is around X: 565, Y: 145)
+        const sunGlow = this.add.circle(565, 145, 48, 0xfef08a, 0.28).setDepth(1);
+        this.tweens.add({
+            targets: sunGlow,
+            scale: { from: 0.9, to: 1.25 },
+            alpha: { from: 0.18, to: 0.35 },
+            duration: 2400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        const sunRays = this.add.graphics().setDepth(1);
+        sunRays.fillStyle(0xfef08a, 0.04);
+        sunRays.fillTriangle(565, 145, 300, 0, 460, 0);
+        sunRays.fillTriangle(565, 145, 680, 0, 800, 0);
+        sunRays.fillTriangle(565, 145, 220, 420, 360, 420);
+        sunRays.fillTriangle(565, 145, 420, 420, 580, 420);
+
+        // 3. Gentle River Shimmer along the river bend (X: 520 - 750, Y: 290 - 400)
+        for (let r = 0; r < 6; r++) {
+            const rx = Phaser.Math.Between(520, 750);
+            const ry = Phaser.Math.Between(290, 400);
+            const gleam = this.add.ellipse(rx, ry, Phaser.Math.Between(6, 12), 2, 0xe0f2fe, 0.5).setDepth(1);
+            this.tweens.add({
+                targets: gleam,
+                alpha: { from: 0.1, to: 0.65 },
+                scaleX: { from: 0.7, to: 1.3 },
+                duration: Phaser.Math.Between(1500, 2500),
+                yoyo: true,
+                repeat: -1,
+                delay: r * 300,
+                ease: 'Sine.easeInOut'
+            });
+        }
+
+        // 4. Chimney Breakfast Smoke for the 3 Houses
+        // House 1 (Pak Thomas) at X: 200, House 2 (Ibu Sarah) at X: 420, House 3 (Paman Bob) at X: 640
+        const chimneyPositions = [
+            { x: 185, y: 318 },
+            { x: 405, y: 318 },
+            { x: 625, y: 318 }
+        ];
+
+        chimneyPositions.forEach((pos) => {
+            for (let i = 0; i < 3; i++) {
+                const smoke = this.add.circle(pos.x, pos.y, Phaser.Math.Between(3, 5), 0xf1f5f9, 0.55).setDepth(3);
+                this.tweens.add({
+                    targets: smoke,
+                    x: pos.x + Phaser.Math.Between(8, 22),
+                    y: pos.y - Phaser.Math.Between(30, 55),
+                    scale: { from: 0.8, to: 2.2 },
+                    alpha: { from: 0.55, to: 0 },
+                    duration: 2200 + i * 400,
+                    delay: i * 650,
+                    repeat: -1,
+                    ease: 'Sine.easeOut'
+                });
+            }
+        });
+
+        // 5. Morning Birds Gliding across the Sky
+        for (let b = 0; b < 4; b++) {
+            const bird = this.add.text(-40 - b * 70, Phaser.Math.Between(40, 120), 'v', {
+                fontSize: `${Phaser.Math.Between(8, 12)}px`,
+                fontStyle: 'bold',
+                fill: '#1e293b'
+            }).setDepth(1).setAlpha(0.65);
+
+            this.tweens.add({
+                targets: bird,
+                x: 840,
+                y: bird.y + Phaser.Math.Between(-15, 15),
+                duration: Phaser.Math.Between(14000, 19000),
+                delay: b * 3200,
+                repeat: -1
+            });
+        }
+
+        // 6. Floating Morning Dew & Golden Sun Motes
+        for (let f = 0; f < 18; f++) {
+            const mote = this.add.circle(
+                Phaser.Math.Between(40, 760),
+                Phaser.Math.Between(260, 420),
+                Phaser.Math.FloatBetween(1, 2.2),
+                0xfef3c7,
+                0.7
+            ).setDepth(3);
+
+            this.tweens.add({
+                targets: mote,
+                x: mote.x + Phaser.Math.Between(-25, 25),
+                y: mote.y - Phaser.Math.Between(15, 35),
+                alpha: { from: 0.75, to: 0.15 },
+                duration: Phaser.Math.Between(2200, 4500),
+                delay: f * 180,
+                repeat: -1,
+                yoyo: true,
+                ease: 'Sine.easeInOut'
+            });
+        }
+
+        // 7. Charming Garden Picket Fences & Morning Wildflowers beside the houses
+        const decG = this.add.graphics().setDepth(3);
+        const houseBases = [200, 420, 640];
+        houseBases.forEach(hx => {
+            // Little wooden picket fences
+            decG.fillStyle(0x78350f, 0.9);
+            decG.fillRect(hx - 62, 404, 18, 14);
+            decG.fillRect(hx + 44, 404, 18, 14);
+            decG.fillStyle(0x92400e, 1);
+            // fence palings
+            for (let px = hx - 62; px <= hx - 46; px += 5) {
+                decG.fillRect(px, 398, 3, 20);
+                decG.fillTriangle(px - 1, 398, px + 1.5, 394, px + 4, 398);
+            }
+            for (let px = hx + 44; px <= hx + 60; px += 5) {
+                decG.fillRect(px, 398, 3, 20);
+                decG.fillTriangle(px - 1, 398, px + 1.5, 394, px + 4, 398);
+            }
+            // Flower clusters near entrance
+            const flowerColors = [0xf43f5e, 0xfbbf24, 0x38bdf8, 0xa855f7];
+            for (let fl = 0; fl < 4; fl++) {
+                const fx = hx - 40 + fl * 6;
+                decG.fillStyle(0x15803d, 1);
+                decG.fillRect(fx, 412, 1.5, 6);
+                decG.fillStyle(flowerColors[fl % flowerColors.length], 1);
+                decG.fillCircle(fx + 0.7, 411, 2);
             }
         });
     }

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
 import { getInventory, getQuestState, setQuestState } from '../utils/gameState.js';
+import { GameAudio } from '../audio/GameAudio.js';
 
 export class HomeScene extends BaseScene {
     constructor() {
@@ -26,7 +27,7 @@ export class HomeScene extends BaseScene {
 
         this.platforms = this.physics.add.staticGroup();
         const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
-        mainPlatform.setDepth(2);
+        mainPlatform.setVisible(false);
 
         const hasWood = !!this.registry.get('hasCollectedFirewood');
         let startX = 360;
@@ -43,7 +44,12 @@ export class HomeScene extends BaseScene {
         this.physics.add.collider(this.player, this.platforms);
 
         // Rachael di Kursi Goyang
-        this.rachael = this.physics.add.staticSprite(200, 395, 'npc_rachael').setDepth(5);
+        this.rachael = this.physics.add.staticSprite(200, 418, 'npc_rachael').setDepth(5).setScale(0.28);
+        this.rachael.setOrigin(0.5, 1);
+        this.rachael.refreshBody();
+        if (this.anims.exists('rachael_idle')) {
+            this.rachael.anims.play('rachael_idle', true);
+        }
         this.rachael.type = 'npc';
         this.rachael.dialogue = [
             { speaker: 'Rachael', text: '(Suara bergetar lemah) Kak Aksel... hati-hatilah di jalan... jangan memaksakan dirimu...' },
@@ -51,7 +57,9 @@ export class HomeScene extends BaseScene {
         ];
 
         // Nenek di Teras Rumah
-        this.grandma = this.physics.add.staticSprite(275, 393, 'npc_grandma_home').setDepth(5);
+        this.grandma = this.physics.add.staticSprite(275, 418, 'npc_grandma_home').setDepth(5).setScale(0.21);
+        this.grandma.setOrigin(0.5, 1);
+        this.grandma.refreshBody();
         this.grandma.type = 'npc';
 
         // Tumpukan Kayu Bakar di Teras (muncul setelah diambil dari Danau)
@@ -148,6 +156,7 @@ export class HomeScene extends BaseScene {
                         curInv.push({ id: 'Roti Bekal', desc: 'Roti bekal buatan Nenek tercinta untuk perjalanan Aksel.' });
                         this.registry.set('inventory', curInv);
                         this.renderInventorySlots();
+                        GameAudio.playCollect();
 
                         const notice = this.add.text(this.grandma.x, this.grandma.y - 32, '✨ + Roti Bekal (Dari Nenek)', {
                             fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000bb', padding: { x: 5, y: 3 }
@@ -221,7 +230,7 @@ export class HomeScene extends BaseScene {
                 { speaker: 'Rachael', portrait: 'portrait_rachael_sembuh', text: '(Perlahan bangkit berdiri dari kursi goyang, menangis bahagia sambil memeluk Aksel) Abang! Kakiku tidak gemetar lagi! Aku bisa berdiri tegak! Aku sembuh, Abang... Aku sembuh total!!' },
                 { speaker: 'Nenek', text: '(Menangis haru memeluk Aksel dan Rachael) Syukurlah ya Tuhan... Rachael cucuku sembuh! Aksel, kau cucu yang paling berani dan berbakti... Nenek bangga sekali padamu, Nak!' },
                 { speaker: 'Aksel (Dalam Hati)', text: '(Mengepalkan tangan dengan air mata kelegaan) Semua penderitaan menjadi Goblin, cemoohan, dan kerja keras tanpa henti itu... semuanya terbayar lunas. Rachael... adikku terselamatkan.' },
-                { speaker: 'Aksel', text: 'Alhamdulillah... Mulai hari ini, kita akan hidup bahagia bersama, Rachael, Nenek. Dan abang berjanji, abang akan selalu menjaga keluarga kita dengan jalan yang jujur dan benar!' }
+                { speaker: 'Aksel', text: 'Mulai hari ini, kita akan hidup bahagia bersama, Rachael, Nenek. Dan abang berjanji, abang akan selalu menjaga keluarga kita dengan jalan yang jujur dan benar!' }
             ], () => {
                 this.registry.set('rachaelHealed', true);
                 this.showChapterBanner('🎉 TAMAT: THE GOOD GOBLIN 🎉', 'Kutukan Terlepas - Rachael Sembuh Total!');
@@ -261,6 +270,7 @@ export class HomeScene extends BaseScene {
         const inv = getInventory(this.registry);
         inv.push({ id: itemSprite.itemId, desc: itemSprite.itemDesc });
         this.registry.set('inventory', inv);
+        GameAudio.playCollect();
 
         const notice = this.add.text(itemSprite.x, itemSprite.y - 30, `+ ${itemSprite.itemId}`, {
             fontSize: '13px', fontStyle: 'bold', fill: '#2ecc71', backgroundColor: '#000000aa', padding: { x: 4, y: 2 }
@@ -299,182 +309,36 @@ export class HomeScene extends BaseScene {
     }
 
     createHomeAtmosphere() {
-        const bgG = this.add.graphics().setDepth(0);
+        // 1. PANORAMIC VILLAGE VALLEY BACKGROUND (Pixel Art Desa Warga Senja)
+        this.add.image(400, 225, 'home_village_bg').setDisplaySize(800, 450).setDepth(0);
 
-        // 1. SKY GRADIENT (Warm Twilight / Nostalgic Dusk Sky)
-        bgG.fillGradientStyle(0x13172e, 0x181e3a, 0x3d1f35, 0x5a2d28, 1);
-        bgG.fillRect(0, 0, 800, 420);
+        // 2. YARD ELEMENTS (Pagar Kayu, Pohon Tepi Pagar, Rumput, Semak, dan Jalan Batu)
+        const bgG = this.add.graphics().setDepth(2);
 
-        // 2. CELESTIAL ELEMENTS (Twinkling Stars, Soft Clouds, Crescent Moon)
-        for (let i = 0; i < 28; i++) {
-            const sx = Phaser.Math.Between(15, 785);
-            const sy = Phaser.Math.Between(10, 160);
-            const star = this.add.circle(sx, sy, Phaser.Math.Between(1, 2), 0xfef08a, Phaser.Math.FloatBetween(0.4, 0.9)).setDepth(0);
-            this.tweens.add({
-                targets: star,
-                alpha: { from: 0.2, to: 1 },
-                scale: { from: 0.7, to: 1.3 },
-                duration: Phaser.Math.Between(1500, 3500),
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            });
-        }
 
-        // Crescent Moon in top right sky
-        bgG.fillStyle(0xfef9c3, 0.95);
-        bgG.fillCircle(710, 55, 18);
-        bgG.fillStyle(0x161c36, 1);
-        bgG.fillCircle(718, 50, 16);
-        bgG.fillStyle(0xfef08a, 0.08);
-        bgG.fillCircle(710, 55, 32);
+        // 3b. GROUND / TERRAIN SPRITE (tanah.png)
+        const groundScale = 800 / 770;
+        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
+        groundSprite.setOrigin(0, 117 / 250);
+        groundSprite.setScale(groundScale);
 
-        // Soft twilight clouds drifting gently
-        const clouds = [
-            { x: 120, y: 70, w: 110, h: 22 },
-            { x: 380, y: 45, w: 140, h: 26 },
-            { x: 580, y: 90, w: 100, h: 20 }
-        ];
-        clouds.forEach(c => {
-            bgG.fillStyle(0xd8b4e2, 0.18);
-            bgG.fillRoundedRect(c.x, c.y, c.w, c.h, 10);
-            bgG.fillCircle(c.x + c.w * 0.35, c.y - 4, c.h * 0.7);
-            bgG.fillCircle(c.x + c.w * 0.65, c.y - 6, c.h * 0.85);
-        });
+        // 4. THE COTTAGE HOUSE — Using cropped rumah.png pixel art sprite
+        const houseSprite = this.add.image(170, 418, 'building_rumah').setDepth(2);
+        // Anchor from bottom-center so the foundation sits directly on the ground line (y = 418)
+        houseSprite.setOrigin(0.5, 1);
+        // Scale house to ~340px wide to fit the cottage grounds
+        const houseScale = 340 / houseSprite.width;
+        houseSprite.setScale(houseScale);
 
-        // 3. DISTANT MOUNTAINS & WOODLAND RIDGE
-        bgG.fillStyle(0x1e1530, 0.9);
-        bgG.fillTriangle(260, 418, 440, 190, 620, 418);
-        bgG.fillTriangle(480, 418, 640, 220, 800, 418);
-        bgG.fillTriangle(600, 418, 730, 250, 840, 418);
-
-        const distantPines = [
-            { x: 360, w: 40, h: 120 },
-            { x: 420, w: 46, h: 145 },
-            { x: 480, w: 42, h: 130 },
-            { x: 540, w: 50, h: 155 },
-            { x: 610, w: 45, h: 140 },
-            { x: 670, w: 52, h: 165 },
-            { x: 740, w: 48, h: 150 }
-        ];
-        distantPines.forEach(dp => {
-            bgG.fillStyle(0x151f28, 0.95);
-            bgG.fillRect(dp.x + dp.w * 0.4, 418 - dp.h, dp.w * 0.2, dp.h);
-            bgG.fillStyle(0x0e1b18, 0.95);
-            bgG.fillTriangle(dp.x, 418 - dp.h * 0.3, dp.x + dp.w * 0.5, 418 - dp.h, dp.x + dp.w, 418 - dp.h * 0.3);
-            bgG.fillTriangle(dp.x - 4, 418 - dp.h * 0.1, dp.x + dp.w * 0.5, 418 - dp.h * 0.6, dp.x + dp.w + 4, 418 - dp.h * 0.1);
-        });
-
-        // Warm horizon dusk glow (subtle bottom strip only)
-        bgG.fillStyle(0xf59e0b, 0.06);
-        bgG.fillRect(0, 380, 800, 38);
-
-        // 4. THE COTTAGE HOUSE (Rumah Aksel & Rachael)
-        // Upper Wall Base (Warm timber)
-        bgG.fillStyle(0x6c3614, 1);
-        bgG.fillRect(0, 160, 330, 258);
-        // Timber Horizontal Wood Planks
-        for (let py = 168; py < 370; py += 16) {
-            bgG.fillStyle(0x7c3f1d, 1);
-            bgG.fillRect(0, py, 330, 14);
-            bgG.fillStyle(0x9a4f27, 0.5);
-            bgG.fillRect(0, py, 330, 2);
-            bgG.fillStyle(0x451a03, 0.9);
-            bgG.fillRect(0, py + 14, 330, 2);
-        }
-
-        // Stone Wall Foundation (Lower Cottage Wall)
-        bgG.fillStyle(0x334155, 1);
-        bgG.fillRect(0, 370, 330, 48);
-        bgG.fillStyle(0x475569, 1);
-        for (let row = 0; row < 3; row++) {
-            const yOffset = 372 + row * 15;
-            const xOffset = (row % 2 === 0) ? 0 : 16;
-            for (let bx = xOffset; bx < 330; bx += 32) {
-                bgG.fillRect(bx + 1, yOffset, 30, 13);
-                bgG.fillStyle(0x1e293b, 0.6);
-                bgG.fillRect(bx, yOffset, 1, 13);
-                bgG.fillRect(bx, yOffset + 12, 31, 1);
-                bgG.fillStyle(0x64748b, 0.4);
-                bgG.fillRect(bx + 1, yOffset, 30, 1);
-                bgG.fillStyle(0x475569, 1);
-            }
-        }
-
-        // Vertical Timber Corner Posts & Crossbeams
-        bgG.fillStyle(0x451a03, 1);
-        bgG.fillRect(0, 160, 14, 258);
-        bgG.fillRect(318, 160, 12, 258);
-        bgG.fillRect(180, 160, 10, 210);
-        bgG.fillRect(0, 250, 330, 8);
-
-        // Diagonal Tudor Style Timber Beams
-        bgG.fillStyle(0x3a1502, 0.9);
-        bgG.beginPath();
-        bgG.moveTo(14, 168); bgG.lineTo(32, 168); bgG.lineTo(180, 250); bgG.lineTo(162, 250);
-        bgG.closePath();
-        bgG.fillPath();
-        bgG.beginPath();
-        bgG.moveTo(180, 168); bgG.lineTo(198, 168); bgG.lineTo(318, 250); bgG.lineTo(300, 250);
-        bgG.closePath();
-        bgG.fillPath();
-
-        // 5. COTTAGE ROOF (Pitched Gable Roof with Rustic Shingles)
-        bgG.fillStyle(0x3d1708, 1);
-        bgG.fillTriangle(140, 52, -38, 185, 348, 185);
-
-        bgG.fillStyle(0x993515, 1);
-        bgG.fillTriangle(140, 50, -32, 180, 342, 180);
-
-        const roofTiers = [
-            { y: 80, leftX: 105, rightX: 175, color: 0xb23b17 },
-            { y: 105, leftX: 75, rightX: 205, color: 0x8a2e12 },
-            { y: 130, leftX: 40, rightX: 240, color: 0xb23b17 },
-            { y: 155, leftX: 5, rightX: 275, color: 0x7c280e },
-            { y: 178, leftX: -28, rightX: 338, color: 0xa43615 }
-        ];
-        roofTiers.forEach(tier => {
-            bgG.fillStyle(tier.color, 1);
-            bgG.fillRect(tier.leftX, tier.y, tier.rightX - tier.leftX, 8);
-            bgG.fillStyle(0x451a03, 0.8);
-            bgG.fillRect(tier.leftX, tier.y + 7, tier.rightX - tier.leftX, 2);
-            for (let sx = tier.leftX + 12; sx < tier.rightX - 10; sx += 20) {
-                bgG.fillRect(sx, tier.y, 2, 8);
-            }
-        });
-
-        // Decorative Roof Ridge Cap & Fascia Trims
-        bgG.fillStyle(0x451a03, 1);
-        bgG.fillRect(128, 46, 24, 8);
-        bgG.beginPath();
-        bgG.moveTo(140, 48); bgG.lineTo(146, 52); bgG.lineTo(-26, 184); bgG.lineTo(-34, 180);
-        bgG.closePath();
-        bgG.fillPath();
-        bgG.beginPath();
-        bgG.moveTo(140, 48); bgG.lineTo(134, 52); bgG.lineTo(336, 184); bgG.lineTo(344, 180);
-        bgG.closePath();
-        bgG.fillPath();
-
-        // 6. STONE CHIMNEY & ANIMATED SMOKE PUFFS
-        bgG.fillStyle(0x475569, 1);
-        bgG.fillRect(52, 45, 34, 75);
-        bgG.fillStyle(0x64748b, 1);
-        bgG.fillRect(54, 47, 30, 10);
-        bgG.fillStyle(0x334155, 1);
-        bgG.fillRect(52, 65, 34, 2);
-        bgG.fillRect(52, 85, 34, 2);
-        bgG.fillRect(52, 105, 34, 2);
-        bgG.fillStyle(0x1e293b, 1);
-        bgG.fillRect(48, 40, 42, 8);
-        bgG.fillStyle(0x94a3b8, 1);
-        bgG.fillRect(50, 41, 38, 2);
-
+        // 5. CHIMNEY SMOKE PUFFS (Animated on top of the house sprite)
+        const smokeX = 170 - (houseSprite.displayWidth / 2) + (60 * houseScale);
+        const smokeY = 418 - houseSprite.displayHeight + (18 * houseScale);
         for (let i = 0; i < 4; i++) {
-            const smoke = this.add.circle(69, 36, 6 + i * 2, 0xe2e8f0, 0.4).setDepth(0);
+            const smoke = this.add.circle(smokeX, smokeY, 6 + i * 2, 0xe2e8f0, 0.4).setDepth(3);
             this.tweens.add({
                 targets: smoke,
-                x: { from: 69, to: 95 + i * 15 },
-                y: { from: 36, to: -20 },
+                x: { from: smokeX, to: smokeX + 26 + i * 15 },
+                y: { from: smokeY, to: smokeY - 56 },
                 scale: { from: 0.8, to: 2.4 },
                 alpha: { from: 0.45, to: 0 },
                 duration: 3200 + i * 600,
@@ -484,116 +348,18 @@ export class HomeScene extends BaseScene {
             });
         }
 
-        // 7. COTTAGE BAY WINDOW (Glowing warmly from inside)
-        bgG.fillStyle(0xfbbf24, 0.12);
+        // 6. WARM WINDOW GLOW (Subtle light cone from the house)
+        bgG.fillStyle(0xfbbf24, 0.08);
         bgG.beginPath();
-        bgG.moveTo(60, 290); bgG.lineTo(140, 290); bgG.lineTo(165, 414); bgG.lineTo(35, 414);
+        bgG.moveTo(60, 310); bgG.lineTo(140, 310); bgG.lineTo(165, 418); bgG.lineTo(35, 418);
         bgG.closePath();
         bgG.fillPath();
 
-        bgG.fillStyle(0x381e0d, 1);
-        bgG.fillRoundedRect(56, 218, 88, 76, 4);
-        bgG.fillStyle(0xfef08a, 1);
-        bgG.fillRect(62, 224, 76, 64);
-        bgG.fillStyle(0xf59e0b, 0.35);
-        bgG.fillRect(62, 224, 76, 30);
-
-        // Curtains
-        bgG.fillStyle(0x991b1b, 0.95);
-        bgG.fillTriangle(62, 224, 78, 224, 62, 280);
-        bgG.fillTriangle(138, 224, 122, 224, 138, 280);
-
-        // Window Mullion Crossbars
-        bgG.fillStyle(0x451a03, 1);
-        bgG.fillRect(98, 224, 4, 64);
-        bgG.fillRect(62, 254, 76, 4);
-        bgG.fillStyle(0x542308, 1);
-        bgG.fillRect(52, 290, 96, 6);
-
-        // Window Planter / Flower Box
-        bgG.fillStyle(0x78350f, 1);
-        bgG.fillRect(54, 296, 92, 14);
-        bgG.fillStyle(0x451a03, 1);
-        bgG.fillRect(54, 308, 92, 2);
-        bgG.fillStyle(0x16a34a, 1);
-        for (let fx = 58; fx < 140; fx += 10) {
-            bgG.fillCircle(fx, 295, 5);
-        }
-        const flowers = [
-            { x: 62, c: 0xef4444 }, { x: 74, c: 0xfde047 }, { x: 86, c: 0xf43f5e },
-            { x: 98, c: 0x38bdf8 }, { x: 110, c: 0xfde047 }, { x: 122, c: 0xef4444 }, { x: 134, c: 0xa855f7 }
-        ];
-        flowers.forEach(f => {
-            bgG.fillStyle(f.c, 1);
-            bgG.fillCircle(f.x, 293, 3);
-            bgG.fillStyle(0xffffff, 0.9);
-            bgG.fillCircle(f.x, 293, 1);
-        });
-
-        // 8. COTTAGE FRONT DOOR (Pintu Rumah)
-        bgG.fillStyle(0x271306, 1);
-        bgG.fillRect(238, 268, 68, 150);
-        bgG.fillStyle(0x5c2b0e, 1);
-        bgG.fillRect(242, 272, 60, 146);
-        bgG.fillStyle(0x431e08, 1);
-        bgG.fillRect(248, 280, 22, 55);
-        bgG.fillRect(274, 280, 22, 55);
-        bgG.fillRect(248, 345, 22, 65);
-        bgG.fillRect(274, 345, 22, 65);
-        bgG.fillStyle(0x1e293b, 1);
-        bgG.fillRect(240, 290, 16, 5);
-        bgG.fillRect(240, 385, 16, 5);
-        bgG.fillStyle(0xf59e0b, 1);
-        bgG.fillCircle(293, 355, 4);
-        bgG.fillStyle(0xfef08a, 1);
-        bgG.fillCircle(292, 354, 1.5);
-
-        // 9. THE TERRACE / PORCH (Halaman Teras)
-        // Porch Awning / Canopy Overhang
-        bgG.fillStyle(0x451a03, 1);
-        bgG.fillRect(15, 268, 345, 8);
-        bgG.fillStyle(0x8a2e12, 1);
-        bgG.beginPath();
-        bgG.moveTo(10, 258); bgG.lineTo(365, 258); bgG.lineTo(355, 272); bgG.lineTo(15, 272);
-        bgG.closePath();
-        bgG.fillPath();
-        bgG.fillStyle(0xb23b17, 1);
-        for (let vx = 20; vx < 355; vx += 14) {
-            bgG.fillTriangle(vx, 272, vx + 7, 278, vx + 14, 272);
-        }
-
-        // Porch Wooden Support Pillars
-        const porchPillars = [
-            { x: 30, w: 10 },
-            { x: 180, w: 10 },
-            { x: 345, w: 10 }
-        ];
-        porchPillars.forEach(pillar => {
-            bgG.fillStyle(0x5c2b0e, 1);
-            bgG.fillRect(pillar.x, 272, pillar.w, 142);
-            bgG.fillStyle(0x78350f, 0.8);
-            bgG.fillRect(pillar.x + 2, 272, 3, 142);
-            bgG.fillStyle(0x3a1705, 1);
-            bgG.fillRect(pillar.x - 3, 272, pillar.w + 6, 6);
-            bgG.fillRect(pillar.x - 3, 408, pillar.w + 6, 6);
-            bgG.fillTriangle(pillar.x, 278, pillar.x - 12, 278, pillar.x, 290);
-            bgG.fillTriangle(pillar.x + pillar.w, 278, pillar.x + pillar.w + 12, 278, pillar.x + pillar.w, 290);
-        });
-
-        // Hanging Porch Lantern
-        bgG.fillStyle(0x1e293b, 1);
-        bgG.fillRect(276, 274, 2, 12);
-        bgG.fillTriangle(277, 286, 271, 292, 283, 292);
-        bgG.fillStyle(0xfde047, 1);
-        bgG.fillRect(272, 292, 10, 12);
-        bgG.fillStyle(0x1e293b, 1);
-        bgG.fillRect(271, 304, 12, 3);
-        bgG.fillRect(276, 292, 2, 12);
-
-        const lanternGlow = this.add.circle(277, 298, 28, 0xfbbf24, 0.22).setDepth(0);
+        // 7. HANGING PORCH LANTERN GLOW (animated)
+        const lanternGlow = this.add.circle(277, 350, 28, 0xfbbf24, 0.18).setDepth(2);
         this.tweens.add({
             targets: lanternGlow,
-            alpha: { from: 0.15, to: 0.32 },
+            alpha: { from: 0.12, to: 0.28 },
             scale: { from: 0.92, to: 1.15 },
             duration: 1800,
             yoyo: true,
@@ -601,102 +367,6 @@ export class HomeScene extends BaseScene {
             ease: 'Sine.easeInOut'
         });
 
-        // Raised Wooden Porch Deck / Floor
-        bgG.fillStyle(0x5c2b0e, 1);
-        bgG.fillRect(15, 412, 340, 6);
-        bgG.fillStyle(0x854d0e, 1);
-        bgG.fillRect(15, 407, 340, 5);
-        bgG.fillStyle(0x3e1d08, 0.8);
-        for (let dx = 25; dx < 350; dx += 24) {
-            bgG.fillRect(dx, 407, 2, 11);
-        }
-
-        // Terrace Steps down to yard
-        bgG.fillStyle(0x5c2b0e, 1);
-        bgG.fillRect(350, 412, 20, 6);
-        bgG.fillStyle(0x854d0e, 1);
-        bgG.fillRect(350, 409, 20, 3);
-        bgG.fillStyle(0x475569, 1);
-        bgG.fillRect(366, 415, 14, 3);
-
-        // Wooden Terrace Railing
-        bgG.fillStyle(0x713f12, 1);
-        bgG.fillRect(40, 372, 138, 4);
-        for (let rx = 48; rx < 175; rx += 14) {
-            bgG.fillStyle(0x854d0e, 1);
-            bgG.fillRect(rx, 376, 4, 31);
-            bgG.fillStyle(0x5c2b0e, 1);
-            bgG.fillRect(rx, 404, 4, 3);
-        }
-        bgG.fillStyle(0x5c2b0e, 1);
-        bgG.fillRect(40, 403, 138, 4);
-
-        // 10. RACHAEL'S ROCKING CHAIR (Kursi Goyang Halaman Teras)
-        const chairG = this.add.graphics().setDepth(1);
-        chairG.fillStyle(0x5c2b0e, 1);
-        chairG.fillRoundedRect(170, 414, 60, 4, 2);
-        chairG.fillRect(168, 412, 4, 3);
-        chairG.fillRect(228, 412, 4, 3);
-
-        chairG.fillStyle(0x78350f, 1);
-        chairG.fillRect(178, 396, 5, 20);
-        chairG.fillRect(216, 396, 5, 20);
-        chairG.fillRect(180, 406, 38, 3);
-
-        chairG.fillStyle(0x92400e, 1);
-        chairG.fillRect(174, 393, 48, 6);
-        chairG.fillStyle(0xd97706, 1);
-        chairG.fillRoundedRect(175, 389, 44, 5, 2);
-
-        chairG.fillStyle(0x78350f, 1);
-        chairG.fillRect(217, 345, 6, 50);
-        chairG.fillStyle(0x92400e, 1);
-        for (let sp = 348; sp < 388; sp += 8) {
-            chairG.fillRect(212, sp, 4, 3);
-        }
-        chairG.fillStyle(0xb45309, 1);
-        chairG.fillRoundedRect(214, 342, 10, 6, 2);
-
-        chairG.fillStyle(0x92400e, 1);
-        chairG.fillRect(176, 375, 28, 4);
-        chairG.fillRect(176, 378, 4, 15);
-
-        // 11. PREPARATION TABLE / GARDEN BENCH (Meja Persiapan Bekal)
-        const tableG = this.add.graphics().setDepth(2);
-        tableG.fillStyle(0x451a03, 1);
-        tableG.fillRect(372, 412, 8, 22);
-        tableG.fillRect(492, 412, 8, 22);
-        tableG.fillRect(432, 414, 6, 20);
-        tableG.fillStyle(0x5c2b0e, 1);
-        tableG.fillRect(372, 424, 128, 4);
-        tableG.fillStyle(0x78350f, 1);
-        tableG.fillRoundedRect(362, 410, 148, 7, 2);
-        tableG.fillStyle(0x9a4f27, 1);
-        tableG.fillRect(364, 411, 144, 2);
-        tableG.fillStyle(0xf8fafc, 0.9);
-        tableG.fillRect(372, 410, 40, 3);
-        tableG.fillRect(470, 410, 34, 3);
-        this.add.text(435, 420, 'Meja Bekal', { fontSize: '9px', fontStyle: 'bold', fill: '#94a3b8' }).setOrigin(0.5).setDepth(2);
-
-        // 12. POTTED PLANTS & FLOWERS ON TERRACE CORNERS
-        const pots = [
-            { x: 36, y: 407, plantColor: 0x22c55e, flowerColor: 0xf43f5e },
-            { x: 334, y: 407, plantColor: 0x16a34a, flowerColor: 0xfde047 }
-        ];
-        pots.forEach(pot => {
-            bgG.fillStyle(0xc2410c, 1);
-            bgG.fillTriangle(pot.x - 7, pot.y - 12, pot.x + 7, pot.y - 12, pot.x, pot.y);
-            bgG.fillRect(pot.x - 6, pot.y - 12, 12, 12);
-            bgG.fillStyle(0x9a3412, 1);
-            bgG.fillRect(pot.x - 8, pot.y - 14, 16, 3);
-            bgG.fillStyle(pot.plantColor, 1);
-            bgG.fillCircle(pot.x - 4, pot.y - 18, 6);
-            bgG.fillCircle(pot.x + 4, pot.y - 18, 6);
-            bgG.fillCircle(pot.x, pot.y - 23, 7);
-            bgG.fillStyle(pot.flowerColor, 1);
-            bgG.fillCircle(pot.x - 2, pot.y - 21, 2.5);
-            bgG.fillCircle(pot.x + 3, pot.y - 19, 2.5);
-        });
 
         // 13. FRONT YARD (Halaman Depan Rumah) & WINDING STONE PATHWAY
         const stones = [

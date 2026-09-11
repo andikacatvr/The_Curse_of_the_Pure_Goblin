@@ -24,6 +24,38 @@ export class BootScene extends Phaser.Scene {
         this.load.image('portrait_bob', '/assets/karakter_pamanbob_npc.png');
         this.load.image('portrait_rachael_sembuh', '/assets/karakter_rachael_sembuh.png');
 
+        // Building & Ground Assets
+        this.load.image('building_rumah', '/assets/rumah_aksel_rachael.png');
+        this.load.image('tanah_home', '/assets/tanah_home.png');
+        this.load.image('waterfall_canyon_bg', '/assets/waterfallbackg.jpg');
+        this.load.image('home_village_bg', '/assets/rumahwargabackg.jpg');
+        this.load.image('lake_forest_bg', '/assets/lakebackgr.png');
+        this.load.image('mountain_foot_bg', '/assets/kakigunungbackgr.png');
+        this.load.image('forest_trail_bg', '/assets/hutanhijaulebat.jpg');
+        this.load.image('witch_yard_bg', '/assets/latarbelakangrumahpenyihir.jpg');
+        this.load.image('witch_yard_house', '/assets/rumahpenyihirbackgr.png');
+        this.load.image('tanah_witch', '/assets/tanah_witch.png');
+        this.load.image('witch_cottage_bg', '/assets/dalam_rumah_penyihir.jpg');
+        this.load.image('tiles_kayu', '/assets/tiles_kayu.png');
+        this.load.image('monster_shadow', '/assets/mosnter1.png');
+        this.load.image('witch_spirit', '/assets/karakter_penyihir.png');
+        this.load.image('grandma_mary_bg', '/assets/latarbelakangrumahmarybackgr.png');
+        this.load.image('bee_garden_bg', '/assets/latarbelakangladangmarybackgr.png');
+        this.load.image('woodshop_bg', '/assets/latarbelakangmrheinreichbackgr.png');
+        this.load.image('firewood_forest_bg', '/assets/latarbelakangpinggirhutanbackgr.png');
+        this.load.image('bakery_mill_bg', '/assets/latarbelakangmrbreado.jpg');
+        this.load.image('village_residential_bg', '/assets/latarbelakangrumahwargahutanbackgr.png');
+        this.load.image('east_forest_bg', '/assets/hutanmenujugpenyihir.png');
+
+        // NPC Nenek Sprite (frozen/static PNG)
+        this.load.image('npc_grandma_home', '/assets/nenek_aksel_rachael_sprite.png');
+
+        // NPC Rachael Spritesheet (3 frames: sitting, eyes closed, sleeping)
+        this.load.spritesheet('npc_rachael', '/assets/rachael_sprite_frozens.png', {
+            frameWidth: 175,
+            frameHeight: 189
+        });
+
         // Human Aksel Spritesheet (44x68 per frame, 7 frames)
         this.load.spritesheet('player_human', '/assets/aksel_human_spritesheet.png', {
             frameWidth: 44,
@@ -93,99 +125,11 @@ export class BootScene extends Phaser.Scene {
         goblinG.fillRect(19, 20, 2, 2); // Tiny friendly fang/tooth
         goblinG.generateTexture('player_goblin', 36, 44);
 
-        // 3. NPC Rachael (Adik Aksel yang Lembut) - 34 x 42
-        const rachaelG = this.make.graphics({ x: 0, y: 0, add: false });
-        // Soft Lavender Dress
-        rachaelG.fillStyle(0xa855f7, 1);
-        rachaelG.fillRoundedRect(6, 18, 22, 20, 4);
-        // Dress Collar & Cozy Shawl
-        rachaelG.fillStyle(0xf3e8ff, 1);
-        rachaelG.fillRect(11, 18, 12, 4);
-        rachaelG.fillStyle(0xc084fc, 1);
-        rachaelG.fillRect(6, 32, 22, 6);
-        // Delicate Feet / Slippers
-        rachaelG.fillStyle(0xddd6fe, 1);
-        rachaelG.fillRect(9, 38, 6, 4);
-        rachaelG.fillRect(19, 38, 6, 4);
-        // Long Chestnut Hair (Back)
-        rachaelG.fillStyle(0x6b3b1e, 1);
-        rachaelG.fillRoundedRect(4, 4, 26, 24, 6);
-        // Gentle Pale Face
-        rachaelG.fillStyle(0xffedd5, 1);
-        rachaelG.fillRoundedRect(7, 7, 20, 16, 5);
-        // Front Hair Strands
-        rachaelG.fillStyle(0x854d0e, 1);
-        rachaelG.fillRect(5, 4, 8, 16);
-        rachaelG.fillRect(21, 4, 8, 16);
-        rachaelG.fillRect(10, 3, 14, 5);
-        // Soft Eyebrows
-        rachaelG.fillStyle(0x5c2b09, 1);
-        rachaelG.fillRect(10, 10, 4, 1);
-        rachaelG.fillRect(20, 10, 4, 1);
-        // Gentle Expressive Eyes
-        rachaelG.fillStyle(0xffffff, 1);
-        rachaelG.fillRect(9, 12, 5, 4);
-        rachaelG.fillRect(20, 12, 5, 4);
-        // Warm Hazel Pupils
-        rachaelG.fillStyle(0x3f1d0b, 1);
-        rachaelG.fillRect(11, 12, 3, 4);
-        rachaelG.fillRect(22, 12, 3, 4);
-        // Soft Highlights
-        rachaelG.fillStyle(0xffffff, 1);
-        rachaelG.fillRect(12, 12, 2, 2);
-        rachaelG.fillRect(23, 12, 2, 2);
-        // Soft Cheeks
-        rachaelG.fillStyle(0xfecdd3, 0.7);
-        rachaelG.fillRect(8, 16, 3, 2);
-        rachaelG.fillRect(23, 16, 3, 2);
-        // Cute Small Nose
-        rachaelG.fillStyle(0xfb923c, 1);
-        rachaelG.fillRect(16, 16, 2, 1);
-        // Sweet Gentle Smile
-        rachaelG.fillStyle(0xe11d48, 1);
-        rachaelG.fillRect(14, 19, 6, 2);
-        rachaelG.generateTexture('npc_rachael', 34, 42);
+        // 3. NPC Rachael (Adik Aksel yang Lembut)
+        // Now loaded as spritesheet PNG in preload() with key 'npc_rachael'
 
-        // 3b. NPC Nenek Aksel & Rachael (Nenek Penyayang di Rumah) - 34 x 44
-        const grandmaHomeG = this.make.graphics({ x: 0, y: 0, add: false });
-        // Cozy Indigo/Purple Dress
-        grandmaHomeG.fillStyle(0x4338ca, 1);
-        grandmaHomeG.fillRoundedRect(5, 18, 24, 20, 4);
-        // Warm Maroon Shawl around shoulders
-        grandmaHomeG.fillStyle(0x991b1b, 1);
-        grandmaHomeG.fillRect(6, 18, 22, 9);
-        grandmaHomeG.fillStyle(0xb91c1c, 1);
-        grandmaHomeG.fillRect(10, 24, 14, 5);
-        // Shoes
-        grandmaHomeG.fillStyle(0x1e293b, 1);
-        grandmaHomeG.fillRect(8, 38, 7, 4);
-        grandmaHomeG.fillRect(19, 38, 7, 4);
-        // Silver-Grey Hair Bun on Top
-        grandmaHomeG.fillStyle(0x94a3b8, 1);
-        grandmaHomeG.fillCircle(17, 4, 6);
-        grandmaHomeG.fillStyle(0xe2e8f0, 1);
-        grandmaHomeG.fillCircle(17, 4, 4);
-        // Silver Hair Around Head
-        grandmaHomeG.fillStyle(0xcbd5e1, 1);
-        grandmaHomeG.fillRoundedRect(5, 5, 24, 13, 5);
-        // Kind Elderly Face
-        grandmaHomeG.fillStyle(0xfed7aa, 1);
-        grandmaHomeG.fillRoundedRect(7, 8, 20, 15, 4);
-        // Rosy Cheeks
-        grandmaHomeG.fillStyle(0xfca5a5, 0.8);
-        grandmaHomeG.fillRect(8, 16, 4, 3);
-        grandmaHomeG.fillRect(22, 16, 4, 3);
-        // Kind Caring Eyes
-        grandmaHomeG.fillStyle(0xffffff, 1);
-        grandmaHomeG.fillRect(9, 13, 4, 3);
-        grandmaHomeG.fillRect(21, 13, 4, 3);
-        grandmaHomeG.fillStyle(0x1e293b, 1);
-        grandmaHomeG.fillRect(10, 13, 3, 3);
-        grandmaHomeG.fillRect(22, 13, 3, 3);
-        // Warm Caring Smile
-        grandmaHomeG.fillStyle(0xb91c1c, 1);
-        grandmaHomeG.fillRect(13, 19, 8, 2);
-        grandmaHomeG.generateTexture('npc_grandma_home', 34, 44);
+        // 3b. NPC Nenek Aksel & Rachael (Nenek Penyayang di Rumah)
+        // Now loaded as PNG image in preload() with key 'npc_grandma_home'
 
         // 4. NPC Madam Joanne (Sang Penyihir Misterius) - 38 x 48
         const joanneG = this.make.graphics({ x: 0, y: 0, add: false });
@@ -572,41 +516,7 @@ export class BootScene extends Phaser.Scene {
         signG.fillCircle(30, 11, 1.5);
         signG.generateTexture('signpost', 36, 44);
 
-        // 16. Monster Shadow (Monster Bayangan Penjaga Rumah Penyihir) - 44 x 50
-        const monsterG = this.make.graphics({ x: 0, y: 0, add: false });
-        // Dark Void Shadow Body
-        monsterG.fillStyle(0x450a0a, 1);
-        monsterG.fillRoundedRect(2, 6, 40, 42, 8);
-        // Jagged Shadow Horns
-        monsterG.fillTriangle(6, 6, 2, 0, 14, 6);
-        monsterG.fillTriangle(30, 6, 42, 0, 38, 6);
-        // Inner Dark Purple-Red Shading
-        monsterG.fillStyle(0x1f172a, 1);
-        monsterG.fillRoundedRect(6, 12, 32, 32, 6);
-        // Menacing Fiery Eyes (Crimson + Yellow Glow)
-        monsterG.fillStyle(0xef4444, 1);
-        monsterG.fillTriangle(8, 16, 18, 18, 10, 24);
-        monsterG.fillTriangle(36, 16, 26, 18, 34, 24);
-        monsterG.fillStyle(0xfef08a, 1);
-        monsterG.fillRect(11, 18, 4, 3);
-        monsterG.fillRect(29, 18, 4, 3);
-        // Snarl Nose / Snout
-        monsterG.fillStyle(0x7f1d1d, 1);
-        monsterG.fillRect(20, 24, 4, 3);
-        // Menacing Open Maw & Fangs
-        monsterG.fillStyle(0x000000, 1);
-        monsterG.fillRoundedRect(10, 29, 24, 12, 3);
-        monsterG.fillStyle(0x991b1b, 1);
-        monsterG.fillRect(12, 32, 20, 6);
-        // Sharp White Fangs
-        monsterG.fillStyle(0xffffff, 1);
-        monsterG.fillTriangle(13, 29, 16, 29, 14.5, 34);
-        monsterG.fillTriangle(19, 29, 22, 29, 20.5, 34);
-        monsterG.fillTriangle(25, 29, 28, 29, 26.5, 34);
-        // Bottom Fangs
-        monsterG.fillTriangle(16, 41, 19, 41, 17.5, 36);
-        monsterG.fillTriangle(22, 41, 25, 41, 23.5, 36);
-        monsterG.generateTexture('monster_shadow', 44, 50);
+        // 16. Monster Shadow (Loaded from PNG /assets/mosnter1.png in preload)
 
         // 17. Witch Door
         const doorG = this.make.graphics({ x: 0, y: 0, add: false });
@@ -639,6 +549,30 @@ export class BootScene extends Phaser.Scene {
         beehiveG.fillStyle(0xca8a04, 1);
         beehiveG.fillRect(6, 14, 24, 8);
         beehiveG.generateTexture('beehive', 36, 36);
+
+        // 20b. Magic Honey Bee (Little Flying Pixel Bee) - 14x12
+        const beeG = this.make.graphics({ x: 0, y: 0, add: false });
+        // Golden aura
+        beeG.fillStyle(0xfef08a, 0.45);
+        beeG.fillCircle(7, 6, 6);
+        // Bee Wings (translucent wings)
+        beeG.fillStyle(0xe0f2fe, 0.85);
+        beeG.fillEllipse(4, 2, 4, 2.5);
+        beeG.fillEllipse(10, 2, 4, 2.5);
+        // Bee striped body
+        beeG.fillStyle(0xfbbf24, 1);
+        beeG.fillRoundedRect(2, 4, 10, 6, 2);
+        // Black stripes
+        beeG.fillStyle(0x1c1917, 1);
+        beeG.fillRect(5, 4, 2, 6);
+        beeG.fillRect(9, 4, 2, 6);
+        // Stinger
+        beeG.fillStyle(0x1c1917, 1);
+        beeG.fillRect(12, 6, 1.5, 2);
+        // Black eye
+        beeG.fillStyle(0x0f172a, 1);
+        beeG.fillRect(3, 5, 1, 1);
+        beeG.generateTexture('magic_bee', 14, 12);
 
         // 21. NPC Mr. Breado
         // 21. NPC Mr. Breado (Koki Pembuat Roti yang Ceria) - 38 x 48
@@ -1144,7 +1078,36 @@ export class BootScene extends Phaser.Scene {
             }
         }
 
-        this.scene.start('TitleScene');
+        // Register Rachael idle animation (sitting in rocking chair)
+        if (this.textures.exists('npc_rachael')) {
+            if (!this.anims.exists('rachael_idle')) {
+                this.anims.create({
+                    key: 'rachael_idle',
+                    frames: this.anims.generateFrameNumbers('npc_rachael', { start: 0, end: 2 }),
+                    frameRate: 0.5,
+                    repeat: -1,
+                    yoyo: true
+                });
+            }
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetScene = urlParams.get('scene');
+        if (targetScene && this.scene.manager.getScene(targetScene)) {
+            const goblinScenes = ['GrandmaGardenScene', 'BeeGardenScene', 'WoodshopScene', 'BakeryMillScene'];
+            if (goblinScenes.includes(targetScene)) {
+                this.registry.set('questState', {
+                    chapter: 'BAB 1',
+                    title: 'Bab 1: Bicara dengan Grandma Mary',
+                    objective: 'Bicara dengan Grandma Mary di Halaman Rumahnya.',
+                    questNumber: 1,
+                    completedQuests: ['Prolog: Menyelinap ke Rumah Penyihir & Kutukan Goblin']
+                });
+            }
+            this.scene.start(targetScene);
+        } else {
+            this.scene.start('TitleScene');
+        }
     }
 }
 

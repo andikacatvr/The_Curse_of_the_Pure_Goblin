@@ -21,7 +21,12 @@ export class MountainFootLakeScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(400, 434, 'platform').setScale(2.5, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2.5, 1).refreshBody();
+        mainPlatform.setVisible(false);
+
+        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(2);
+        groundSprite.setOrigin(0, 117 / 250);
+        groundSprite.setScale(800 / 770);
 
         let startX = 720;
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
@@ -99,214 +104,92 @@ export class MountainFootLakeScene extends BaseScene {
     }
 
     createMountainFootAtmosphere() {
-        const bgG = this.add.graphics().setDepth(0);
+        // 1. Panoramic Snowy Mountain Lake Background (Pixel Art Danau Kaki Gunung Megah)
+        this.add.image(400, 225, 'mountain_foot_bg').setDisplaySize(800, 450).setDepth(0);
 
-        // 1. SKY GRADIENT (Rich Senja / Alpine Twilight Sunset Sky)
-        bgG.fillGradientStyle(0x181230, 0x27173e, 0x662241, 0xb45309, 1);
-        bgG.fillRect(0, 0, 800, 420);
-
-        // Radiant Sunset Horizon Glow
-        bgG.fillGradientStyle(0x9a3412, 0xc2410c, 0xf59e0b, 0xfbbf24, 0.5);
-        bgG.fillRect(0, 150, 800, 150);
-
-        // Setting Sun sinking behind the mountain peaks
-        bgG.fillStyle(0xf97316, 0.2);
-        bgG.fillCircle(630, 170, 72);
-        bgG.fillStyle(0xfbbf24, 0.35);
-        bgG.fillCircle(630, 170, 44);
-        bgG.fillStyle(0xfde047, 0.9);
-        bgG.fillCircle(630, 170, 22);
-        bgG.fillStyle(0xfffbeb, 0.95);
-        bgG.fillCircle(630, 170, 13);
-
-        // Soft Senja Clouds (Lembayung Senja)
-        const sunsetClouds = [
-            { x: 70, y: 65, w: 130, h: 22, col: 0xf43f5e },
-            { x: 310, y: 45, w: 150, h: 25, col: 0xfb923c },
-            { x: 530, y: 80, w: 120, h: 20, col: 0xfbbf24 },
-            { x: 670, y: 105, w: 100, h: 18, col: 0xf472b6 }
+        // 2. Alpine Mountain Mist & Chill Fog (Kabut Dingin Kaki Gunung Salju yang Melayang)
+        const mistClouds = [
+            { x: 140, y: 310, w: 250, h: 26, dur: 14000, dist: 80 },
+            { x: 360, y: 290, w: 280, h: 28, dur: 18000, dist: -90 },
+            { x: 580, y: 320, w: 230, h: 22, dur: 13000, dist: 70 },
+            { x: 260, y: 340, w: 310, h: 25, dur: 15000, dist: -80 }
         ];
-        sunsetClouds.forEach(c => {
-            bgG.fillStyle(c.col, 0.22);
-            bgG.fillRoundedRect(c.x, c.y, c.w, c.h, 10);
-            bgG.fillCircle(c.x + c.w * 0.35, c.y - 4, c.h * 0.65);
-            bgG.fillCircle(c.x + c.w * 0.65, c.y - 5, c.h * 0.8);
-        });
 
-        // Early Twilight Stars (Bintang Senja di Langit Atas)
-        for (let i = 0; i < 12; i++) {
-            const sx = Phaser.Math.Between(20, 780);
-            const sy = Phaser.Math.Between(10, 85);
-            const star = this.add.circle(sx, sy, Phaser.Math.Between(1, 2), 0xfef08a, Phaser.Math.FloatBetween(0.3, 0.75)).setDepth(0);
+        mistClouds.forEach((m) => {
+            const mist = this.add.graphics().setDepth(1);
+            mist.fillStyle(0xe0f2fe, 0.09);
+            mist.fillRoundedRect(m.x, m.y, m.w, m.h, 12);
+            mist.fillStyle(0xbae6fd, 0.07);
+            mist.fillCircle(m.x + m.w * 0.35, m.y + 2, m.h * 0.75);
+            mist.fillCircle(m.x + m.w * 0.65, m.y - 2, m.h * 0.85);
+
             this.tweens.add({
-                targets: star,
-                alpha: { from: 0.15, to: 0.75 },
-                scale: { from: 0.8, to: 1.25 },
-                duration: Phaser.Math.Between(2000, 3800),
+                targets: mist,
+                x: m.dist,
+                alpha: { from: 0.6, to: 1.05 },
+                duration: m.dur,
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
             });
-        }
+        });
 
-        // 2. TOWERING MOUNTAINS IN SENJA SILHOUETTE (Pegunungan Senja Megah)
-        bgG.fillStyle(0x231638, 1);
-        bgG.fillTriangle(-80, 410, 80, 40, 260, 410);
-        bgG.fillStyle(0x2d1a45, 1);
-        bgG.fillTriangle(-20, 410, 150, 70, 360, 410);
-        bgG.fillTriangle(140, 410, 310, 95, 480, 410);
+        // 3. Dynamic Water Shimmer & Mountain Reflection Waves (Kilauan Riak Air Danau Pemantul Gunung)
+        const lakeRipples = [
+            { x: 280, y: 305, w: 60, h: 2.5, col: 0x99f6e4, dur: 2300 },
+            { x: 420, y: 320, w: 75, h: 2.8, col: 0xfef08a, dur: 2700 },
+            { x: 560, y: 315, w: 85, h: 2.5, col: 0x99f6e4, dur: 3100 },
+            { x: 350, y: 345, w: 90, h: 3.0, col: 0xfde047, dur: 2500 },
+            { x: 510, y: 350, w: 100, h: 3.2, col: 0x67e8f9, dur: 2900 },
+            { x: 420, y: 375, w: 120, h: 3.5, col: 0x99f6e4, dur: 2600 },
+            { x: 620, y: 365, w: 80, h: 3.0, col: 0xfef08a, dur: 3300 }
+        ];
 
-        // Distant peaks to the right (catching warm sunset glow)
-        bgG.fillStyle(0x452055, 0.95);
-        bgG.fillTriangle(380, 410, 540, 130, 700, 410);
-        bgG.fillStyle(0x38194a, 0.95);
-        bgG.fillTriangle(580, 410, 720, 150, 880, 410);
-
-        // Snowcaps on peaks with Alpenglow (Pantulan Merona Sinar Senja di Salju)
-        bgG.fillStyle(0xffe4e6, 0.95);
-        bgG.fillTriangle(68, 65, 80, 40, 92, 65);
-        bgG.fillTriangle(135, 95, 150, 70, 165, 95);
-        bgG.fillTriangle(295, 120, 310, 95, 325, 120);
-        bgG.fillTriangle(525, 150, 540, 130, 555, 150);
-
-        // Golden peak highlights
-        bgG.fillStyle(0xfef08a, 0.85);
-        bgG.fillTriangle(76, 50, 80, 40, 84, 50);
-        bgG.fillTriangle(146, 80, 150, 70, 154, 80);
-        bgG.fillTriangle(306, 105, 310, 95, 314, 105);
-
-        // Helper to draw filled polygon safely with Phaser Graphics
-        const drawPoly = (coords, color, alpha = 1) => {
-            if (coords.length < 4) return;
-            bgG.fillStyle(color, alpha);
-            bgG.beginPath();
-            bgG.moveTo(coords[0], coords[1]);
-            for (let i = 2; i < coords.length; i += 2) {
-                bgG.lineTo(coords[i], coords[i + 1]);
-            }
-            bgG.closePath();
-            bgG.fillPath();
-        };
-
-        // Giant Left Cliff Base (Close foreground cliff)
-        drawPoly([
-            -40, 412,
-            -40, 90,
-            60, 140,
-            110, 220,
-            160, 310,
-            180, 412
-        ], 0x241e35, 1);
-
-        // Rocky cliff facets & fissures
-        drawPoly([
-            -20, 412,
-            0, 180,
-            50, 240,
-            90, 340,
-            110, 412
-        ], 0x191426, 0.9);
-
-        drawPoly([
-            40, 200,
-            80, 240,
-            110, 230,
-            80, 190
-        ], 0x3a2c50, 0.8);
-
-        // Mountain snow patches on cliff shelves (Alpenglow tint)
-        bgG.fillStyle(0xffe4e6, 0.92);
-        bgG.fillRoundedRect(35, 185, 32, 5, 2);
-        bgG.fillRoundedRect(85, 275, 45, 6, 2);
-        bgG.fillRoundedRect(130, 345, 36, 5, 2);
-
-        // 3. TRANQUIL LAKE EDGE & COVE IN SENJA (Ujung Danau Berkilau Senja)
-        bgG.fillStyle(0x131934, 1);
-        bgG.fillRect(150, 280, 650, 130);
-        // Sky reflection on lake
-        bgG.fillGradientStyle(0xb45309, 0xbe123c, 0x1e3a8a, 0x0284c7, 0.45);
-        bgG.fillRect(150, 280, 650, 70);
-
-        // Lake Shore Bank
-        bgG.fillStyle(0x14532d, 0.95);
-        bgG.fillRect(0, 405, 800, 15);
-        bgG.fillStyle(0x365314, 1);
-        bgG.fillRect(0, 403, 800, 3);
-
-        // Lake ripples (Golden sunset reflection)
-        for (let r = 0; r < 7; r++) {
-            const rx = Phaser.Math.Between(200, 750);
-            const ry = Phaser.Math.Between(290, 395);
-            const rw = Phaser.Math.Between(35, 80);
-            const col = (r % 2 === 0) ? 0xfcd34d : 0x67e8f9;
-            const ripple = this.add.rectangle(rx, ry, rw, 2.5, col, 0.45).setDepth(1);
+        lakeRipples.forEach((wr, i) => {
+            const rip = this.add.rectangle(wr.x, wr.y, wr.w, wr.h, wr.col, 0.42).setDepth(1);
             this.tweens.add({
-                targets: ripple,
-                alpha: { from: 0.15, to: 0.65 },
-                scaleX: { from: 0.8, to: 1.2 },
-                duration: Phaser.Math.Between(1800, 3000),
+                targets: rip,
+                alpha: { from: 0.12, to: 0.65 },
+                scaleX: { from: 0.75, to: 1.3 },
+                duration: wr.dur,
+                delay: i * 420,
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
             });
+        });
+
+        // 4. Subtle Ripples at Mountain Pier / Shore (Riak Air di Sekitar Dermaga Kayu)
+        for (let r = 0; r < 2; r++) {
+            const pierRipple = this.add.ellipse(490, 392, 42, 8).setDepth(1);
+            pierRipple.setStrokeStyle(1.2, 0x99f6e4, 0.5);
+            pierRipple.setFillStyle(0, 0);
+            this.tweens.add({
+                targets: pierRipple,
+                scaleX: 1.8,
+                scaleY: 1.5,
+                alpha: 0,
+                duration: 2800,
+                delay: r * 1400,
+                repeat: -1,
+                ease: 'Sine.easeOut'
+            });
         }
 
-        // Shoreline rocks and boulders
-        const boulders = [
-            { x: 140, y: 408, w: 28, h: 14, col: 0x334155 },
-            { x: 175, y: 410, w: 22, h: 11, col: 0x475569 },
-            { x: 370, y: 411, w: 18, h: 9, col: 0x334155 },
-            { x: 590, y: 409, w: 26, h: 13, col: 0x1e293b },
-            { x: 730, y: 410, w: 20, h: 10, col: 0x475569 }
-        ];
-        boulders.forEach(b => {
-            bgG.fillStyle(b.col, 1);
-            bgG.fillRoundedRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h, 4);
-            bgG.fillStyle(0x65a30d, 0.8);
-            bgG.fillRoundedRect(b.x - b.w / 2 + 2, b.y - b.h / 2, b.w - 4, 3, 1);
-        });
-
-        // Reeds and Cattails
-        const reedX = [190, 330, 420, 560, 670];
-        reedX.forEach(rx => {
-            bgG.fillStyle(0x166534, 1);
-            bgG.fillRect(rx, 375, 3, 30);
-            bgG.fillRect(rx + 5, 380, 2.5, 25);
-            bgG.fillStyle(0x78350f, 1);
-            bgG.fillRoundedRect(rx - 1, 372, 5, 12, 2);
-        });
-
-        // 4. ALPINE PINES & FOREGROUND VEGETATION
-        const pines = [
-            { x: 120, w: 60, h: 230 },
-            { x: 320, w: 65, h: 210 },
-            { x: 530, w: 70, h: 245 },
-            { x: 690, w: 65, h: 225 }
-        ];
-        pines.forEach(p => {
-            bgG.fillStyle(0x271910, 1);
-            bgG.fillRect(p.x + p.w * 0.42, 412 - p.h * 0.35, p.w * 0.16, p.h * 0.35);
-            bgG.fillStyle(0x062818, 0.95);
-            bgG.fillTriangle(p.x, 412 - p.h * 0.18, p.x + p.w * 0.5, 412 - p.h * 0.6, p.x + p.w, 412 - p.h * 0.18);
-            bgG.fillStyle(0x0a3c24, 0.95);
-            bgG.fillTriangle(p.x + 4, 412 - p.h * 0.45, p.x + p.w * 0.5, 412 - p.h * 0.85, p.x + p.w - 4, 412 - p.h * 0.45);
-            bgG.fillStyle(0x14532d, 1);
-            bgG.fillTriangle(p.x + 8, 412 - p.h * 0.7, p.x + p.w * 0.5, 412 - p.h, p.x + p.w - 8, 412 - p.h * 0.7);
-        });
-
-        // Glowing Alpine Wisps / Evening Spores (Lembayung Emas)
-        for (let i = 0; i < 16; i++) {
+        // 5. Alpine Glowing Wisps & Frost Fireflies (Spora Salju & Kunang-kunang Dingin)
+        for (let i = 0; i < 18; i++) {
             const fx = Phaser.Math.Between(40, 760);
-            const fy = Phaser.Math.Between(240, 400);
+            const fy = Phaser.Math.Between(180, 410);
             const col = (i % 2 === 0) ? 0xfde047 : 0x7dd3fc;
-            const ff = this.add.circle(fx, fy, Phaser.Math.Between(1.5, 2.5), col, 0.75).setDepth(2);
+            const ff = this.add.circle(fx, fy, Phaser.Math.FloatBetween(1.5, 2.5), col, 0.75).setDepth(3);
+
             this.tweens.add({
                 targets: ff,
-                x: fx + Phaser.Math.Between(-25, 25),
+                x: fx + Phaser.Math.Between(-30, 30),
                 y: fy + Phaser.Math.Between(-20, 20),
-                alpha: { from: 0.2, to: 0.85 },
-                scale: { from: 0.8, to: 1.3 },
-                duration: Phaser.Math.Between(2000, 3800),
+                alpha: { from: 0.15, to: 0.9 },
+                scale: { from: 0.7, to: 1.3 },
+                duration: Phaser.Math.Between(2000, 4200),
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
@@ -342,7 +225,7 @@ export class MountainFootLakeScene extends BaseScene {
             onComplete: () => notice.destroy()
         });
 
-        GameAudio.playClick();
+        GameAudio.playCollect();
         woodSprite.destroy();
         this.nearTarget = null;
         this.promptText.setVisible(false);
@@ -359,7 +242,7 @@ export class MountainFootLakeScene extends BaseScene {
             this.updateQuestHUD();
 
             this.startDialogue([
-                { speaker: 'Aksel', text: 'Alhamdulillah, semua 4 ikat kayu bakar sudah terkumpul lengkap dari danau dan kaki gunung!' },
+                { speaker: 'Aksel', text: 'Semua 4 ikat kayu bakar sudah terkumpul lengkap dari danau dan kaki gunung!' },
                 { speaker: 'Aksel', text: 'Sekarang aku harus segera kembali ke Hutan Danau di sebelah kanan [➔] lalu pulang ke rumah Nenek dan Rachael!' }
             ]);
         } else {

@@ -28,17 +28,18 @@ export class WaterfallGorgeScene extends BaseScene {
         // Platform 5 (Right Exit Cliff) - safe ground to WitchYardScene
         this.plat5 = this.platforms.create(725, 395, 'canyon_rock_platform').setScale(1.2, 1).refreshBody().setDepth(3);
 
+
         const qState = getQuestState(this.registry);
         const inv = getInventory(this.registry);
         const hasCure = inv.some(i => i.id === 'Ramuan Kesembuhan Asli');
         const playerTexture = (qState.chapter !== 'PROLOG' && !hasCure) ? 'player_goblin' : 'player_human';
 
-        // Spawn position based on entry direction
+        // Spawn position based on entry direction (startY diangkat ke 330 agar mendarat mulus di atas tebing y=379)
         let startX = 65;
-        let startY = 355;
+        let startY = 330;
         if (data && data.from === 'WitchYardScene') {
             startX = 735;
-            startY = 355;
+            startY = 330;
         }
         this.checkpointX = startX;
         this.checkpointY = startY;
@@ -80,8 +81,8 @@ export class WaterfallGorgeScene extends BaseScene {
             this.takeDamage(1, knock);
         });
 
-        // Healing Crystal Fruit on Platform 3
-        this.fruitGlow = this.add.circle(400, 255, 16, 0x38bdf8, 0.3).setDepth(4);
+        // Healing Crystal Fruit on Mid Platform (Platform 3 at y = 360)
+        this.fruitGlow = this.add.circle(400, 305, 16, 0x38bdf8, 0.3).setDepth(4);
         this.tweens.add({
             targets: this.fruitGlow,
             alpha: 0.7,
@@ -93,10 +94,10 @@ export class WaterfallGorgeScene extends BaseScene {
             ease: 'Sine.easeInOut'
         });
 
-        this.crystalFruit = this.physics.add.staticSprite(400, 255, 'crystal_fruit').setDepth(5);
+        this.crystalFruit = this.physics.add.staticSprite(400, 305, 'crystal_fruit').setDepth(5);
         this.tweens.add({
             targets: this.crystalFruit,
-            y: 247,
+            y: 297,
             duration: 1100,
             yoyo: true,
             repeat: -1,
@@ -113,12 +114,12 @@ export class WaterfallGorgeScene extends BaseScene {
                 this.healPlayer(1);
 
                 // Spawn floating sparkle text
-                const spark = this.add.text(400, 235, '+1 HP PULIH!', {
+                const spark = this.add.text(400, 205, '+1 HP PULIH!', {
                     fontSize: '12px', fontStyle: 'bold', fill: '#4ade80'
                 }).setOrigin(0.5).setDepth(15);
                 this.tweens.add({
                     targets: spark,
-                    y: 200,
+                    y: 170,
                     alpha: 0,
                     duration: 1200,
                     onComplete: () => spark.destroy()
@@ -137,6 +138,7 @@ export class WaterfallGorgeScene extends BaseScene {
                 this.time.delayedCall(3000, () => { this.hasShownFullHpToast = false; });
             }
         });
+
 
         // Navigation labels (Navigasi Map di Atas)
         this.add.text(20, 65, '◀ Pinggir Hutan', {
@@ -167,196 +169,156 @@ export class WaterfallGorgeScene extends BaseScene {
         this.createVisualInventoryUI();
         this.createQuestUI();
 
-        // Fall hazard handler: if falling into water gorge pit
+        // Fall hazard failsafe: bila terjatuh dari tebing ke sungai di bawah
         this.onPlayerFallHazard = () => {
             if (this.isRespawning) return;
-
-            // Take 1 damage from the turbulent water & fall
-            this.takeDamage(1);
-
-            const hp = getPlayerHP(this.registry);
-            if (hp > 0) {
-                // Safe respawn to latest reached platform
+            if (this.player) {
                 this.player.setVelocity(0, 0);
-                this.player.setPosition(this.checkpointX, this.checkpointY);
-                this.showToastNotice('🌊 Aksel tercebur ke jurang air terjun! (-1 HP)');
+                this.player.setPosition(this.checkpointX, this.checkpointY || 330);
             }
         };
     }
 
     createWaterfallGorgeAtmosphere() {
-        const bgG = this.add.graphics();
+        // 1. Background Image (Latar Pixel Art Hutan & Air Terjun Megah)
+        this.add.image(400, 225, 'waterfall_canyon_bg').setDisplaySize(800, 450).setDepth(0);
 
-        // 1. Twilight Canyon Sky Gradient
-        for (let y = 0; y < 240; y += 4) {
-            const ratio = y / 240;
-            const r = Math.round(4 + ratio * 8);
-            const g = Math.round(24 + ratio * 20);
-            const b = Math.round(44 + ratio * 30);
-            bgG.fillStyle(Phaser.Display.Color.GetColor(r, g, b), 1);
-            bgG.fillRect(0, y, 800, 4);
-        }
-
-        // 2. Distant Jagged Canyon Mountain Ridges
-        bgG.fillStyle(0x0a1e2f, 0.95);
-        bgG.beginPath();
-        bgG.moveTo(0, 240);
-        bgG.lineTo(0, 80);
-        bgG.lineTo(90, 110);
-        bgG.lineTo(190, 70);
-        bgG.lineTo(290, 120);
-        bgG.lineTo(390, 60);
-        bgG.lineTo(510, 115);
-        bgG.lineTo(620, 75);
-        bgG.lineTo(720, 110);
-        bgG.lineTo(800, 85);
-        bgG.lineTo(800, 240);
-        bgG.closePath();
-        bgG.fillPath();
-
-        // 3. Middle Canyon Rock Walls
-        bgG.fillStyle(0x0c2538, 1);
-        // Left Rock Wall
-        bgG.fillRect(0, 100, 150, 350);
-        // Right Rock Wall
-        bgG.fillRect(650, 100, 150, 350);
-
-        // Canyon Crevice Shadows
-        bgG.fillStyle(0x061420, 1);
-        bgG.beginPath();
-        bgG.moveTo(340, 0);
-        bgG.lineTo(460, 0);
-        bgG.lineTo(470, 430);
-        bgG.lineTo(330, 430);
-        bgG.closePath();
-        bgG.fillPath();
-
-        // 4. Center Giant Cascading Waterfall Streams
-        // Broad outer spray
-        bgG.fillStyle(0x0284c7, 0.65);
-        bgG.fillRect(352, 0, 96, 425);
-
-        // Core rushing water body
-        bgG.fillStyle(0x38bdf8, 0.85);
-        bgG.fillRect(362, 0, 76, 425);
-
-        // Secondary Cascade on Left Wall
-        bgG.fillStyle(0x0284c7, 0.5);
-        bgG.fillRect(150, 110, 28, 315);
-        bgG.fillStyle(0x7dd3fc, 0.7);
-        bgG.fillRect(156, 110, 16, 315);
-
-        // Secondary Cascade on Right Wall
-        bgG.fillStyle(0x0284c7, 0.5);
-        bgG.fillRect(622, 110, 28, 315);
-        bgG.fillStyle(0x7dd3fc, 0.7);
-        bgG.fillRect(628, 110, 16, 315);
-
-        // 5. Animated Shimmering Water Ribbons
-        const waterLines = this.add.graphics();
-        this.tweens.addCounter({
-            from: 0,
-            to: 100,
-            duration: 800,
-            repeat: -1,
-            onUpdate: (tween) => {
-                const val = tween.getValue();
-                const offset = (val / 100) * 30;
-                waterLines.clear();
-
-                // Main waterfall shimmering ribbons
-                waterLines.lineStyle(2.5, 0xf0f9ff, 0.75);
-                waterLines.lineBetween(372, offset, 372, 425);
-                waterLines.lineBetween(388, (offset + 15) % 30, 388, 425);
-                waterLines.lineBetween(404, offset, 404, 425);
-                waterLines.lineBetween(420, (offset + 10) % 30, 420, 425);
-
-                // Left cascade ribbons
-                waterLines.lineStyle(1.5, 0xe0f2fe, 0.6);
-                waterLines.lineBetween(164, 110 + offset, 164, 425);
-                // Right cascade ribbons
-                waterLines.lineBetween(636, 110 + offset, 636, 425);
-            }
-        });
-
-        // 6. Waterfall Base Splash Foam & Mist
-        const splashG = this.add.graphics();
-        splashG.fillStyle(0xf0fdf4, 0.85);
-        splashG.fillEllipse(400, 422, 140, 24);
-        splashG.fillStyle(0xbae6fd, 0.7);
-        splashG.fillEllipse(400, 425, 170, 28);
-
+        // 2. Ambient Sunlight & Mist Glow
+        const ambientGlow = this.add.circle(400, 190, 170, 0x99f6e4, 0.06).setDepth(1);
         this.tweens.add({
-            targets: splashG,
-            scaleX: 1.1,
-            scaleY: 1.15,
-            alpha: 0.75,
-            duration: 650,
+            targets: ambientGlow,
+            alpha: 0.14,
+            scale: 1.12,
+            duration: 3000,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
 
-        // 7. Rising Water Spray Mist Particles
-        for (let i = 0; i < 18; i++) {
-            const mistX = 330 + Math.random() * 140;
-            const mistY = 410 + Math.random() * 20;
-            const radius = 6 + Math.random() * 12;
-            const mistDot = this.add.circle(mistX, mistY, radius, 0xe0f2fe, 0.25).setDepth(2);
+        // 3. Dynamic Animated Cascading Water Streams (Aliran Air Terjun Mengalir)
+        const waterLines = this.add.graphics().setDepth(2);
+        const streams = [
+            // Aliran Air Terjun Utama di Tengah (X: 350 - 450, Y: 135 - 340)
+            { x: 355, top: 145, bot: 335, w: 2.5, color: 0x99f6e4, alpha: 0.55, speed: 1.2, seed: 0 },
+            { x: 366, top: 138, bot: 340, w: 3.0, color: 0xccfbf1, alpha: 0.70, speed: 1.5, seed: 12 },
+            { x: 378, top: 142, bot: 338, w: 2.0, color: 0x5eead4, alpha: 0.60, speed: 1.0, seed: 7 },
+            { x: 390, top: 135, bot: 345, w: 3.5, color: 0xffffff, alpha: 0.85, speed: 1.7, seed: 20 },
+            { x: 402, top: 134, bot: 345, w: 3.5, color: 0xf0fdfa, alpha: 0.85, speed: 1.6, seed: 4 },
+            { x: 414, top: 138, bot: 342, w: 3.0, color: 0x99f6e4, alpha: 0.75, speed: 1.3, seed: 15 },
+            { x: 426, top: 140, bot: 338, w: 2.5, color: 0x5eead4, alpha: 0.65, speed: 1.4, seed: 9 },
+            { x: 438, top: 144, bot: 336, w: 2.0, color: 0xccfbf1, alpha: 0.60, speed: 1.1, seed: 18 },
+            { x: 448, top: 150, bot: 332, w: 1.8, color: 0x2dd4bf, alpha: 0.50, speed: 1.0, seed: 3 },
+            // Celah Air Terjun Tipis di Tebing Kanan
+            { x: 532, top: 120, bot: 335, w: 1.8, color: 0xccfbf1, alpha: 0.65, speed: 1.2, seed: 8 },
+            { x: 544, top: 140, bot: 330, w: 1.5, color: 0x99f6e4, alpha: 0.55, speed: 1.4, seed: 16 }
+        ];
+
+        this.tweens.addCounter({
+            from: 0,
+            to: 100,
+            duration: 850,
+            repeat: -1,
+            onUpdate: (tween) => {
+                const progress = tween.getValue();
+                waterLines.clear();
+                streams.forEach(st => {
+                    const cycleHeight = 36;
+                    const curOffset = ((progress * st.speed + st.seed * 8) % 100 / 100) * cycleHeight;
+                    waterLines.lineStyle(st.w, st.color, st.alpha);
+                    for (let segY = st.top + curOffset; segY < st.bot; segY += cycleHeight) {
+                        const segLen = Math.min(20, st.bot - segY);
+                        if (segLen > 0) {
+                            waterLines.lineBetween(st.x, segY, st.x, segY + segLen);
+                        }
+                    }
+                });
+            }
+        });
+
+        // 4. Waterfall Base Splash Foam & Froth Bubbles (Efek Buih & Gelembung Busa Air Alami)
+        for (let b = 0; b < 28; b++) {
+            const bx = 360 + Math.random() * 90;
+            const by = 335 + Math.random() * 55;
+            const rad = 1.8 + Math.random() * 3.2;
+            const colorChoices = [0xffffff, 0xf0fdf4, 0xccfbf1, 0x99f6e4, 0x5eead4];
+            const col = colorChoices[Math.floor(Math.random() * colorChoices.length)];
+            const bubble = this.add.circle(bx, by, rad, col, 0.8).setDepth(2);
 
             this.tweens.add({
-                targets: mistDot,
-                y: 180 + Math.random() * 140,
-                x: mistX + (Math.random() * 30 - 15),
-                alpha: 0,
-                scale: 1.6,
-                duration: 2200 + Math.random() * 1600,
+                targets: bubble,
+                y: by + (Math.random() * 14 - 10),
+                x: bx + (Math.random() * 26 - 13),
+                scaleX: { from: 0.5, to: 1.4 },
+                scaleY: { from: 0.5, to: 1.4 },
+                alpha: { from: 0.85, to: 0 },
+                duration: 900 + Math.random() * 1200,
                 repeat: -1,
-                delay: Math.random() * 2000
+                delay: Math.random() * 1800,
+                ease: 'Sine.easeOut'
             });
         }
 
-        // 8. Raging Bottom River Torrent Pit (Hazard under platforms)
-        const riverG = this.add.graphics().setDepth(2);
-        riverG.fillStyle(0x0369a1, 0.95);
-        riverG.fillRect(0, 422, 800, 28);
-        riverG.fillStyle(0x38bdf8, 0.7);
-        riverG.fillRect(0, 424, 800, 6);
-        riverG.fillStyle(0xffffff, 0.8);
-        for (let x = 10; x < 800; x += 45) {
-            riverG.fillEllipse(x, 428, 26, 4);
+        // 5. Water Splash Droplets (Cipratan Air Mikro di Titik Benturan)
+        for (let s = 0; s < 12; s++) {
+            const sx = 380 + Math.random() * 50;
+            const sy = 338 + Math.random() * 15;
+            const drop = this.add.circle(sx, sy, 1.5 + Math.random() * 1.5, 0xffffff, 0.9).setDepth(2);
+
+            this.tweens.add({
+                targets: drop,
+                y: sy - (15 + Math.random() * 20),
+                x: sx + (Math.random() * 24 - 12),
+                alpha: { from: 0.9, to: 0 },
+                scale: { from: 1.2, to: 0.4 },
+                duration: 500 + Math.random() * 500,
+                repeat: -1,
+                delay: Math.random() * 1200,
+                ease: 'Cubic.easeOut'
+            });
         }
 
-        // Rapid water foam scrolling animation
-        this.tweens.add({
-            targets: riverG,
-            x: -25,
-            duration: 400,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Linear'
-        });
+        // 6. Floating Mystical Cyan Spores & Light Particles (Spora Cahaya Gaib Melayang)
+        for (let i = 0; i < 20; i++) {
+            const px = 330 + Math.random() * 160;
+            const py = 310 + Math.random() * 70;
+            const rad = 1.5 + Math.random() * 2.5;
+            const col = Math.random() > 0.4 ? 0x5eead4 : 0x86efac;
+            const spore = this.add.circle(px, py, rad, col, 0.3 + Math.random() * 0.5).setDepth(2);
+
+            this.tweens.add({
+                targets: spore,
+                y: py - (80 + Math.random() * 120),
+                x: px + (Math.random() * 40 - 20),
+                alpha: { from: 0.7, to: 0 },
+                scale: { from: 0.8, to: 1.5 },
+                duration: 2400 + Math.random() * 1800,
+                repeat: -1,
+                delay: Math.random() * 2500,
+                ease: 'Sine.easeOut'
+            });
+        }
+
     }
 
     respawnPlayer() {
-        this.checkpointX = 75;
-        this.checkpointY = 355;
+        this.checkpointX = 65;
+        this.checkpointY = 330;
         this.reachedMidCheckpoint = false;
         if (this.player) {
-            this.player.setPosition(75, 355);
+            this.player.setPosition(65, 330);
             this.player.setVelocity(0, 0);
             this.player.clearTint();
         }
     }
 
     update() {
-        // Update checkpoint when landing safely on mid island (Platform 3)
+        // Update checkpoint when landing safely on mid island (Platform 3 at y = 360)
         if (this.player && this.player.body && this.player.body.touching.down) {
-            if (this.player.x > 340 && this.player.x < 460) {
+            if (this.player.x > 340 && this.player.x < 460 && this.player.y < 370) {
                 if (!this.reachedMidCheckpoint) {
                     this.reachedMidCheckpoint = true;
                     this.checkpointX = 400;
-                    this.checkpointY = 265;
+                    this.checkpointY = 325;
                     this.showToastNotice('🚩 Titik aman pulau air terjun tercapai!');
                 }
             }

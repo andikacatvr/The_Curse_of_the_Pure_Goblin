@@ -263,24 +263,51 @@ export class TitleScene extends Phaser.Scene {
         const bgmLabel = this.add.text(-240, -135, '🎵 Musik Latar (BGM):', {
             fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
         });
-        const bgmBtn = this.add.rectangle(150, -126, 130, 26, GameAudio.bgmEnabled ? 0x16a34a : 0xdc2626, 0.9)
+        const bgmBtn = this.add.rectangle(45, -126, 75, 26, GameAudio.bgmEnabled ? 0x16a34a : 0xdc2626, 0.9)
             .setStrokeStyle(1.5, 0xffffff)
             .setInteractive({ useHandCursor: true });
-        const bgmText = this.add.text(150, -126, GameAudio.bgmEnabled ? 'AKTIF [ON]' : 'MATI [OFF]', {
-            fontSize: '12px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
+        const bgmText = this.add.text(45, -126, GameAudio.bgmEnabled ? 'ON' : 'OFF', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
         }).setOrigin(0.5);
+
+        const bgmMinusBtn = this.add.rectangle(105, -126, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const bgmMinusText = this.add.text(105, -126, '➖', { fontSize: '10px' }).setOrigin(0.5);
+
+        const bgmVolText = this.add.text(152, -126, `${Math.round(GameAudio.bgmVolume * 100)}%`, {
+            fontSize: '12px', fontStyle: 'bold', fill: '#38bdf8', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        const bgmPlusBtn = this.add.rectangle(200, -126, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const bgmPlusText = this.add.text(200, -126, '➕', { fontSize: '10px' }).setOrigin(0.5);
+
+        bgmMinusBtn.on('pointerdown', () => {
+            GameAudio.setBGMVolume(GameAudio.bgmVolume - 0.1);
+            bgmVolText.setText(`${Math.round(GameAudio.bgmVolume * 100)}%`);
+            GameAudio.playClick();
+        });
+
+        bgmPlusBtn.on('pointerdown', () => {
+            GameAudio.setBGMVolume(GameAudio.bgmVolume + 0.1);
+            bgmVolText.setText(`${Math.round(GameAudio.bgmVolume * 100)}%`);
+            GameAudio.playClick();
+        });
 
         bgmBtn.on('pointerdown', () => {
             GameAudio.bgmEnabled = !GameAudio.bgmEnabled;
             if (GameAudio.bgmEnabled) {
                 GameAudio.startAmbientBGM();
                 bgmBtn.setFillStyle(0x16a34a, 0.9);
-                bgmText.setText('AKTIF [ON]');
+                bgmText.setText('ON');
             } else {
                 GameAudio.stopAmbientBGM();
                 bgmBtn.setFillStyle(0xdc2626, 0.9);
-                bgmText.setText('MATI [OFF]');
+                bgmText.setText('OFF');
             }
+            GameAudio.updateGainValues();
             GameAudio.playClick();
         });
 
@@ -288,23 +315,50 @@ export class TitleScene extends Phaser.Scene {
         const sfxLabel = this.add.text(-240, -97, '🔊 Efek Suara (SFX):', {
             fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
         });
-        const sfxBtn = this.add.rectangle(150, -88, 130, 26, GameAudio.sfxEnabled ? 0x16a34a : 0xdc2626, 0.9)
+        const sfxBtn = this.add.rectangle(45, -88, 75, 26, GameAudio.sfxEnabled ? 0x16a34a : 0xdc2626, 0.9)
             .setStrokeStyle(1.5, 0xffffff)
             .setInteractive({ useHandCursor: true });
-        const sfxText = this.add.text(150, -88, GameAudio.sfxEnabled ? 'AKTIF [ON]' : 'MATI [OFF]', {
-            fontSize: '12px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
+        const sfxText = this.add.text(45, -88, GameAudio.sfxEnabled ? 'ON' : 'OFF', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
         }).setOrigin(0.5);
+
+        const sfxMinusBtn = this.add.rectangle(105, -88, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const sfxMinusText = this.add.text(105, -88, '➖', { fontSize: '10px' }).setOrigin(0.5);
+
+        const sfxVolText = this.add.text(152, -88, `${Math.round(GameAudio.sfxVolume * 100)}%`, {
+            fontSize: '12px', fontStyle: 'bold', fill: '#4ade80', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        const sfxPlusBtn = this.add.rectangle(200, -88, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const sfxPlusText = this.add.text(200, -88, '➕', { fontSize: '10px' }).setOrigin(0.5);
+
+        sfxMinusBtn.on('pointerdown', () => {
+            GameAudio.setSFXVolume(GameAudio.sfxVolume - 0.1);
+            sfxVolText.setText(`${Math.round(GameAudio.sfxVolume * 100)}%`);
+            GameAudio.playClick();
+        });
+
+        sfxPlusBtn.on('pointerdown', () => {
+            GameAudio.setSFXVolume(GameAudio.sfxVolume + 0.1);
+            sfxVolText.setText(`${Math.round(GameAudio.sfxVolume * 100)}%`);
+            GameAudio.playClick();
+        });
 
         sfxBtn.on('pointerdown', () => {
             GameAudio.sfxEnabled = !GameAudio.sfxEnabled;
             if (GameAudio.sfxEnabled) {
                 sfxBtn.setFillStyle(0x16a34a, 0.9);
-                sfxText.setText('AKTIF [ON]');
+                sfxText.setText('ON');
                 GameAudio.playClick();
             } else {
                 sfxBtn.setFillStyle(0xdc2626, 0.9);
-                sfxText.setText('MATI [OFF]');
+                sfxText.setText('OFF');
             }
+            GameAudio.updateGainValues();
         });
 
         // 3. Ukuran Layar / Resolusi
@@ -318,41 +372,37 @@ export class TitleScene extends Phaser.Scene {
             fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
         }).setOrigin(0.5);
 
-        resBtn.on('pointerover', () => resBtn.setFillStyle(0x2563eb, 1));
-        resBtn.on('pointerout', () => resBtn.setFillStyle(0x1e3a8a, 0.95));
         resBtn.on('pointerdown', () => {
-            const nextRes = DisplayManager.cycleNext();
-            resText.setText(nextRes.label);
+            DisplayManager.cycleMode(this.scale);
+            resText.setText(DisplayManager.current.label);
             GameAudio.playClick();
         });
 
-        // Fullscreen Icon Button
-        const fsBtn = this.add.rectangle(225, -50, 32, 26, 0x334155, 0.9)
-            .setStrokeStyle(1.5, 0x94a3b8)
+        // Fullscreen Icon Button (Square)
+        const fsBtn = this.add.rectangle(220, -50, 26, 26, 0x0f172a, 0.95)
+            .setStrokeStyle(1.5, 0x38bdf8)
             .setInteractive({ useHandCursor: true });
-        const fsIcon = this.add.text(225, -50, '⛶', {
-            fontSize: '13px', fill: '#ffffff'
+        const fsIcon = this.add.text(220, -50, '⛶', {
+            fontSize: '14px', fill: '#38bdf8'
         }).setOrigin(0.5);
 
-        fsBtn.on('pointerover', () => fsBtn.setFillStyle(0x475569, 1));
-        fsBtn.on('pointerout', () => fsBtn.setFillStyle(0x334155, 0.9));
         fsBtn.on('pointerdown', () => {
-            DisplayManager.toggleFullscreen(this);
+            DisplayManager.toggleFullscreen(this.scale);
             GameAudio.playClick();
         });
 
         const isMobile = isMobileDevice();
-        let partY = isMobile ? 17 : 10;
-        let dividerY = isMobile ? 52 : 42;
-        let ctrlTitleY = isMobile ? 65 : 56;
-        let ctrlListY = isMobile ? 80 : 72;
-        let closeY = isMobile ? 172 : 145;
-        let modalHeight = isMobile ? 420 : 360;
+        const modalHeight = isMobile ? 415 : 390;
+        const dividerY = isMobile ? 7 : -21;
+        const ctrlTitleY = isMobile ? 20 : -7;
+        const ctrlListY = isMobile ? 35 : 8;
+        const partY = isMobile ? 138 : 125;
+        const closeY = isMobile ? 180 : 165;
 
         const elements = [
             modalBg, headerBg, title,
-            bgmLabel, bgmBtn, bgmText,
-            sfxLabel, sfxBtn, sfxText,
+            bgmLabel, bgmBtn, bgmText, bgmMinusBtn, bgmMinusText, bgmVolText, bgmPlusBtn, bgmPlusText,
+            sfxLabel, sfxBtn, sfxText, sfxMinusBtn, sfxMinusText, sfxVolText, sfxPlusBtn, sfxPlusText,
             resLabel, resBtn, resText, fsBtn, fsIcon
         ];
 

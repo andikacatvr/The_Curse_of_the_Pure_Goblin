@@ -14,6 +14,21 @@ import { DisplayManager } from '../utils/DisplayManager.js';
 
 export class BaseScene extends Phaser.Scene {
     createVisualInventoryUI() {
+        // Inisialisasi dan jalankan chill ambient backsound
+        GameAudio.init();
+        if (GameAudio.bgmEnabled && !GameAudio.bgmPlaying) {
+            GameAudio.startAmbientBGM();
+        }
+        if (!this._audioPointerListenerAttached) {
+            this._audioPointerListenerAttached = true;
+            this.input.on('pointerdown', () => {
+                GameAudio.resume();
+                if (GameAudio.bgmEnabled && !GameAudio.bgmPlaying) {
+                    GameAudio.startAmbientBGM();
+                }
+            });
+        }
+
         // Hamburger Menu Button (Top Right HUD - Clean, compact & modern)
         this.menuBtnContainer = this.add.container(765, 26).setDepth(25);
 
@@ -848,24 +863,51 @@ export class BaseScene extends Phaser.Scene {
         const bgmLabel = this.add.text(-240, bgmY, '🎵 Musik Latar (BGM):', {
             fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
         });
-        const bgmBtn = this.add.rectangle(160, bgmY + 8, 130, 26, GameAudio.bgmEnabled ? 0x16a34a : 0xdc2626, 0.9)
+        const bgmBtn = this.add.rectangle(45, bgmY + 8, 75, 26, GameAudio.bgmEnabled ? 0x16a34a : 0xdc2626, 0.9)
             .setStrokeStyle(1.5, 0xffffff)
             .setInteractive({ useHandCursor: true });
-        const bgmText = this.add.text(160, bgmY + 8, GameAudio.bgmEnabled ? 'AKTIF [ON]' : 'MATI [OFF]', {
-            fontSize: '12px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
+        const bgmText = this.add.text(45, bgmY + 8, GameAudio.bgmEnabled ? 'ON' : 'OFF', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
         }).setOrigin(0.5);
+
+        const bgmMinusBtn = this.add.rectangle(105, bgmY + 8, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const bgmMinusText = this.add.text(105, bgmY + 8, '➖', { fontSize: '10px' }).setOrigin(0.5);
+
+        const bgmVolText = this.add.text(152, bgmY + 8, `${Math.round(GameAudio.bgmVolume * 100)}%`, {
+            fontSize: '12px', fontStyle: 'bold', fill: '#38bdf8', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        const bgmPlusBtn = this.add.rectangle(200, bgmY + 8, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const bgmPlusText = this.add.text(200, bgmY + 8, '➕', { fontSize: '10px' }).setOrigin(0.5);
+
+        bgmMinusBtn.on('pointerdown', () => {
+            GameAudio.setBGMVolume(GameAudio.bgmVolume - 0.1);
+            bgmVolText.setText(`${Math.round(GameAudio.bgmVolume * 100)}%`);
+            GameAudio.playClick();
+        });
+
+        bgmPlusBtn.on('pointerdown', () => {
+            GameAudio.setBGMVolume(GameAudio.bgmVolume + 0.1);
+            bgmVolText.setText(`${Math.round(GameAudio.bgmVolume * 100)}%`);
+            GameAudio.playClick();
+        });
 
         bgmBtn.on('pointerdown', () => {
             GameAudio.bgmEnabled = !GameAudio.bgmEnabled;
             if (GameAudio.bgmEnabled) {
                 GameAudio.startAmbientBGM();
                 bgmBtn.setFillStyle(0x16a34a, 0.9);
-                bgmText.setText('AKTIF [ON]');
+                bgmText.setText('ON');
             } else {
                 GameAudio.stopAmbientBGM();
                 bgmBtn.setFillStyle(0xdc2626, 0.9);
-                bgmText.setText('MATI [OFF]');
+                bgmText.setText('OFF');
             }
+            GameAudio.updateGainValues();
             GameAudio.playClick();
         });
 
@@ -873,23 +915,50 @@ export class BaseScene extends Phaser.Scene {
         const sfxLabel = this.add.text(-240, sfxY, '🔊 Efek Suara (SFX):', {
             fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
         });
-        const sfxBtn = this.add.rectangle(160, sfxY + 8, 130, 26, GameAudio.sfxEnabled ? 0x16a34a : 0xdc2626, 0.9)
+        const sfxBtn = this.add.rectangle(45, sfxY + 8, 75, 26, GameAudio.sfxEnabled ? 0x16a34a : 0xdc2626, 0.9)
             .setStrokeStyle(1.5, 0xffffff)
             .setInteractive({ useHandCursor: true });
-        const sfxText = this.add.text(160, sfxY + 8, GameAudio.sfxEnabled ? 'AKTIF [ON]' : 'MATI [OFF]', {
-            fontSize: '12px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
+        const sfxText = this.add.text(45, sfxY + 8, GameAudio.sfxEnabled ? 'ON' : 'OFF', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
         }).setOrigin(0.5);
+
+        const sfxMinusBtn = this.add.rectangle(105, sfxY + 8, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const sfxMinusText = this.add.text(105, sfxY + 8, '➖', { fontSize: '10px' }).setOrigin(0.5);
+
+        const sfxVolText = this.add.text(152, sfxY + 8, `${Math.round(GameAudio.sfxVolume * 100)}%`, {
+            fontSize: '12px', fontStyle: 'bold', fill: '#4ade80', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        const sfxPlusBtn = this.add.rectangle(200, sfxY + 8, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const sfxPlusText = this.add.text(200, sfxY + 8, '➕', { fontSize: '10px' }).setOrigin(0.5);
+
+        sfxMinusBtn.on('pointerdown', () => {
+            GameAudio.setSFXVolume(GameAudio.sfxVolume - 0.1);
+            sfxVolText.setText(`${Math.round(GameAudio.sfxVolume * 100)}%`);
+            GameAudio.playClick();
+        });
+
+        sfxPlusBtn.on('pointerdown', () => {
+            GameAudio.setSFXVolume(GameAudio.sfxVolume + 0.1);
+            sfxVolText.setText(`${Math.round(GameAudio.sfxVolume * 100)}%`);
+            GameAudio.playClick();
+        });
 
         sfxBtn.on('pointerdown', () => {
             GameAudio.sfxEnabled = !GameAudio.sfxEnabled;
             if (GameAudio.sfxEnabled) {
                 sfxBtn.setFillStyle(0x16a34a, 0.9);
-                sfxText.setText('AKTIF [ON]');
+                sfxText.setText('ON');
                 GameAudio.playClick();
             } else {
                 sfxBtn.setFillStyle(0xdc2626, 0.9);
-                sfxText.setText('MATI [OFF]');
+                sfxText.setText('OFF');
             }
+            GameAudio.updateGainValues();
         });
 
         // 3. Ukuran Layar / Resolusi
@@ -928,8 +997,8 @@ export class BaseScene extends Phaser.Scene {
 
         const settingsElements = [
             modalBg, headerBg, title,
-            bgmLabel, bgmBtn, bgmText,
-            sfxLabel, sfxBtn, sfxText,
+            bgmLabel, bgmBtn, bgmText, bgmMinusBtn, bgmMinusText, bgmVolText, bgmPlusBtn, bgmPlusText,
+            sfxLabel, sfxBtn, sfxText, sfxMinusBtn, sfxMinusText, sfxVolText, sfxPlusBtn, sfxPlusText,
             resLabel, resBtn, resText, fsBtn, fsIcon
         ];
 
@@ -1498,6 +1567,7 @@ export class BaseScene extends Phaser.Scene {
         this.currentDialogueIndex = 0;
         this.onDialogueComplete = onCompleteCallback;
         this._prevSpeaker = null;
+        GameAudio.playDialogue();
         if (this.player && this.player.body) this.player.setVelocityX(0);
         this.updateMobileControlsVisibility();
 
@@ -1629,6 +1699,7 @@ export class BaseScene extends Phaser.Scene {
 
         this.currentDialogueIndex++;
         if (this.currentDialogueIndex < this.activeDialogueList.length) {
+            GameAudio.playDialogue();
             this.displayCurrentDialogue();
         } else {
             this.endDialogue();
@@ -1819,6 +1890,11 @@ export class BaseScene extends Phaser.Scene {
 
         const onGround = this.player.body.touching.down || this.player.body.blocked.down;
 
+        if (this._playerWasInAir && onGround) {
+            GameAudio.playLand();
+        }
+        this._playerWasInAir = !onGround;
+
         if (left) {
             this.player.setVelocityX(-200);
             this.player.setFlipX(true);
@@ -1831,6 +1907,7 @@ export class BaseScene extends Phaser.Scene {
 
         if (jump && onGround) {
             this.player.setVelocityY(-450);
+            GameAudio.playJump();
         }
 
         // Animasi karakter Aksel Manusia
@@ -1853,6 +1930,7 @@ export class BaseScene extends Phaser.Scene {
         const leftThreshold = canExitLeft ? 30 : leftLimit;
         if (this.player.x <= leftThreshold) {
             if (canExitLeft && onExitLeft) {
+                GameAudio.playTransition();
                 onExitLeft();
                 return;
             } else {
@@ -1868,6 +1946,7 @@ export class BaseScene extends Phaser.Scene {
         const rightThreshold = canExitRight ? 765 : rightLimit;
         if (this.player.x >= rightThreshold) {
             if (canExitRight && onExitRight) {
+                GameAudio.playTransition();
                 onExitRight();
                 return;
             } else {
