@@ -405,13 +405,11 @@ export class BaseScene extends Phaser.Scene {
         // Cinema Matte Black Pillarbox Bars (Hanya menutup sisi kiri dan kanan agar panggung simetris di tengah)
         this.cinemaBarsContainer = this.add.container(0, 0).setDepth(20);
         // Left pillarbox (kiri dari x=0 ke luar)
-        const barLeft = this.add.rectangle(-300, 225, 600, 1200, 0x000000, 1);
+        const barLeft = this.add.rectangle(-300, 300, 600, 1400, 0x000000, 1);
         // Right pillarbox (kanan dari x=800 ke luar)
-        const barRight = this.add.rectangle(1100, 225, 600, 1200, 0x000000, 1);
-        // Top letterbox (atas dari y=0 ke luar atas langit)
-        const barTop = this.add.rectangle(400, -250, 1600, 500, 0x000000, 1);
+        const barRight = this.add.rectangle(1100, 300, 600, 1400, 0x000000, 1);
 
-        this.cinemaBarsContainer.add([barLeft, barRight, barTop]);
+        this.cinemaBarsContainer.add([barLeft, barRight]);
 
         // Lapisan tanah bawah alami (Earth extension) agar tanah dan rumput mengalir alami ke bawah tanpa terpotong hitam
         this.earthExtension = this.add.rectangle(400, 650, 800, 400, 0x54361e, 1).setDepth(0);
@@ -576,10 +574,11 @@ export class BaseScene extends Phaser.Scene {
                     cam.stopFollow();
                     cam._isFollowing = false;
                 }
+                const targetScrollY = 225 / clamped - 225;
                 if (smooth) {
-                    cam.pan(400, 225, 200, 'Sine.easeOut');
+                    cam.pan(400, 225 + targetScrollY, 200, 'Sine.easeOut');
                 } else {
-                    cam.setScroll(0, 0);
+                    cam.setScroll(0, targetScrollY);
                 }
             }
         }
@@ -625,6 +624,7 @@ export class BaseScene extends Phaser.Scene {
         const Z = cam.zoom || 1;
         const hw = cam.width / 2;
         const hh = cam.height / 2;
+        const invZ = 1 / Z;
 
         if (this._registeredUI) {
             for (let i = 0; i < this._registeredUI.length; i++) {
@@ -632,17 +632,9 @@ export class BaseScene extends Phaser.Scene {
                 const el = item.element;
                 if (!el || !el.active) continue;
 
-                if (Z < 0.99) {
-                    // Mode sinematik panorama (< 1.0x): UI tetap rapi di posisi aslinya di panggung game
-                    el.x = item.screenX;
-                    el.y = item.screenY;
-                    el.setScale(item.baseScale);
-                } else {
-                    const invZ = 1 / Z;
-                    el.x = (item.screenX - hw) * invZ + cam.scrollX + hw;
-                    el.y = (item.screenY - hh) * invZ + cam.scrollY + hh;
-                    el.setScale(item.baseScale * invZ);
-                }
+                el.x = (item.screenX - hw) * invZ + cam.scrollX + hw;
+                el.y = (item.screenY - hh) * invZ + cam.scrollY + hh;
+                el.setScale(item.baseScale * invZ);
             }
         }
     }
@@ -2359,7 +2351,11 @@ export class BaseScene extends Phaser.Scene {
                     cam.stopFollow();
                     cam._isFollowing = false;
                 }
-                cam.setScroll(0, 0);
+                const isPanning = cam.panEffect && cam.panEffect.isRunning;
+                if (!isPanning) {
+                    const targetScrollY = 225 / Z - 225;
+                    cam.setScroll(0, targetScrollY);
+                }
             }
         }
 
