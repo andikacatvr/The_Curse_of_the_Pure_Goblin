@@ -169,6 +169,9 @@ export class WaterfallGorgeScene extends BaseScene {
         this.createVisualInventoryUI();
         this.createQuestUI();
 
+        this.input.keyboard.on('keydown-E', () => this.handleActionKey());
+        this.input.keyboard.on('keydown-ENTER', () => this.handleActionKey());
+
         // Fall hazard failsafe: bila terjatuh dari tebing ke sungai di bawah
         this.onPlayerFallHazard = () => {
             if (this.isRespawning) return;
@@ -177,6 +180,16 @@ export class WaterfallGorgeScene extends BaseScene {
                 this.player.setPosition(this.checkpointX, this.checkpointY || 330);
             }
         };
+    }
+
+    handleActionKey() {
+        if (this.isTalking) {
+            this.nextDialogue();
+            return;
+        }
+        if (this.nearTarget && this.nearTarget.dialogue) {
+            this.startDialogue(this.nearTarget.dialogue);
+        }
     }
 
     createWaterfallGorgeAtmosphere() {

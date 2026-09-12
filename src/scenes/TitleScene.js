@@ -465,12 +465,12 @@ export class TitleScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const ctrlListStr = isMobile
-            ? '▶ [A] / [D] / [◀] [▶] : Bergerak ke Kiri / Kanan\n' +
-              '▶ [W] / [SPASI] / [▲] : Melompat\n' +
-              '▶ [E] / [⚡ AKSI]     : Berinteraksi / Ambil Barang / Dialog\n' +
-              '▶ [I] / [Icon Tas]    : Buka / Tutup Tas Inventory\n' +
-              '▶ [Q] / [Quest Bar]   : Buka Catatan Misi / Quest\n' +
-              '▶ [📱 Icon HP]        : Tombol Sentuh On-Screen Pengguna Ponsel'
+            ? '▶ [◀] [▶]             : Bergerak ke Kiri / Kanan\n' +
+              '▶ [▲]                 : Melompat\n' +
+              '▶ [Sentuh Karakter]   : Langsung Ketuk Karakter / Item untuk Bicara\n' +
+              '▶ [Icon Tas]          : Buka / Tutup Tas Inventory\n' +
+              '▶ [Quest Bar]         : Buka Catatan Misi / Quest\n' +
+              '▶ [📱 Icon HP]        : Pengaturan Tombol Layar Ponsel'
             : '▶ [A] / [D]        : Bergerak ke Kiri / Kanan\n' +
               '▶ [W] / [SPASI]    : Melompat\n' +
               '▶ [E]              : Berinteraksi dengan Karakter / Ambil Barang\n' +

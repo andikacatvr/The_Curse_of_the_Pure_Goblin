@@ -529,18 +529,20 @@ export class BaseScene extends Phaser.Scene {
         // ==========================================
         // ACTION & JUMP BUTTONS (Bottom Right HUD)
         // ==========================================
-        // 3. Tombol Aksi / Interaksi [E] (Action)
-        this.actionBtnContainer = this.add.container(660, 390);
+        // 3. Tombol Aksi / Interaksi (Action) - Disembunyikan pada mobile mode karena sistem Tap-to-Interact aktif
+        this.actionBtnContainer = this.add.container(650, 390);
         this.actionBg = this.add.rectangle(0, 0, 58, 58, 0x1e1b4b, 0.85)
             .setStrokeStyle(2, 0xf59e0b)
             .setInteractive(new Phaser.Geom.Rectangle(-10, -10, 78, 78), Phaser.Geom.Rectangle.Contains);
         this.actionIcon = this.add.text(0, -7, '⚡', {
             fontSize: '18px', fill: '#fde047'
         }).setOrigin(0.5);
-        this.actionText = this.add.text(0, 13, 'AKSI [E]', {
+        this.actionText = this.add.text(0, 13, 'AKSI', {
             fontSize: '9px', fontStyle: 'bold', fill: '#fbbf24', fontFamily: FONT_BODY
         }).setOrigin(0.5);
         this.actionBtnContainer.add([this.actionBg, this.actionIcon, this.actionText]);
+        // Default disembunyikan agar kontrol HP super bersih dan pemain cukup sentuh karakter langsung
+        this.actionBtnContainer.setVisible(false);
 
         this.actionBg.on('pointerdown', () => {
             GameAudio.playClick();
@@ -558,13 +560,13 @@ export class BaseScene extends Phaser.Scene {
             }
         });
 
-        // 4. Tombol Lompat [W / SPASI] (Jump)
-        this.jumpBtnContainer = this.add.container(738, 390);
-        const jumpBg = this.add.rectangle(0, 0, 58, 58, 0x064e3b, 0.85)
+        // 4. Tombol Lompat [W / SPASI] (Jump) - Diletakkan secara ergonomis di kanan bawah
+        this.jumpBtnContainer = this.add.container(730, 390);
+        const jumpBg = this.add.rectangle(0, 0, 60, 60, 0x064e3b, 0.88)
             .setStrokeStyle(2.5, 0x10b981)
-            .setInteractive(new Phaser.Geom.Rectangle(-10, -10, 78, 78), Phaser.Geom.Rectangle.Contains);
+            .setInteractive(new Phaser.Geom.Rectangle(-10, -10, 80, 80), Phaser.Geom.Rectangle.Contains);
         const jumpIcon = this.add.text(0, -7, '▲', {
-            fontSize: '18px', fontStyle: 'bold', fill: '#6ee7b7', fontFamily: FONT_BODY
+            fontSize: '20px', fontStyle: 'bold', fill: '#6ee7b7', fontFamily: FONT_BODY
         }).setOrigin(0.5);
         const jumpText = this.add.text(0, 13, 'LOMPAT', {
             fontSize: '9px', fontStyle: 'bold', fill: '#a7f3d0', fontFamily: FONT_BODY
@@ -583,7 +585,7 @@ export class BaseScene extends Phaser.Scene {
         });
         const releaseJump = () => {
             this.touchState.jump = false;
-            jumpBg.setFillStyle(0x064e3b, 0.85);
+            jumpBg.setFillStyle(0x064e3b, 0.88);
             jumpBg.setStrokeStyle(2.5, 0x10b981);
             this.tweens.add({ targets: this.jumpBtnContainer, scaleX: 1, scaleY: 1, duration: 70 });
         };
@@ -610,18 +612,160 @@ export class BaseScene extends Phaser.Scene {
         this.updateMobileControlsVisibility();
     }
 
+    /**
+     * Tampilkan tombol Serang khusus combat (misal saat melawan monster di WitchYardScene)
+     */
+    showMobileCombatButton(onAttackCallback) {
+        if (!isMobileDevice() || !this.mobileControlsContainer) return;
+        if (!this.combatBtnContainer) {
+            this.combatBtnContainer = this.add.container(650, 390);
+            const combatBg = this.add.rectangle(0, 0, 60, 60, 0x991b1b, 0.92)
+                .setStrokeStyle(2.5, 0xf87171)
+                .setInteractive(new Phaser.Geom.Rectangle(-10, -10, 80, 80), Phaser.Geom.Rectangle.Contains);
+            const combatIcon = this.add.text(0, -8, '⚔️', { fontSize: '20px' }).setOrigin(0.5);
+            const combatTxt = this.add.text(0, 13, 'SERANG', {
+                fontSize: '9px', fontStyle: 'bold', fill: '#fca5a5', fontFamily: FONT_BODY
+            }).setOrigin(0.5);
+            this.combatBtnContainer.add([combatBg, combatIcon, combatTxt]);
+
+            combatBg.on('pointerdown', () => {
+                GameAudio.playClick();
+                this.tweens.add({ targets: this.combatBtnContainer, scaleX: 0.9, scaleY: 0.9, duration: 60, yoyo: true });
+                if (this._onCombatAttack) this._onCombatAttack();
+            });
+
+            this.mobileControlsContainer.add(this.combatBtnContainer);
+        }
+
+        this._onCombatAttack = onAttackCallback;
+        this.combatBtnContainer.setVisible(true);
+    }
+
+    /**
+     * Sembunyikan tombol serang jika musuh telah kalah
+     */
+    hideMobileCombatButton() {
+        if (this.combatBtnContainer) {
+            this.combatBtnContainer.setVisible(false);
+        }
+    }
+
+    formatPromptText(text) {
+        if (!text) return '';
+        if (isMobileDevice()) {
+            let clean = text;
+            clean = clean.replace(/Tekan \[E\] /gi, '💬 Ketuk ');
+            clean = clean.replace(/Tekan \[F\] \/ \[SPACE\] /gi, '⚔️ Ketuk ');
+            clean = clean.replace(/Tekan \[F\] /gi, '⚔️ Ketuk ');
+            clean = clean.replace(/\[E\]/gi, '');
+            clean = clean.replace(/\[F\]/gi, '');
+            clean = clean.replace(/\[SPACE\]/gi, '');
+            clean = clean.replace(/\s+/g, ' ').trim();
+            return clean;
+        }
+        return text;
+    }
+
+    initInteractivePrompt() {
+        if (!this.promptText || this.promptText._interactiveReady) return;
+        this.promptText._interactiveReady = true;
+
+        if (isMobileDevice()) {
+            this.promptText.setFontSize('12px');
+            this.promptText.setPadding(10, 6);
+            this.promptText.setBackgroundColor('#0a0f1dee');
+            this.promptText.setColor('#fde047');
+            this.promptText.setDepth(26);
+        }
+
+        this.promptText.setInteractive({ useHandCursor: true });
+        this.promptText.on('pointerdown', (pointer, localX, localY, event) => {
+            if (event && event.stopPropagation) event.stopPropagation();
+            if (this.isTalking) {
+                this.nextDialogue();
+            } else if (this.handleActionKey) {
+                this.handleActionKey();
+            }
+        });
+
+        const origSetText = this.promptText.setText.bind(this.promptText);
+        this.promptText.setText = (val) => {
+            const formatted = this.formatPromptText(val);
+            return origSetText(formatted);
+        };
+    }
+
+    setupTapToInteract() {
+        if (this._tapToInteractReady) return;
+        this._tapToInteractReady = true;
+
+        this.input.on('pointerdown', (pointer) => {
+            if (this.isTalking) {
+                this.nextDialogue();
+                return;
+            }
+            if (this.isSettingsOpen || this.isInvOpen || this.isQuestModalOpen) return;
+
+            // Jangan picu interaksi jika sedang menyentuh tombol D-Pad/HUD
+            if (isMobileDevice() && this.isPointerOverMobileHUD(pointer)) {
+                return;
+            }
+
+            // Jika sedang ada target interaktif di dekat karakter (nearTarget)
+            if (this.nearTarget) {
+                const targetX = this.nearTarget.x !== undefined ? this.nearTarget.x : (this.nearTarget.sprite ? this.nearTarget.sprite.x : 0);
+                const targetY = this.nearTarget.y !== undefined ? this.nearTarget.y : (this.nearTarget.sprite ? this.nearTarget.sprite.y : 0);
+
+                const distToTap = Phaser.Math.Distance.Between(pointer.worldX, pointer.worldY, targetX, targetY);
+                const playerDist = this.player ? Phaser.Math.Distance.Between(this.player.x, this.player.y, targetX, targetY) : 999;
+
+                // Pemain mengetuk langsung pada/dekat target (< 95px) ATAU mengetuk layar saat Aksel berada dalam jangkauan target
+                if (distToTap < 95 || playerDist < 75) {
+                    if (this.handleActionKey) {
+                        this.handleActionKey();
+                    }
+                }
+            }
+        });
+    }
+
+    isPointerOverMobileHUD(pointer) {
+        const px = pointer.x;
+        const py = pointer.y;
+        // Top HUD buttons: settings, bag, mobile toggle & health
+        if (py <= 60 && (px >= 640 || px <= 165)) return true;
+        // Bottom Left D-pad
+        if (py >= 330 && px <= 195) return true;
+        // Bottom Right Jump button / Combat button
+        if (py >= 330 && px >= 635) return true;
+        return false;
+    }
+
+    /**
+     * Fallback default handleActionKey bila scene anak belum mendefinisikannya
+     */
+    handleActionKey() {
+        if (this.isTalking) {
+            this.nextDialogue();
+            return;
+        }
+        if (this.nearTarget && this.nearTarget.dialogue) {
+            this.startDialogue(this.nearTarget.dialogue);
+        }
+    }
+
     updateMobileActionHighlight() {
-        if (!this.actionBg || !this.actionText || !this.actionIcon) return;
+        if (!this.actionBg || !this.actionText || !this.actionIcon || !this.actionBtnContainer || !this.actionBtnContainer.visible) return;
         if (this.nearTarget) {
             this.actionBg.setFillStyle(0xb45309, 0.95);
             this.actionBg.setStrokeStyle(3, 0xfde047);
             this.actionIcon.setText('✦').setFill('#fef08a');
-            this.actionText.setText('AKSI [E]').setFill('#ffffff');
+            this.actionText.setText('AKSI').setFill('#ffffff');
         } else {
             this.actionBg.setFillStyle(0x1e1b4b, 0.85);
             this.actionBg.setStrokeStyle(2, 0xf59e0b);
             this.actionIcon.setText('⚡').setFill('#fde047');
-            this.actionText.setText('AKSI [E]').setFill('#fbbf24');
+            this.actionText.setText('AKSI').setFill('#fbbf24');
         }
     }
 
@@ -1033,12 +1177,12 @@ export class BaseScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const ctrlListStr = isMobile
-            ? '▶ [A] / [D] / [◀] [▶] : Bergerak Kiri / Kanan\n' +
-              '▶ [W] / [SPASI] / [▲] : Melompat\n' +
-              '▶ [E] / [⚡ AKSI]     : Berinteraksi dengan Karakter / Objek\n' +
-              '▶ [1] / [I] / [Tas]   : Buka Daftar Lengkap Tas Inventory\n' +
-              '▶ [Q] / [Quest Bar]   : Buka / Tutup Catatan Misi / Quest\n' +
-              '▶ [📱 Icon HP]        : Tombol Sentuh On-Screen Pengguna HP'
+            ? '▶ [◀] [▶]             : Bergerak Kiri / Kanan\n' +
+              '▶ [▲]                 : Melompat\n' +
+              '▶ [Sentuh Karakter]   : Langsung Ketuk Karakter / Item untuk Bicara\n' +
+              '▶ [Tas]               : Buka Daftar Lengkap Tas Inventory\n' +
+              '▶ [Quest Bar]         : Buka / Tutup Catatan Misi / Quest\n' +
+              '▶ [📱 Icon HP]        : Pengaturan Tombol Layar Ponsel'
             : '▶ [A] / [D]        : Bergerak Kiri / Kanan\n' +
               '▶ [W] / [SPASI]    : Melompat\n' +
               '▶ [E]              : Berinteraksi dengan Karakter / Objek\n' +
@@ -1054,7 +1198,8 @@ export class BaseScene extends Phaser.Scene {
         const resumeBtn = this.add.rectangle(-130, actionY, 220, 36, 0x2563eb, 0.95)
             .setStrokeStyle(2, 0x93c5fd)
             .setInteractive({ useHandCursor: true });
-        const resumeText = this.add.text(-130, actionY, '▶ LANJUTKAN [ESC]', {
+        const resumeLabel = isMobile ? '▶ LANJUTKAN' : '▶ LANJUTKAN [ESC]';
+        const resumeText = this.add.text(-130, actionY, resumeLabel, {
             fontSize: '13px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
         }).setOrigin(0.5);
 
@@ -1506,7 +1651,8 @@ export class BaseScene extends Phaser.Scene {
             .setVisible(false)
             .setInteractive({ useHandCursor: true });
 
-        this.skipBtnText = this.add.text(720, nameTabY, '⏩ SKIP [S]', {
+        const skipLabel = isMobileDevice() ? '⏩ LEWATI' : '⏩ SKIP [S]';
+        this.skipBtnText = this.add.text(720, nameTabY, skipLabel, {
             fontSize: '10px', fontStyle: 'bold', fill: '#f5c842', fontFamily: FONT_BODY
         }).setOrigin(0.5).setDepth(23).setVisible(false);
 
@@ -1524,7 +1670,8 @@ export class BaseScene extends Phaser.Scene {
         });
 
         // ===== CONTINUE PROMPT =====
-        this.continuePrompt = this.add.text(400, boxY + boxH / 2 - 8, '▼  Sentuh Layar / E / SPASI', {
+        const continueLabel = isMobileDevice() ? '▼  Sentuh Layar untuk Lanjut' : '▼  Sentuh Layar / [E] / [SPASI]';
+        this.continuePrompt = this.add.text(400, boxY + boxH / 2 - 8, continueLabel, {
             fontSize: '10px', fontStyle: 'bold', fill: '#d4a017', fontFamily: FONT_BODY
         }).setOrigin(0.5, 1).setDepth(23).setVisible(false);
 
@@ -1843,6 +1990,14 @@ export class BaseScene extends Phaser.Scene {
         maxX = 780
     } = {}) {
         if (!this.player || !this.player.body) return;
+
+        // Inisialisasi prompt interaktif & tap-to-interact jika belum aktif
+        if (this.promptText && !this.promptText._interactiveReady) {
+            this.initInteractivePrompt();
+        }
+        if (!this._tapToInteractReady) {
+            this.setupTapToInteract();
+        }
 
         // Failsafe: bila karakter terdorong keluar atau jatuh dari platform, kembalikan posisi secara aman ke platform
         if (this.player.y > 435) {

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
-import { getInventory, getQuestState, setQuestState } from '../utils/gameState.js';
+import { getInventory, getQuestState, setQuestState, isMobileDevice } from '../utils/gameState.js';
 
 export class WitchYardScene extends BaseScene {
     constructor() {
@@ -141,7 +141,10 @@ export class WitchYardScene extends BaseScene {
                 fontSize: '12px', fontStyle: 'bold', fill: '#ef4444', backgroundColor: '#000000cc', padding: { x: 4, y: 2 }
             }).setOrigin(0.5).setDepth(15);
 
-            this.battleHint = this.add.text(400, 110, '⚔️ TEKAN [F] / [SPACE] DI DEKAT MONSTER UNTUK MENYERANG DENGAN PISAU!', {
+            const hintText = isMobileDevice()
+                ? '⚔️ DEKATI & KETUK MONSTER UNTUK MENEBAS DENGAN PISAU!'
+                : '⚔️ TEKAN [F] / [SPACE] DI DEKAT MONSTER UNTUK MENYERANG DENGAN PISAU!';
+            this.battleHint = this.add.text(400, 110, hintText, {
                 fontSize: '13px', fontStyle: 'bold', fill: '#f59e0b', backgroundColor: '#000000cc', padding: { x: 8, y: 4 }
             }).setOrigin(0.5).setDepth(15);
 
@@ -154,6 +157,47 @@ export class WitchYardScene extends BaseScene {
                     ]);
                 });
             }
+
+            // Tampilkan tombol serang khusus di HP saat melawan monster
+            if (isMobileDevice()) {
+                this.showMobileCombatButton(() => this.attackMonster());
+            }
+
+            // Jadikan monster interaktif agar pemain HP bisa langsung mengetuk monster untuk menebas
+            if (this.monster) {
+                this.monster.setInteractive({ useHandCursor: true });
+                this.monster.on('pointerdown', (pointer, localX, localY, event) => {
+                    if (event && event.stopPropagation) event.stopPropagation();
+                    if (this.isTalking) {
+                        this.nextDialogue();
+                        return;
+                    }
+                    const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.monster.x, this.monster.y);
+                    if (dist < 95) {
+                        this.attackMonster();
+                    } else {
+                        this.showToastNotice('Dekati monster untuk menyerang!');
+                    }
+                });
+            }
+        }
+
+        // Jadikan pintu pondok interaktif untuk sentuhan langsung
+        if (this.door) {
+            this.door.setInteractive({ useHandCursor: true });
+            this.door.on('pointerdown', (pointer, localX, localY, event) => {
+                if (event && event.stopPropagation) event.stopPropagation();
+                if (this.isTalking) {
+                    this.nextDialogue();
+                    return;
+                }
+                const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y);
+                if (dist < 85) {
+                    this.handleActionKey();
+                } else {
+                    this.showToastNotice('Dekati pintu untuk masuk!');
+                }
+            });
         }
 
         this.promptText = this.add.text(0, 0, '', {
@@ -185,6 +229,31 @@ export class WitchYardScene extends BaseScene {
 
         this.input.keyboard.on('keydown-I', () => { if (!this.isTalking) this.toggleInventoryModal(); });
         this.input.keyboard.on('keydown-Q', () => { if (!this.isTalking) this.toggleQuestModal(); });
+    }
+
+    handleActionKey() {
+        if (this.isTalking) {
+            this.nextDialogue();
+            return;
+        }
+
+        // Jika monster masih hidup dan dekat, aksi menebas monster
+        if (!this.isMonsterDefeated && this.monster && this.monster.active) {
+            const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.monster.x, this.monster.y);
+            if (dist < 90) {
+                this.attackMonster();
+                return;
+            }
+        }
+
+        // Jika dekat pintu pondok penyihir
+        if (this.door && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) < 85) {
+            if (this.canEnterCottage()) {
+                this.scene.start('WitchCottageScene', { from: 'WitchYardScene' });
+            } else {
+                this.showMapLockedNotice('Pintu terkunci rapat dari dalam! Selesaikan dulu pencarian 3 Bahan Magis.');
+            }
+        }
     }
 
     attackMonster() {
@@ -220,8 +289,13 @@ export class WitchYardScene extends BaseScene {
 
     onMonsterDefeated() {
         this.registry.set('monsterDefeated', true);
+        this.hideMobileCombatButton();
+
         if (this.battleHint) {
-            this.battleHint.setText('✨ MONSTER DIKALAHKAN! DEKATI PINTU RUMAH & TEKAN [E] UNTUK MENYELINAP!');
+            const defeatedText = isMobileDevice()
+                ? '✨ MONSTER DIKALAHKAN! DEKATI & KETUK PINTU RUMAH UNTUK MASUK!'
+                : '✨ MONSTER DIKALAHKAN! DEKATI PINTU RUMAH & TEKAN [E] UNTUK MENYELINAP!';
+            this.battleHint.setText(defeatedText);
             this.battleHint.setStyle({ fill: '#10b981' });
         }
 
@@ -237,7 +311,7 @@ export class WitchYardScene extends BaseScene {
         setQuestState(this.registry, {
             chapter: 'PROLOG',
             title: 'Menyelinap Mencuri Ramuan',
-            objective: 'Monster kalah! Dekati Pintu Rumah Penyihir & Tekan [E] Menyelinap.'
+            objective: isMobileDevice() ? 'Monster kalah! Dekati Pintu Rumah Penyihir & Ketuk untuk Masuk.' : 'Monster kalah! Dekati Pintu Rumah Penyihir & Tekan [E] Menyelinap.'
         });
         this.updateQuestHUD();
 
@@ -273,17 +347,23 @@ export class WitchYardScene extends BaseScene {
         if (this.canEnterCottage()) {
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.door.x, this.door.y) < 75) {
                 const prompt = (qState.chapter === 'PROLOG') ? 'Tekan [E] Menyelinap Masuk' : 'Tekan [E] Masuk & Serahkan 3 Bahan';
+                this.nearTarget = { type: 'door', x: this.door.x, y: this.door.y - 45 };
                 this.promptText.setPosition(this.door.x, this.door.y - 45).setText(prompt).setVisible(true);
             } else {
+                if (this.nearTarget && this.nearTarget.type === 'door') this.nearTarget = null;
                 this.promptText.setVisible(false);
             }
         } else if (this.monster && this.monster.active) {
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.monster.x, this.monster.y) < 90) {
-                this.promptText.setPosition(this.monster.x, this.monster.y - 50).setText('Tekan [F] / [SPACE] Tebas Pisau!').setVisible(true);
+                const prompt = isMobileDevice() ? '⚔️ Ketuk Monster untuk Menebas!' : 'Tekan [F] / [SPACE] Tebas Pisau!';
+                this.nearTarget = { type: 'monster', x: this.monster.x, y: this.monster.y - 50 };
+                this.promptText.setPosition(this.monster.x, this.monster.y - 50).setText(prompt).setVisible(true);
             } else {
+                if (this.nearTarget && this.nearTarget.type === 'monster') this.nearTarget = null;
                 this.promptText.setVisible(false);
             }
         } else {
+            this.nearTarget = null;
             this.promptText.setVisible(false);
         }
 
