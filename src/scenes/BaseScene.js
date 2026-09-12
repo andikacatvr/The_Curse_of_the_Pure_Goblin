@@ -42,6 +42,7 @@ export class BaseScene extends Phaser.Scene {
         const line3 = this.add.rectangle(0, 6, 18, 2.5, 0xf8fafc, 1);
 
         this.menuBtnContainer.add([menuBtnBg, line1, line2, line3]);
+        this.registerUIElement(this.menuBtnContainer, 765, 26);
 
         menuBtnBg.on('pointerover', () => {
             menuBtnBg.setFillStyle(0x1e293b, 1);
@@ -69,6 +70,7 @@ export class BaseScene extends Phaser.Scene {
 
         // Bag / Inventory Button (Top Right HUD - Next to Settings, Pure White Vector Style)
         this.bagBtnContainer = this.add.container(720, 26).setDepth(25);
+        this.registerUIElement(this.bagBtnContainer, 720, 26);
 
         const bagBtnBg = this.add.rectangle(0, 0, 36, 36, 0x0f172a, 0.9)
             .setStrokeStyle(2, 0x64748b)
@@ -127,6 +129,10 @@ export class BaseScene extends Phaser.Scene {
         // Mobile Controls HUD Toggle Button (Top Right HUD)
         this.createMobileHUDButton();
 
+        // Universal Camera Zoom HUD Button & System (HP, Tablet, Laptop Trackpad, PC Mouse)
+        this.createZoomHUDButton();
+        this.initCameraZoomSystem();
+
         // Slot sprites kept hidden in memory for compatibility with any existing calls
         this.slotSprites = [];
         this.slotTexts = [];
@@ -141,8 +147,10 @@ export class BaseScene extends Phaser.Scene {
         this.invModalOverlay = this.add.rectangle(400, 225, 800, 450, 0x000000, 0.65)
             .setDepth(30).setVisible(false).setInteractive();
         this.invModalOverlay.on('pointerdown', () => this.toggleInventoryModal(false));
+        this.registerUIElement(this.invModalOverlay, 400, 225);
 
         this.invModalContainer = this.add.container(400, 225).setDepth(31).setVisible(false);
+        this.registerUIElement(this.invModalContainer, 400, 225);
 
         // Window Base Dimensions: 318 x 350
         // Window Graphics: Dark Navy background + mottled diagonal pixel bands + cyan-blue border
@@ -352,6 +360,7 @@ export class BaseScene extends Phaser.Scene {
 
         // Mobile / Touch Controls HUD Toggle Button (Top Right HUD - Next to Bag at 720)
         this.mobileToggleBtnContainer = this.add.container(675, 26).setDepth(25);
+        this.registerUIElement(this.mobileToggleBtnContainer, 675, 26);
 
         const mobBtnBg = this.add.rectangle(0, 0, 36, 36, 0x0f172a, 0.9)
             .setStrokeStyle(2, 0x64748b)
@@ -389,6 +398,242 @@ export class BaseScene extends Phaser.Scene {
         });
 
         this.updateMobileToggleHUD();
+    }
+
+    createZoomHUDButton() {
+        const isMobile = isMobileDevice();
+        const zoomX = isMobile ? 625 : 675;
+        this.zoomBtnContainer = this.add.container(zoomX, 26).setDepth(25);
+
+        const zoomBtnBg = this.add.rectangle(0, 0, 48, 36, 0x0f172a, 0.9)
+            .setStrokeStyle(2, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+
+        const zoomVal = this.currentZoom || 1.0;
+        this.zoomBtnText = this.add.text(0, 0, `🔍 ${zoomVal.toFixed(1)}x`, {
+            fontSize: '10px', fontStyle: 'bold', fill: '#f8fafc', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        this.zoomBtnContainer.add([zoomBtnBg, this.zoomBtnText]);
+
+        zoomBtnBg.on('pointerover', () => {
+            zoomBtnBg.setFillStyle(0x1e293b, 1);
+            zoomBtnBg.setStrokeStyle(2, 0x38bdf8);
+            this.zoomBtnText.setFill('#38bdf8');
+            this.tweens.add({ targets: this.zoomBtnContainer, scaleX: 1.08, scaleY: 1.08, duration: 120, ease: 'Sine.easeOut' });
+            GameAudio.playHover();
+        });
+
+        zoomBtnBg.on('pointerout', () => {
+            zoomBtnBg.setFillStyle(0x0f172a, 0.9);
+            zoomBtnBg.setStrokeStyle(2, 0x64748b);
+            this.zoomBtnText.setFill('#f8fafc');
+            this.tweens.add({ targets: this.zoomBtnContainer, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.easeOut' });
+        });
+
+        zoomBtnBg.on('pointerdown', () => {
+            GameAudio.playClick();
+            let next = 1.0;
+            if (this.currentZoom < 1.15) next = 1.25;
+            else if (this.currentZoom < 1.4) next = 1.5;
+            else next = 1.0;
+
+            this.setCameraZoom(next, true);
+            this.showToastNotice(`🔍 Zoom Kamera: ${next.toFixed(2)}x`);
+        });
+
+        this.registerUIElement(this.zoomBtnContainer, zoomX, 26);
+    }
+
+    updateZoomHUDText() {
+        if (this.zoomBtnText) {
+            const z = this.currentZoom || 1.0;
+            this.zoomBtnText.setText(`🔍 ${z.toFixed(1)}x`);
+        }
+    }
+
+    initCameraZoomSystem() {
+        if (this._cameraZoomInitialized) return;
+        this._cameraZoomInitialized = true;
+
+        // Izinkan 2 pointer touch untuk gesture pinch-to-zoom di HP/Tablet
+        if (this.input.totalPointers < 2) {
+            this.input.addPointer(1);
+        }
+
+        let saved = 1.0;
+        try {
+            const val = localStorage.getItem('game_camera_zoom');
+            if (val) saved = parseFloat(val);
+            if (isNaN(saved) || saved < 0.85 || saved > 1.6) saved = 1.0;
+        } catch (e) {}
+
+        this.currentZoom = saved;
+        const cam = this.cameras.main;
+        if (cam) {
+            cam.setBounds(0, 0, 800, 450);
+            this.setCameraZoom(this.currentZoom, false);
+        }
+
+        window._goblinGameInstance = this.game;
+
+        // 1. Laptop Trackpad Pinch & Mouse Wheel listener
+        if (!window._gameZoomWheelAttached) {
+            window._gameZoomWheelAttached = true;
+            window.addEventListener('wheel', (e) => {
+                const canvas = document.querySelector('canvas');
+                const isOverCanvas = canvas && (e.target === canvas || canvas.contains(e.target));
+                const isTrackpadPinch = e.ctrlKey;
+
+                // Stop browser page zoom when pinching on trackpad or scrolling over game
+                if (isTrackpadPinch || isOverCanvas) {
+                    e.preventDefault();
+                }
+
+                const game = window._goblinGameInstance || (window.Phaser && Phaser.GAMES && Phaser.GAMES[0]);
+                let activeScene = null;
+                if (game && game.scene) {
+                    activeScene = game.scene.getScenes(true).find(s => s.setCameraZoom && s.cameras && s.cameras.main);
+                }
+                if (!activeScene && this.scene && this.scene.manager) {
+                    activeScene = this.scene.manager.getScenes(true).find(s => s.setCameraZoom && s.cameras && s.cameras.main);
+                }
+                if (!activeScene) return;
+
+                const delta = e.deltaY;
+                let step = 0;
+                if (isTrackpadPinch) {
+                    // Trackpad pinch gesture: fingers moving apart (deltaY < 0) zooms in, pinching closer (deltaY > 0) zooms out
+                    step = delta < 0 ? 0.04 : -0.04;
+                } else if (isOverCanvas) {
+                    // Mouse wheel
+                    step = delta < 0 ? 0.08 : -0.08;
+                }
+
+                if (step !== 0) {
+                    const nextZoom = (activeScene.currentZoom || 1.0) + step;
+                    activeScene.setCameraZoom(nextZoom, true);
+                }
+            }, { passive: false });
+        }
+
+        // 2. Keyboard shortcuts (+ / - / 0) untuk Laptop & PC
+        if (this.input.keyboard) {
+            this.input.keyboard.on('keydown-PLUS', () => this.setCameraZoom(this.currentZoom + 0.1, true));
+            this.input.keyboard.on('keydown-NUMPAD_ADD', () => this.setCameraZoom(this.currentZoom + 0.1, true));
+            this.input.keyboard.on('keydown-MINUS', () => this.setCameraZoom(this.currentZoom - 0.1, true));
+            this.input.keyboard.on('keydown-NUMPAD_SUBTRACT', () => this.setCameraZoom(this.currentZoom - 0.1, true));
+            this.input.keyboard.on('keydown-ZERO', () => this.setCameraZoom(1.0, true));
+            this.input.keyboard.on('keydown-NUMPAD_ZERO', () => this.setCameraZoom(1.0, true));
+        }
+    }
+
+    setCameraZoom(targetZoom, smooth = false) {
+        const clamped = Math.round(Phaser.Math.Clamp(targetZoom, 0.85, 1.6) * 100) / 100;
+        this.currentZoom = clamped;
+
+        try {
+            localStorage.setItem('game_camera_zoom', clamped.toFixed(2));
+        } catch (e) {}
+
+        const cam = this.cameras.main;
+        if (cam) {
+            cam.setBounds(0, 0, 800, 450);
+            if (smooth) {
+                cam.zoomTo(clamped, 200, 'Sine.easeOut');
+            } else {
+                cam.setZoom(clamped);
+            }
+
+            if (clamped > 1.01 && this.player) {
+                cam.startFollow(this.player, true, 0.08, 0.08);
+                cam._isFollowing = true;
+            } else {
+                if (cam._isFollowing) {
+                    cam.stopFollow();
+                    cam._isFollowing = false;
+                }
+                if (smooth) {
+                    cam.pan(400, 225, 200, 'Sine.easeOut');
+                } else {
+                    cam.setScroll(0, 0);
+                }
+            }
+        }
+
+        this.updateZoomHUDText();
+        if (this.settingsZoomText) {
+            this.settingsZoomText.setText(`${clamped.toFixed(2)}x`);
+        }
+        this.updateUIForCameraZoom();
+    }
+
+    handlePinchToZoom() {
+        const p1 = this.input.pointer1;
+        const p2 = this.input.pointer2;
+
+        if (p1 && p2 && p1.isDown && p2.isDown) {
+            const dist = Phaser.Math.Distance.Between(p1.x, p1.y, p2.x, p2.y);
+            if (this._lastPinchDist) {
+                const diff = dist - this._lastPinchDist;
+                if (Math.abs(diff) > 1.5) {
+                    const zoomDelta = (diff / 280);
+                    const newZoom = Phaser.Math.Clamp(this.currentZoom + zoomDelta, 0.85, 1.6);
+                    this.setCameraZoom(newZoom, false);
+                }
+            }
+            this._lastPinchDist = dist;
+        } else {
+            this._lastPinchDist = null;
+        }
+    }
+
+    triggerCinematicDialogueZoom(isStarting) {
+        const cam = this.cameras.main;
+        if (!cam) return;
+
+        if (isStarting) {
+            this._preDialogueZoom = this.currentZoom || 1.0;
+            const targetZoom = Math.max(this._preDialogueZoom, 1.25);
+            cam.setBounds(0, 0, 800, 450);
+            if (this.player) {
+                cam.startFollow(this.player, true, 0.06, 0.06);
+                cam._isFollowing = true;
+            }
+            cam.zoomTo(targetZoom, 350, 'Sine.easeOut');
+        } else {
+            const restoreZoom = this._preDialogueZoom || 1.0;
+            this.setCameraZoom(restoreZoom, true);
+        }
+    }
+
+    registerUIElement(element, screenX, screenY, baseScale = 1) {
+        if (!element) return;
+        if (!this._registeredUI) this._registeredUI = [];
+        if (!this._registeredUI.some(item => item.element === element)) {
+            this._registeredUI.push({ element, screenX, screenY, baseScale });
+        }
+    }
+
+    updateUIForCameraZoom() {
+        const cam = this.cameras.main;
+        if (!cam) return;
+        const Z = cam.zoom || 1;
+        const hw = cam.width / 2;
+        const hh = cam.height / 2;
+        const invZ = 1 / Z;
+
+        if (this._registeredUI) {
+            for (let i = 0; i < this._registeredUI.length; i++) {
+                const item = this._registeredUI[i];
+                const el = item.element;
+                if (!el || !el.active) continue;
+
+                el.x = (item.screenX - hw) * invZ + cam.scrollX + hw;
+                el.y = (item.screenY - hh) * invZ + cam.scrollY + hh;
+                el.setScale(item.baseScale * invZ);
+            }
+        }
     }
 
     isMobileControlsEnabled() {
@@ -466,6 +711,7 @@ export class BaseScene extends Phaser.Scene {
         if (!isMobileDevice()) return;
 
         this.mobileControlsContainer = this.add.container(0, 0).setDepth(28);
+        this.registerUIElement(this.mobileControlsContainer, 0, 0);
 
         // ==========================================
         // LEFT & RIGHT D-PAD (Bottom Left HUD)
@@ -775,6 +1021,7 @@ export class BaseScene extends Phaser.Scene {
         }
 
         this.healthContainer = this.add.container(16, 12).setDepth(20);
+        this.registerUIElement(this.healthContainer, 16, 12);
 
         // Pill background (132 x 26) — no visible border
         const hpBg = this.add.rectangle(66, 12, 132, 25, 0x0f172a, 0.85)
@@ -976,23 +1223,27 @@ export class BaseScene extends Phaser.Scene {
             .setDepth(50)
             .setVisible(false)
             .setInteractive();
+        this.registerUIElement(this.settingsModalOverlay, 400, 225);
 
         this.settingsModalOverlay.on('pointerdown', () => this.toggleSettingsModal(false));
 
         // Settings Container
         this.settingsModalBox = this.add.container(400, 225).setDepth(51).setVisible(false);
+        this.registerUIElement(this.settingsModalBox, 400, 225);
 
         const isMobile = isMobileDevice();
-        const modalHeight = isMobile ? 415 : 390;
-        const headerY = isMobile ? -178 : -165;
-        const bgmY = isMobile ? -135 : -125;
-        const sfxY = isMobile ? -99 : -89;
-        const resY = isMobile ? -63 : -53;
-        const dividerY = isMobile ? 7 : -21;
-        const ctrlTitleY = isMobile ? 20 : -7;
-        const ctrlListY = isMobile ? 35 : 8;
-        const actionY = isMobile ? 138 : 125;
-        const locY = isMobile ? 178 : 165;
+        const modalHeight = isMobile ? 440 : 415;
+        const headerY = isMobile ? -192 : -180;
+        const bgmY = isMobile ? -150 : -140;
+        const sfxY = isMobile ? -116 : -106;
+        const zoomY = isMobile ? -82 : -72;
+        const resY = isMobile ? -48 : -38;
+        const mobY = -14;
+        const dividerY = isMobile ? 18 : 2;
+        const ctrlTitleY = isMobile ? 31 : 15;
+        const ctrlListY = isMobile ? 46 : 30;
+        const actionY = isMobile ? 150 : 140;
+        const locY = isMobile ? 190 : 180;
 
         // Modal Frame
         const modalBg = this.add.rectangle(0, 0, 560, modalHeight, 0x0f172a, 0.98)
@@ -1105,7 +1356,47 @@ export class BaseScene extends Phaser.Scene {
             GameAudio.updateGainValues();
         });
 
-        // 3. Ukuran Layar / Resolusi
+        // 3. Skala Zoom Kamera
+        const zoomLabel = this.add.text(-240, zoomY, '🔍 Skala Zoom Kamera:', {
+            fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
+        });
+        const zoomMinusBtn = this.add.rectangle(45, zoomY + 8, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const zoomMinusText = this.add.text(45, zoomY + 8, '➖', { fontSize: '10px' }).setOrigin(0.5);
+
+        this.settingsZoomText = this.add.text(88, zoomY + 8, `${(this.currentZoom || 1.0).toFixed(2)}x`, {
+            fontSize: '12px', fontStyle: 'bold', fill: '#38bdf8', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        const zoomPlusBtn = this.add.rectangle(132, zoomY + 8, 26, 26, 0x334155, 0.95)
+            .setStrokeStyle(1.5, 0x64748b)
+            .setInteractive({ useHandCursor: true });
+        const zoomPlusText = this.add.text(132, zoomY + 8, '➕', { fontSize: '10px' }).setOrigin(0.5);
+
+        const zoomResetBtn = this.add.rectangle(200, zoomY + 8, 68, 26, 0x1e3a8a, 0.95)
+            .setStrokeStyle(1.5, 0x38bdf8)
+            .setInteractive({ useHandCursor: true });
+        const zoomResetText = this.add.text(200, zoomY + 8, 'RESET', {
+            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
+        }).setOrigin(0.5);
+
+        zoomMinusBtn.on('pointerdown', () => {
+            this.setCameraZoom(this.currentZoom - 0.1, true);
+            GameAudio.playClick();
+        });
+
+        zoomPlusBtn.on('pointerdown', () => {
+            this.setCameraZoom(this.currentZoom + 0.1, true);
+            GameAudio.playClick();
+        });
+
+        zoomResetBtn.on('pointerdown', () => {
+            this.setCameraZoom(1.0, true);
+            GameAudio.playClick();
+        });
+
+        // 4. Ukuran Layar / Resolusi
         const resLabel = this.add.text(-240, resY, '🖥️ Resolusi Layar:', {
             fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
         });
@@ -1143,19 +1434,20 @@ export class BaseScene extends Phaser.Scene {
             modalBg, headerBg, title,
             bgmLabel, bgmBtn, bgmText, bgmMinusBtn, bgmMinusText, bgmVolText, bgmPlusBtn, bgmPlusText,
             sfxLabel, sfxBtn, sfxText, sfxMinusBtn, sfxMinusText, sfxVolText, sfxPlusBtn, sfxPlusText,
+            zoomLabel, zoomMinusBtn, zoomMinusText, this.settingsZoomText, zoomPlusBtn, zoomPlusText, zoomResetBtn, zoomResetText,
             resLabel, resBtn, resText, fsBtn, fsIcon
         ];
 
         if (isMobile) {
-            // 4. Mobile Controls Toggle (Khusus HP/Tablet)
-            const mobLabel = this.add.text(-240, -27, '📱 Tombol Layar HP (Touch):', {
+            // 5. Mobile Controls Toggle (Khusus HP/Tablet)
+            const mobLabel = this.add.text(-240, mobY, '📱 Tombol Layar HP (Touch):', {
                 fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
             });
             const isMobActive = this.isMobileControlsEnabled();
-            this.mobileSettingsBtn = this.add.rectangle(160, -19, 130, 26, isMobActive ? 0x16a34a : 0xdc2626, 0.9)
+            this.mobileSettingsBtn = this.add.rectangle(160, mobY + 8, 130, 26, isMobActive ? 0x16a34a : 0xdc2626, 0.9)
                 .setStrokeStyle(1.5, 0xffffff)
                 .setInteractive({ useHandCursor: true });
-            this.mobileSettingsBtnText = this.add.text(160, -19, isMobActive ? 'AKTIF [ON]' : 'MATI [OFF]', {
+            this.mobileSettingsBtnText = this.add.text(160, mobY + 8, isMobActive ? 'AKTIF [ON]' : 'MATI [OFF]', {
                 fontSize: '12px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
             }).setOrigin(0.5);
 
@@ -1180,12 +1472,14 @@ export class BaseScene extends Phaser.Scene {
             ? '▶ [◀] [▶]             : Bergerak Kiri / Kanan\n' +
               '▶ [▲]                 : Melompat\n' +
               '▶ [Sentuh Karakter]   : Langsung Ketuk Karakter / Item untuk Bicara\n' +
+              '▶ [Pinch 2 Jari / 🔍] : Zoom In / Out Kamera Permainan\n' +
               '▶ [Tas]               : Buka Daftar Lengkap Tas Inventory\n' +
               '▶ [Quest Bar]         : Buka / Tutup Catatan Misi / Quest\n' +
               '▶ [📱 Icon HP]        : Pengaturan Tombol Layar Ponsel'
             : '▶ [A] / [D]        : Bergerak Kiri / Kanan\n' +
               '▶ [W] / [SPASI]    : Melompat\n' +
               '▶ [E]              : Berinteraksi dengan Karakter / Objek\n' +
+              '▶ [Pinch / Scroll] : Trackpad Pinch / Mouse Scroll / [+-0] Zoom Kamera\n' +
               '▶ [1] / [I]        : Buka Daftar Lengkap Tas Inventory\n' +
               '▶ [Q]              : Buka / Tutup Catatan Misi / Quest\n' +
               '▶ [☰] / [ESC]     : Buka / Tutup Pengaturan & Jeda';
@@ -1408,6 +1702,7 @@ export class BaseScene extends Phaser.Scene {
     createQuestUI() {
         // Quest button (Top Left HUD, aligned with HP / right-side HUD buttons)
         this.questBtnContainer = this.add.container(190, 26).setDepth(25);
+        this.registerUIElement(this.questBtnContainer, 190, 26);
 
         const questBtnBg = this.add.rectangle(0, 0, 72, 36, 0x0f172a, 0.9)
             .setStrokeStyle(2, 0x64748b)
@@ -1443,10 +1738,19 @@ export class BaseScene extends Phaser.Scene {
         });
 
         this.questModalOverlay = this.add.rectangle(400, 225, 800, 450, 0x000000, 0.6).setDepth(30).setVisible(false);
+        this.registerUIElement(this.questModalOverlay, 400, 225);
+
         this.questModalBox = this.add.rectangle(400, 225, 520, 320, 0x1e1b4b, 0.98).setStrokeStyle(3, 0x818cf8).setDepth(31).setVisible(false);
+        this.registerUIElement(this.questModalBox, 400, 225);
+
         this.questTitleText = this.add.text(400, 95, '📜 CATATAN QUEST & OBJEKTIF', { fontSize: '17px', fontStyle: 'bold', fill: '#a5b4fc', fontFamily: FONT_BODY }).setOrigin(0.5).setDepth(32).setVisible(false);
+        this.registerUIElement(this.questTitleText, 400, 95);
+
         this.questContentText = this.add.text(170, 135, '', { fontSize: '14px', fill: '#f8fafc', fontFamily: FONT_BODY, lineSpacing: 8 }).setDepth(32).setVisible(false);
+        this.registerUIElement(this.questContentText, 170, 135);
+
         this.questCloseHint = this.add.text(400, 360, 'Tekan [Q] atau Klik untuk Tutup', { fontSize: '12px', fill: '#94a3b8' }).setOrigin(0.5).setDepth(32).setVisible(false);
+        this.registerUIElement(this.questCloseHint, 400, 360);
 
         this.questModalOverlay.setInteractive();
         this.questModalOverlay.on('pointerdown', () => this.toggleQuestModal());
@@ -1701,6 +2005,31 @@ export class BaseScene extends Phaser.Scene {
         this.input.keyboard.on('keydown-S', () => {
             if (this.isTalking) this.skipDialogue();
         });
+
+        // Container for dialogue UI elements so they zoom and follow camera seamlessly
+        this.dialogueContainer = this.add.container(0, 0).setDepth(21);
+        const dialogueList = [
+            this.portraitShadow,
+            this.portraitImage,
+            this.portraitFallbackIcon,
+            this.dialogueFrameOuter,
+            this.dialogueFrameInner,
+            this.dialogueBox,
+            ...this.cornerOrnaments,
+            this.decoLineTop,
+            this.decoLineBottom,
+            this.nameTabBg,
+            this.nameTabOrnL,
+            this.nameTabOrnR,
+            this.speakerText,
+            this.dialogueBodyText,
+            this.skipBtn,
+            this.skipBtnText,
+            this.continuePrompt
+        ];
+        this.dialogueContainer.add(dialogueList);
+        this.registerUIElement(this.dialogueContainer, 0, 0);
+        this.registerUIElement(this.dialogueOverlay, 400, 225);
     }
 
     startDialogue(dialogueList, onCompleteCallback = null) {
@@ -1717,6 +2046,7 @@ export class BaseScene extends Phaser.Scene {
         GameAudio.playDialogue();
         if (this.player && this.player.body) this.player.setVelocityX(0);
         this.updateMobileControlsVisibility();
+        this.triggerCinematicDialogueZoom(true);
 
         // Show all dialogue UI elements
         const showElements = [
@@ -1889,6 +2219,7 @@ export class BaseScene extends Phaser.Scene {
         if (this.cornerOrnaments) this.cornerOrnaments.forEach(o => o.setVisible(false));
 
         this.updateMobileControlsVisibility();
+        this.triggerCinematicDialogueZoom(false);
         if (this.onDialogueComplete) {
             const cb = this.onDialogueComplete;
             this.onDialogueComplete = null;
@@ -1998,6 +2329,26 @@ export class BaseScene extends Phaser.Scene {
         if (!this._tapToInteractReady) {
             this.setupTapToInteract();
         }
+
+        // Kamera Zooming Dynamic Follow & Clamp Bounds
+        if (this.player && this.cameras.main) {
+            const cam = this.cameras.main;
+            if (this.currentZoom > 1.01 && !cam._isFollowing) {
+                cam.setBounds(0, 0, 800, 450);
+                cam.startFollow(this.player, true, 0.08, 0.08);
+                cam._isFollowing = true;
+            } else if (this.currentZoom <= 1.01 && cam._isFollowing) {
+                cam.stopFollow();
+                cam._isFollowing = false;
+                cam.setScroll(0, 0);
+            }
+        }
+
+        // Multi-touch Gesture Pinch-to-zoom (HP / Tablet)
+        this.handlePinchToZoom();
+
+        // Kunci posisi seluruh UI fixed screen coordinates & scale
+        this.updateUIForCameraZoom();
 
         // Failsafe: bila karakter terdorong keluar atau jatuh dari platform, kembalikan posisi secara aman ke platform
         if (this.player.y > 435) {

@@ -468,12 +468,14 @@ export class TitleScene extends Phaser.Scene {
             ? '▶ [◀] [▶]             : Bergerak ke Kiri / Kanan\n' +
               '▶ [▲]                 : Melompat\n' +
               '▶ [Sentuh Karakter]   : Langsung Ketuk Karakter / Item untuk Bicara\n' +
+              '▶ [Pinch 2 Jari / 🔍] : Zoom In / Out Kamera Permainan\n' +
               '▶ [Icon Tas]          : Buka / Tutup Tas Inventory\n' +
               '▶ [Quest Bar]         : Buka Catatan Misi / Quest\n' +
               '▶ [📱 Icon HP]        : Pengaturan Tombol Layar Ponsel'
             : '▶ [A] / [D]        : Bergerak ke Kiri / Kanan\n' +
               '▶ [W] / [SPASI]    : Melompat\n' +
               '▶ [E]              : Berinteraksi dengan Karakter / Ambil Barang\n' +
+              '▶ [Pinch / Scroll] : Trackpad Pinch / Mouse Wheel / [+-0] Zoom Kamera\n' +
               '▶ [I]              : Buka / Tutup Tas Inventory\n' +
               '▶ [Q]              : Buka Catatan Misi / Quest\n' +
               '▶ [ESC] / [S]      : Lewati Dialog Cerita';
