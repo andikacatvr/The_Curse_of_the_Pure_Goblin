@@ -402,22 +402,19 @@ export class BaseScene extends Phaser.Scene {
     }
 
     createCinemaBorders() {
-        // Cinema Matte Black Pillarbox / Letterbox Bars (menutup area luar 800x450 secara simetris dan elegan)
+        // Cinema Matte Black Pillarbox Bars (Hanya menutup sisi kiri dan kanan agar panggung simetris di tengah)
         this.cinemaBarsContainer = this.add.container(0, 0).setDepth(20);
-        // Left pillarbox (kiri)
-        const barLeft = this.add.rectangle(-300, 225, 600, 900, 0x000000, 1);
-        // Right pillarbox (kanan)
-        const barRight = this.add.rectangle(1100, 225, 600, 900, 0x000000, 1);
-        // Top letterbox (atas)
+        // Left pillarbox (kiri dari x=0 ke luar)
+        const barLeft = this.add.rectangle(-300, 225, 600, 1200, 0x000000, 1);
+        // Right pillarbox (kanan dari x=800 ke luar)
+        const barRight = this.add.rectangle(1100, 225, 600, 1200, 0x000000, 1);
+        // Top letterbox (atas dari y=0 ke luar atas langit)
         const barTop = this.add.rectangle(400, -250, 1600, 500, 0x000000, 1);
-        // Bottom letterbox (bawah)
-        const barBottom = this.add.rectangle(400, 700, 1600, 500, 0x000000, 1);
 
-        // Garis frame tipis elegan (Cinema Scope Frame)
-        const stageFrame = this.add.rectangle(400, 225, 800, 450)
-            .setStrokeStyle(1.5, 0x1e293b);
+        this.cinemaBarsContainer.add([barLeft, barRight, barTop]);
 
-        this.cinemaBarsContainer.add([barLeft, barRight, barTop, barBottom, stageFrame]);
+        // Lapisan tanah bawah alami (Earth extension) agar tanah dan rumput mengalir alami ke bawah tanpa terpotong hitam
+        this.earthExtension = this.add.rectangle(400, 650, 800, 400, 0x54361e, 1).setDepth(0);
     }
 
     createZoomHUDButton() {
