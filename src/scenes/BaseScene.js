@@ -411,8 +411,147 @@ export class BaseScene extends Phaser.Scene {
 
         this.cinemaBarsContainer.add([barLeft, barRight]);
 
-        // Lapisan tanah bawah alami (Earth extension) agar tanah dan rumput mengalir alami ke bawah tanpa terpotong hitam
-        this.earthExtension = this.add.rectangle(400, 650, 800, 400, 0x54361e, 1).setDepth(0);
+        // Lapisan bawah dinamis sesuai tema map (Deep Teal Abyss untuk air terjun, tanah subur untuk ladang/hutan, dll.)
+        this.setupBottomExtension();
+    }
+
+    setupBottomExtension() {
+        if (this.earthExtensionContainer) {
+            this.earthExtensionContainer.destroy();
+        }
+        this.earthExtensionContainer = this.add.container(0, 0).setDepth(1);
+
+        const sceneKey = (this.scene && this.scene.key) ? this.scene.key : '';
+
+        if (sceneKey === 'WaterfallGorgeScene') {
+            // === TEMA AIR TERJUN & JURANG LEMBAH (DEEP TEAL WATERFALL ABYSS) ===
+            // 1. Dasar air jurang gelap menyatu dengan latar air terjun (#041624 / #061b24)
+            const abyssBg = this.add.rectangle(400, 650, 800, 408, 0x061a24, 1);
+
+            // 2. Lapisan kedalaman air jurang dan kabut uap
+            const rippleG = this.add.graphics();
+            rippleG.fillStyle(0x04131d, 0.96);
+            rippleG.fillRect(0, 480, 800, 370);
+            rippleG.fillStyle(0x020a10, 1);
+            rippleG.fillRect(0, 550, 800, 300);
+
+            // 3. Gelombang riak air terjun (Concentric water ripples yang selaras dengan kolam air terjun)
+            rippleG.lineStyle(2.5, 0x144047, 0.75);
+            rippleG.strokeEllipse(400, 452, 540, 36);
+            rippleG.lineStyle(2, 0x0f343b, 0.65);
+            rippleG.strokeEllipse(400, 478, 640, 44);
+            rippleG.lineStyle(1.5, 0x08242a, 0.55);
+            rippleG.strokeEllipse(400, 510, 730, 48);
+
+            // 4. Pijar lembut uap kabut air terjun (Ambient mist glow)
+            const mistGlow = this.add.ellipse(400, 460, 520, 54, 0x5eead4, 0.08);
+            this.tweens.add({
+                targets: mistGlow,
+                alpha: { from: 0.04, to: 0.13 },
+                scaleX: { from: 0.96, to: 1.06 },
+                duration: 2500,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+
+            // 5. Partikel tetesan embun / percikan air terjun yang melayang turun ke jurang
+            for (let i = 0; i < 9; i++) {
+                const px = Phaser.Math.Between(320, 480);
+                const py = Phaser.Math.Between(448, 510);
+                const drop = this.add.circle(px, py, Phaser.Math.Between(1, 2), 0x99f6e4, 0.45);
+                this.tweens.add({
+                    targets: drop,
+                    y: py + Phaser.Math.Between(40, 85),
+                    alpha: 0,
+                    duration: Phaser.Math.Between(1100, 2200),
+                    repeat: -1,
+                    delay: Phaser.Math.Between(0, 1400)
+                });
+                this.earthExtensionContainer.add(drop);
+            }
+
+            // 6. Siluet dinding tebing batu canyon di sisi kiri dan kanan bawah
+            const cliffG = this.add.graphics();
+            cliffG.fillStyle(0x061413, 1);
+            // Tebing kiri
+            cliffG.beginPath();
+            cliffG.moveTo(0, 442);
+            cliffG.lineTo(130, 442);
+            cliffG.lineTo(105, 540);
+            cliffG.lineTo(125, 850);
+            cliffG.lineTo(0, 850);
+            cliffG.closePath();
+            cliffG.fillPath();
+            // Tebing kanan
+            cliffG.beginPath();
+            cliffG.moveTo(800, 442);
+            cliffG.lineTo(670, 442);
+            cliffG.lineTo(695, 540);
+            cliffG.lineTo(675, 850);
+            cliffG.lineTo(800, 850);
+            cliffG.closePath();
+            cliffG.fillPath();
+
+            this.earthExtensionContainer.add([abyssBg, rippleG, mistGlow, cliffG]);
+        } else if (sceneKey === 'WitchYardScene') {
+            // === TEMA TANAH PENYIHIR MALAM / TWILIGHT (ENCHANTED SOIL) ===
+            const witchSoil = this.add.rectangle(400, 650, 800, 408, 0x120a1f, 1);
+            const witchG = this.add.graphics();
+            witchG.fillStyle(0x0a0512, 0.95);
+            witchG.fillRect(0, 500, 800, 350);
+            witchG.fillStyle(0x05020a, 1);
+            witchG.fillRect(0, 580, 800, 270);
+
+            // Spora sihir ungu berkilau lembut dari tanah
+            for (let i = 0; i < 6; i++) {
+                const spX = Phaser.Math.Between(40, 760);
+                const spY = Phaser.Math.Between(460, 540);
+                const spore = this.add.circle(spX, spY, 1.5, 0xa855f7, 0.5);
+                this.tweens.add({
+                    targets: spore,
+                    y: spY - 30,
+                    alpha: 0,
+                    duration: Phaser.Math.Between(1800, 3200),
+                    repeat: -1,
+                    delay: Phaser.Math.Between(0, 1500)
+                });
+                this.earthExtensionContainer.add(spore);
+            }
+            this.earthExtensionContainer.add([witchSoil, witchG]);
+        } else if (sceneKey === 'WitchCottageScene') {
+            // === TEMA LANTAI INTERIOR PONDOK PENYIHIR ===
+            const cottageFloor = this.add.rectangle(400, 650, 800, 408, 0x140d1e, 1);
+            this.earthExtensionContainer.add(cottageFloor);
+        } else if (sceneKey === 'VillageResidentialScene' || sceneKey === 'BakeryMillScene') {
+            // === TEMA BEBATUAN / COBBLESTONE DESA ===
+            const stoneBase = this.add.rectangle(400, 650, 800, 408, 0x1e293b, 1);
+            const stoneG = this.add.graphics();
+            stoneG.fillStyle(0x0f172a, 0.95);
+            stoneG.fillRect(0, 500, 800, 350);
+            stoneG.fillStyle(0x090d16, 1);
+            stoneG.fillRect(0, 580, 800, 270);
+            this.earthExtensionContainer.add([stoneBase, stoneG]);
+        } else {
+            // === TEMA TANAH ALAMI SUBUR (EARTH SOIL) ===
+            // (GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, ForestTrailScene, LakeForestScene, HomeScene)
+            const baseSoil = this.add.rectangle(400, 650, 800, 408, 0x54361e, 1);
+            const soilG = this.add.graphics();
+            // Lapisan tanah semakin dalam semakin gelap
+            soilG.fillStyle(0x3e2412, 0.95);
+            soilG.fillRect(0, 490, 800, 360);
+            soilG.fillStyle(0x24140a, 1);
+            soilG.fillRect(0, 570, 800, 280);
+
+            // Kerikil dan tekstur bebatuan alami di dalam tanah
+            soilG.fillStyle(0x6b482b, 0.55);
+            for (let i = 0; i < 24; i++) {
+                const rx = ((i * 47 + 23) % 780) + 10;
+                const ry = 458 + ((i * 29) % 190);
+                soilG.fillCircle(rx, ry, (i % 3) + 1.8);
+            }
+            this.earthExtensionContainer.add([baseSoil, soilG]);
+        }
     }
 
     createZoomHUDButton() {
