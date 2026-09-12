@@ -132,6 +132,7 @@ export class BaseScene extends Phaser.Scene {
         // Universal Camera Zoom HUD Button & System (HP, Tablet, Laptop Trackpad, PC Mouse)
         this.createZoomHUDButton();
         this.initCameraZoomSystem();
+        this.createCinemaBorders();
 
         // Slot sprites kept hidden in memory for compatibility with any existing calls
         this.slotSprites = [];
@@ -400,6 +401,25 @@ export class BaseScene extends Phaser.Scene {
         this.updateMobileToggleHUD();
     }
 
+    createCinemaBorders() {
+        // Cinema Matte Black Pillarbox / Letterbox Bars (menutup area luar 800x450 secara simetris dan elegan)
+        this.cinemaBarsContainer = this.add.container(0, 0).setDepth(20);
+        // Left pillarbox (kiri)
+        const barLeft = this.add.rectangle(-300, 225, 600, 900, 0x000000, 1);
+        // Right pillarbox (kanan)
+        const barRight = this.add.rectangle(1100, 225, 600, 900, 0x000000, 1);
+        // Top letterbox (atas)
+        const barTop = this.add.rectangle(400, -250, 1600, 500, 0x000000, 1);
+        // Bottom letterbox (bawah)
+        const barBottom = this.add.rectangle(400, 700, 1600, 500, 0x000000, 1);
+
+        // Garis frame tipis elegan (Cinema Scope Frame)
+        const stageFrame = this.add.rectangle(400, 225, 800, 450)
+            .setStrokeStyle(1.5, 0x1e293b);
+
+        this.cinemaBarsContainer.add([barLeft, barRight, barTop, barBottom, stageFrame]);
+    }
+
     createZoomHUDButton() {
         const isMobile = isMobileDevice();
         const zoomX = isMobile ? 625 : 675;
@@ -434,12 +454,15 @@ export class BaseScene extends Phaser.Scene {
         zoomBtnBg.on('pointerdown', () => {
             GameAudio.playClick();
             let next = 1.0;
-            if (this.currentZoom < 1.15) next = 1.25;
+            if (this.currentZoom < 0.95) next = 1.0;
+            else if (this.currentZoom < 1.15) next = 1.25;
             else if (this.currentZoom < 1.4) next = 1.5;
+            else if (this.currentZoom < 1.55) next = 0.85;
             else next = 1.0;
 
             this.setCameraZoom(next, true);
-            this.showToastNotice(`🔍 Zoom Kamera: ${next.toFixed(2)}x`);
+            const label = next < 1.0 ? `${next.toFixed(2)}x (Sinematik)` : `${next.toFixed(2)}x`;
+            this.showToastNotice(`🔍 Zoom Kamera: ${label}`);
         });
 
         this.registerUIElement(this.zoomBtnContainer, zoomX, 26);
@@ -465,7 +488,7 @@ export class BaseScene extends Phaser.Scene {
         try {
             const val = localStorage.getItem('game_camera_zoom');
             if (val) saved = parseFloat(val);
-            if (isNaN(saved) || saved < 1.0 || saved > 1.6) saved = 1.0;
+            if (isNaN(saved) || saved < 0.8 || saved > 1.6) saved = 1.0;
         } catch (e) {}
 
         this.currentZoom = saved;
@@ -510,7 +533,7 @@ export class BaseScene extends Phaser.Scene {
                 }
 
                 if (step !== 0) {
-                    const nextZoom = Phaser.Math.Clamp((activeScene.currentZoom || 1.0) + step, 1.0, 1.6);
+                    const nextZoom = Phaser.Math.Clamp((activeScene.currentZoom || 1.0) + step, 0.8, 1.6);
                     activeScene.setCameraZoom(nextZoom, true);
                 }
             }, { passive: false });
@@ -528,7 +551,7 @@ export class BaseScene extends Phaser.Scene {
     }
 
     setCameraZoom(targetZoom, smooth = false) {
-        const clamped = Math.round(Phaser.Math.Clamp(targetZoom, 1.0, 1.6) * 100) / 100;
+        const clamped = Math.round(Phaser.Math.Clamp(targetZoom, 0.8, 1.6) * 100) / 100;
         this.currentZoom = clamped;
 
         try {
@@ -581,7 +604,7 @@ export class BaseScene extends Phaser.Scene {
                 const diff = dist - this._lastPinchDist;
                 if (Math.abs(diff) > 1.5) {
                     const zoomDelta = (diff / 280);
-                    const newZoom = Phaser.Math.Clamp(this.currentZoom + zoomDelta, 1.0, 1.6);
+                    const newZoom = Phaser.Math.Clamp(this.currentZoom + zoomDelta, 0.8, 1.6);
                     this.setCameraZoom(newZoom, false);
                 }
             }
@@ -605,7 +628,6 @@ export class BaseScene extends Phaser.Scene {
         const Z = cam.zoom || 1;
         const hw = cam.width / 2;
         const hh = cam.height / 2;
-        const invZ = 1 / Z;
 
         if (this._registeredUI) {
             for (let i = 0; i < this._registeredUI.length; i++) {
@@ -613,9 +635,17 @@ export class BaseScene extends Phaser.Scene {
                 const el = item.element;
                 if (!el || !el.active) continue;
 
-                el.x = (item.screenX - hw) * invZ + cam.scrollX + hw;
-                el.y = (item.screenY - hh) * invZ + cam.scrollY + hh;
-                el.setScale(item.baseScale * invZ);
+                if (Z < 0.99) {
+                    // Mode sinematik panorama (< 1.0x): UI tetap rapi di posisi aslinya di panggung game
+                    el.x = item.screenX;
+                    el.y = item.screenY;
+                    el.setScale(item.baseScale);
+                } else {
+                    const invZ = 1 / Z;
+                    el.x = (item.screenX - hw) * invZ + cam.scrollX + hw;
+                    el.y = (item.screenY - hh) * invZ + cam.scrollY + hh;
+                    el.setScale(item.baseScale * invZ);
+                }
             }
         }
     }

@@ -22,6 +22,7 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 450,
+    backgroundColor: '#000000',
     parent: 'game-container',
     pixelArt: true,
     roundPixels: true,
