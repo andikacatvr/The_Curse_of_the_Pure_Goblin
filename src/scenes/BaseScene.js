@@ -465,13 +465,12 @@ export class BaseScene extends Phaser.Scene {
         try {
             const val = localStorage.getItem('game_camera_zoom');
             if (val) saved = parseFloat(val);
-            if (isNaN(saved) || saved < 0.85 || saved > 1.6) saved = 1.0;
+            if (isNaN(saved) || saved < 1.0 || saved > 1.6) saved = 1.0;
         } catch (e) {}
 
         this.currentZoom = saved;
         const cam = this.cameras.main;
         if (cam) {
-            cam.setBounds(0, 0, 800, 450);
             this.setCameraZoom(this.currentZoom, false);
         }
 
@@ -511,7 +510,7 @@ export class BaseScene extends Phaser.Scene {
                 }
 
                 if (step !== 0) {
-                    const nextZoom = (activeScene.currentZoom || 1.0) + step;
+                    const nextZoom = Phaser.Math.Clamp((activeScene.currentZoom || 1.0) + step, 1.0, 1.6);
                     activeScene.setCameraZoom(nextZoom, true);
                 }
             }, { passive: false });
@@ -529,7 +528,7 @@ export class BaseScene extends Phaser.Scene {
     }
 
     setCameraZoom(targetZoom, smooth = false) {
-        const clamped = Math.round(Phaser.Math.Clamp(targetZoom, 0.85, 1.6) * 100) / 100;
+        const clamped = Math.round(Phaser.Math.Clamp(targetZoom, 1.0, 1.6) * 100) / 100;
         this.currentZoom = clamped;
 
         try {
@@ -538,7 +537,7 @@ export class BaseScene extends Phaser.Scene {
 
         const cam = this.cameras.main;
         if (cam) {
-            cam.setBounds(0, 0, 800, 450);
+            cam.removeBounds();
             if (smooth) {
                 cam.zoomTo(clamped, 200, 'Sine.easeOut');
             } else {
@@ -548,6 +547,10 @@ export class BaseScene extends Phaser.Scene {
             if (clamped > 1.01 && this.player) {
                 cam.startFollow(this.player, true, 0.08, 0.08);
                 cam._isFollowing = true;
+                const halfW = 400 / clamped;
+                const halfH = 225 / clamped;
+                cam.scrollX = Phaser.Math.Clamp(cam.scrollX, halfW - 400, 400 - halfW);
+                cam.scrollY = Phaser.Math.Clamp(cam.scrollY, halfH - 225, 225 - halfH);
             } else {
                 if (cam._isFollowing) {
                     cam.stopFollow();
@@ -578,7 +581,7 @@ export class BaseScene extends Phaser.Scene {
                 const diff = dist - this._lastPinchDist;
                 if (Math.abs(diff) > 1.5) {
                     const zoomDelta = (diff / 280);
-                    const newZoom = Phaser.Math.Clamp(this.currentZoom + zoomDelta, 0.85, 1.6);
+                    const newZoom = Phaser.Math.Clamp(this.currentZoom + zoomDelta, 1.0, 1.6);
                     this.setCameraZoom(newZoom, false);
                 }
             }
@@ -2309,16 +2312,26 @@ export class BaseScene extends Phaser.Scene {
             this.setupTapToInteract();
         }
 
-        // Kamera Zooming Dynamic Follow & Clamp Bounds
+        // Kamera Zooming Dynamic Follow & Mathematical Zero-Void Clamping
         if (this.player && this.cameras.main) {
             const cam = this.cameras.main;
-            if (this.currentZoom > 1.01 && !cam._isFollowing) {
-                cam.setBounds(0, 0, 800, 450);
-                cam.startFollow(this.player, true, 0.08, 0.08);
-                cam._isFollowing = true;
-            } else if (this.currentZoom <= 1.01 && cam._isFollowing) {
-                cam.stopFollow();
-                cam._isFollowing = false;
+            const Z = cam.zoom || 1.0;
+            if (Z > 1.01) {
+                if (!cam._isFollowing) {
+                    cam.removeBounds();
+                    cam.startFollow(this.player, true, 0.08, 0.08);
+                    cam._isFollowing = true;
+                }
+                // Pastikan batas layar kamera tidak pernah melihat ruang kosong di luar [0, 800] & [0, 450]
+                const halfW = 400 / Z;
+                const halfH = 225 / Z;
+                cam.scrollX = Phaser.Math.Clamp(cam.scrollX, halfW - 400, 400 - halfW);
+                cam.scrollY = Phaser.Math.Clamp(cam.scrollY, halfH - 225, 225 - halfH);
+            } else {
+                if (cam._isFollowing) {
+                    cam.stopFollow();
+                    cam._isFollowing = false;
+                }
                 cam.setScroll(0, 0);
             }
         }
