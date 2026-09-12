@@ -588,25 +588,6 @@ export class BaseScene extends Phaser.Scene {
         }
     }
 
-    triggerCinematicDialogueZoom(isStarting) {
-        const cam = this.cameras.main;
-        if (!cam) return;
-
-        if (isStarting) {
-            this._preDialogueZoom = this.currentZoom || 1.0;
-            const targetZoom = Math.max(this._preDialogueZoom, 1.25);
-            cam.setBounds(0, 0, 800, 450);
-            if (this.player) {
-                cam.startFollow(this.player, true, 0.06, 0.06);
-                cam._isFollowing = true;
-            }
-            cam.zoomTo(targetZoom, 350, 'Sine.easeOut');
-        } else {
-            const restoreZoom = this._preDialogueZoom || 1.0;
-            this.setCameraZoom(restoreZoom, true);
-        }
-    }
-
     registerUIElement(element, screenX, screenY, baseScale = 1) {
         if (!element) return;
         if (!this._registeredUI) this._registeredUI = [];
@@ -2046,7 +2027,6 @@ export class BaseScene extends Phaser.Scene {
         GameAudio.playDialogue();
         if (this.player && this.player.body) this.player.setVelocityX(0);
         this.updateMobileControlsVisibility();
-        this.triggerCinematicDialogueZoom(true);
 
         // Show all dialogue UI elements
         const showElements = [
@@ -2219,7 +2199,6 @@ export class BaseScene extends Phaser.Scene {
         if (this.cornerOrnaments) this.cornerOrnaments.forEach(o => o.setVisible(false));
 
         this.updateMobileControlsVisibility();
-        this.triggerCinematicDialogueZoom(false);
         if (this.onDialogueComplete) {
             const cb = this.onDialogueComplete;
             this.onDialogueComplete = null;
