@@ -46,7 +46,9 @@ export class HomeScene extends BaseScene {
 
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
-        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+        this.cameras.main.startFollow(this.player, false, 0.045, 0.025);
+        this.cameras.main.setDeadzone(80, 40);
+        this.cameras.main._isFollowing = true;
 
         // Rachael di Kursi Goyang (Teras Depan Rumah)
         this.rachael = this.physics.add.staticSprite(320, 418, 'npc_rachael').setDepth(5).setScale(0.28);
@@ -85,16 +87,9 @@ export class HomeScene extends BaseScene {
             }
         }
 
-        // Teks Petunjuk Arah Kiri & Kanan (Fixed HUD Navigasi Map di Atas)
-        this.leftExitText = this.add.text(20, 65, '◀ Ke Hutan Danau & Kaki Gunung\n(Cari Kayu Bakar)', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20).setScrollFactor(0);
-        this.leftExitText.setVisible(!hasWood);
-
-        this.rightExitText = this.add.text(780, 65, 'Ke Pinggir Hutan ➔\n(Jalan ke Kanan)', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#60a5fa', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20).setScrollFactor(0);
-        this.rightExitText.setVisible(hasWood && !hasCure);
+        // Teks Petunjuk Arah Kiri & Kanan (HD HTML Overlay Navigasi Map)
+        this.leftExitText = this.createLeftNavHint('◀ Ke Hutan Danau & Kaki Gunung\n(Cari Kayu Bakar)', !hasWood);
+        this.rightExitText = this.createRightNavHint('Ke Pinggir Hutan ➔\n(Jalan ke Kanan)', hasWood && !hasCure);
 
         this.promptText = this.add.text(0, 0, '', {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
@@ -702,7 +697,8 @@ export class HomeScene extends BaseScene {
                         targetScene: 'ForestTrailScene',
                         reqQuestNum: 1,
                         lockMessage: 'Ambil Pisau Belati di meja teras sebelum berangkat ke Hutan Timur!',
-                        direction: 'right'
+                        direction: 'right',
+                        pushBackX: 1120
                     });
                 } else {
                     this.scene.start('ForestTrailScene', { from: 'HomeScene' });

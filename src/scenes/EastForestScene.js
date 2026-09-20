@@ -15,12 +15,10 @@ export class EastForestScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 1);
 
         let startX = 60;
         if (data && data.from === 'WitchYardScene') {
@@ -66,12 +64,8 @@ export class EastForestScene extends BaseScene {
             ease: 'Sine.easeInOut'
         });
 
-        this.add.text(20, 65, '◀ Pemukiman Desa', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
-        this.add.text(780, 65, 'Halaman Madam Joanne ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#c084fc', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        this.createLeftNavHint('◀ Pemukiman Desa', true);
+        this.createRightNavHint('Halaman Madam Joanne ➔', true);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -92,12 +86,12 @@ export class EastForestScene extends BaseScene {
 
     createEastForestAtmosphere() {
         // 1. High-fidelity Misty Birch Forest Background Asset
-        this.add.image(400, 225, 'east_forest_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('east_forest_bg', 0, 1100, 450);
 
         // 2. Cold Violet/Indigo Witchcraft Ambient Tint
         const ambG = this.add.graphics().setDepth(1);
         ambG.fillStyle(0x2e1065, 0.1);
-        ambG.fillRect(0, 0, 800, 450);
+        ambG.fillRect(-200, 0, 1200, 450);
 
         // 3. Drifting Eerie Forest Fog Layers
         for (let m = 0; m < 5; m++) {

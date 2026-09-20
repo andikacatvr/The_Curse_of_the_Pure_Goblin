@@ -16,12 +16,10 @@ export class FirewoodForestScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 1);
 
         let startX = 60;
         if (data && data.from === 'BakeryMillScene') {
@@ -30,12 +28,8 @@ export class FirewoodForestScene extends BaseScene {
         this.player = this.physics.add.sprite(startX, 380, 'player_goblin').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
 
-        this.add.text(20, 65, '◀ Bengkel Heinreich', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
-        this.add.text(780, 65, 'Gilingan & Toko Roti ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        this.createLeftNavHint('◀ Bengkel Heinreich', true);
+        this.createRightNavHint('Gilingan & Toko Roti ➔', true);
 
         // Firewood items group
         this.woodGroup = this.physics.add.staticGroup();
@@ -201,7 +195,7 @@ export class FirewoodForestScene extends BaseScene {
 
     createFirewoodForestAtmosphere() {
         // 1. High-fidelity Pixel Art Pine Forest Outskirts Background
-        this.add.image(400, 225, 'firewood_forest_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('firewood_forest_bg', 0, 1100, 450);
 
         // 2. Atmospheric Sunbeams / Canopy God Rays piercing through the forest
         const raysG = this.add.graphics().setDepth(1);

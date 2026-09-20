@@ -16,7 +16,7 @@ export class WitchCottageScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 427, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 427, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
         const qState = getQuestState(this.registry);
@@ -54,9 +54,7 @@ export class WitchCottageScene extends BaseScene {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
         }).setOrigin(0.5).setDepth(10).setVisible(false);
 
-        this.add.text(20, 65, '◀ Keluar Ke Halaman', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#60a5fa', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
+        this.createLeftNavHint('◀ Keluar Ke Halaman', true);
 
         this.createVisualInventoryUI();
         this.createDialogueUI();
@@ -307,10 +305,16 @@ export class WitchCottageScene extends BaseScene {
 
     createWitchCottageAtmosphere() {
         // 1. Witch Cottage Interior Background (Shifted slightly up so tiles_kayu sits under the cauldron)
-        this.add.image(400, 192, 'witch_cottage_bg').setDisplaySize(800, 465).setDepth(0);
+        this.add.image(400, 192, 'witch_cottage_bg').setDisplaySize(1100, 465).setDepth(0);
 
         // 2. Wooden Floor Surface (tiles_kayu) placed under cauldron feet
-        this.add.image(0, 450, 'tiles_kayu').setOrigin(0, 1).setScale(800 / 770, 0.68).setDepth(2);
+        const floorGroup = this.add.container(0, 0).setDepth(2);
+        for (let gx = -800; gx <= 800; gx += 800) {
+            const spr = this.add.image(gx, 450, 'tiles_kayu');
+            spr.setOrigin(0, 1);
+            spr.setScale(800 / 770, 0.68);
+            floorGroup.add(spr);
+        }
 
         // 3. Animated Cauldron Fire Glow (Under Cauldron: X: 265, Y: 390)
         const fireGlow = this.add.circle(265, 390, 22, 0xf97316, 0.35).setDepth(1);

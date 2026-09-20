@@ -15,12 +15,16 @@ export class WitchYardScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 450, 'tanah_witch').setDepth(2);
-        groundSprite.setOrigin(0, 1);
-        groundSprite.setScale(800 / 770, 0.55);
+        const groundGroup = this.add.container(0, 0).setDepth(2);
+        for (let gx = -800; gx <= 800; gx += 800) {
+            const spr = this.add.image(gx, 450, 'tanah_witch');
+            spr.setOrigin(0, 1);
+            spr.setScale(800 / 770, 0.55);
+            groundGroup.add(spr);
+        }
 
         const qState = getQuestState(this.registry);
         const inv = getInventory(this.registry);
@@ -68,17 +72,11 @@ export class WitchYardScene extends BaseScene {
         });
 
         if (hasCure || qState.chapter === 'PROLOG') {
-            this.add.text(20, 65, '◀ Lembah Air Terjun', {
-                fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-            }).setOrigin(0, 0).setDepth(20);
+            this.createLeftNavHint('◀ Lembah Air Terjun', true);
         } else if (qState.chapter === 'BAB 4') {
-            this.add.text(20, 65, '◀ Hutan Timur', {
-                fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-            }).setOrigin(0, 0).setDepth(20);
+            this.createLeftNavHint('◀ Hutan Timur', true);
         } else if (qState.chapter === 'BAB 1' || qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
-            this.add.text(20, 65, '◀ Kebun Nenek Mary', {
-                fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-            }).setOrigin(0, 0).setDepth(20);
+            this.createLeftNavHint('◀ Kebun Nenek Mary', true);
         }
         
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -405,12 +403,12 @@ export class WitchYardScene extends BaseScene {
 
     createWitchYardAtmosphere() {
         // 1. PANORAMIC WITCH COTTAGE VALLEY BACKGROUND (latarbelakangrumahpenyihir.jpg)
-        this.add.image(400, 225, 'witch_yard_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('witch_yard_bg', 0, 1100, 450);
 
         // 2. Subtle mystical night tint & gentle floating magical stars
         const mistG = this.add.graphics().setDepth(0);
         mistG.fillStyle(0x3b0764, 0.12);
-        mistG.fillRect(0, 0, 800, 450);
+        mistG.fillRect(-200, 0, 1200, 450);
 
         for (let i = 0; i < 20; i++) {
             const sx = Phaser.Math.Between(15, 785);
@@ -428,8 +426,8 @@ export class WitchYardScene extends BaseScene {
         }
 
         // 5. The Witch Cottage Pixel Art Mansion Asset (Depth: 1)
-        const cottageBg = this.add.image(0, 0, 'witch_yard_house').setOrigin(0, 0);
-        cottageBg.setDisplaySize(800, 450);
+        const cottageBg = this.add.image(400, 225, 'witch_yard_house').setOrigin(0.5, 0.5);
+        cottageBg.setDisplaySize(1100, 450);
         cottageBg.setDepth(1);
 
         // 6. Yard Scenery Graphics (Depth: 2 & 3)

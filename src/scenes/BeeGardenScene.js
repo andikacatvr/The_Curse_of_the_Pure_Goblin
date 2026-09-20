@@ -16,12 +16,10 @@ export class BeeGardenScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 1);
 
         const qState = getQuestState(this.registry);
         const inv = getInventory(this.registry);
@@ -56,9 +54,7 @@ export class BeeGardenScene extends BaseScene {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
         }).setOrigin(0.5).setDepth(10).setVisible(false);
 
-        this.add.text(780, 65, 'Ke Halaman Grandma Mary ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        this.createRightNavHint('Ke Halaman Grandma Mary ➔', true);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -239,7 +235,7 @@ export class BeeGardenScene extends BaseScene {
 
     createBeeGardenAtmosphere() {
         // 1. High-fidelity Pixel Art Ladang Grandma Mary Background
-        this.add.image(400, 225, 'bee_garden_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('bee_garden_bg', 0, 1100, 450);
 
         // 2. Drifting atmospheric morning mist across the meadow
         for (let m = 0; m < 3; m++) {

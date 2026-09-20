@@ -21,12 +21,10 @@ export class WoodshopScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 1);
 
         this.player = this.physics.add.sprite(startX, 380, 'player_goblin').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
@@ -108,12 +106,8 @@ export class WoodshopScene extends BaseScene {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
         }).setOrigin(0.5).setDepth(10).setVisible(false);
 
-        this.add.text(20, 65, '◀ Kebun Grandma Mary', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
-        this.add.text(780, 65, 'Pinggir Hutan (Kayu) ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        this.createLeftNavHint('◀ Kebun Grandma Mary', true);
+        this.createRightNavHint('Pinggir Hutan (Kayu) ➔', true);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -329,7 +323,7 @@ export class WoodshopScene extends BaseScene {
 
     createWoodshopAtmosphere() {
         // 1. High-fidelity Pixel Art Valley Woodshop Background
-        this.add.image(400, 225, 'woodshop_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('woodshop_bg', 0, 1100, 450);
 
         // 2. Gentle drifting mountain valley mist
         for (let m = 0; m < 3; m++) {

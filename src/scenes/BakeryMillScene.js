@@ -16,12 +16,10 @@ export class BakeryMillScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 1);
 
         let startX = 60;
         if (data && data.from === 'VillageResidentialScene') {
@@ -46,12 +44,8 @@ export class BakeryMillScene extends BaseScene {
         this.oven = this.physics.add.staticSprite(710, 380, 'magic_oven').setDepth(4);
         this.oven.type = 'oven';
 
-        this.add.text(20, 65, '◀ Pinggir Hutan (Kayu)', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
-        this.add.text(780, 65, 'Pemukiman Warga (3 Rumah) ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#60a5fa', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        this.createLeftNavHint('◀ Pinggir Hutan (Kayu)', true);
+        this.createRightNavHint('Pemukiman Warga (3 Rumah) ➔', true);
 
         this.promptText = this.add.text(0, 0, '', {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
@@ -288,7 +282,7 @@ export class BakeryMillScene extends BaseScene {
 
     createBakeryMillAtmosphere() {
         // 1. High-fidelity Pixel Art Sunrise Terraced Fields Background
-        this.add.image(400, 225, 'bakery_mill_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('bakery_mill_bg', 0, 1100, 450);
 
         // 2. Radiant Golden Sunrise Sunburst & Light Rays
         const sunGlow = this.add.circle(410, 132, 55, 0xfef08a, 0.28).setDepth(1);

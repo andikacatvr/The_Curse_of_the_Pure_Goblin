@@ -14,6 +14,7 @@ import { DisplayManager } from '../utils/DisplayManager.js';
 import { HDHudManager } from '../utils/HDHudManager.js';
 import { HDSettingsModal } from '../utils/HDSettingsModal.js';
 import { HDInventoryModal } from '../utils/HDInventoryModal.js';
+import { HDDialogueManager } from '../utils/HDDialogueManager.js';
 
 export class BaseScene extends Phaser.Scene {
     init(data) {
@@ -35,6 +36,7 @@ export class BaseScene extends Phaser.Scene {
                 HDHudManager.clear();
                 HDSettingsModal.hide();
                 HDInventoryModal.hide();
+                HDDialogueManager.hide();
                 this._worldExpanded = false;
                 this._camFollowReady = false;
                 this._registeredUI = [];
@@ -43,10 +45,51 @@ export class BaseScene extends Phaser.Scene {
                 HDHudManager.clear();
                 HDSettingsModal.hide();
                 HDInventoryModal.hide();
+                HDDialogueManager.hide();
                 this._registeredUI = [];
             });
         }
         return HDHudManager.createBadge(direction, text, isVisible);
+    }
+
+    /**
+     * Creates a panoramic seamless background that covers widescreen / cinema zoom views.
+     */
+    createSeamlessBackground(bgKey, depth = 0, width = 1100, height = 450) {
+        return this.add.image(400, 225, bgKey).setDisplaySize(width, height).setDepth(depth);
+    }
+
+    /**
+     * Creates a continuous, seamless ground that spans edge-to-edge from -800px to 1600px.
+     */
+    createSeamlessGround(groundKey = 'tanah_home', depth = 1, y = 418) {
+        const group = this.add.container(0, 0).setDepth(depth);
+        const tileWidth = 800;
+        const scale = 800 / 770;
+        const originY = 117 / 250;
+
+        for (let gx = -800; gx <= 800; gx += tileWidth) {
+            const spr = this.add.image(gx, y, groundKey);
+            spr.setOrigin(0, originY);
+            spr.setScale(scale);
+            group.add(spr);
+        }
+        return group;
+    }
+
+    /**
+     * Creates an HD HTML navigation hint badge for the scene.
+     */
+    createNavHint(direction, text, visible = true) {
+        return HDHudManager.createBadge(direction, text, visible);
+    }
+
+    createLeftNavHint(text, visible = true) {
+        return HDHudManager.createBadge('left', text, visible);
+    }
+
+    createRightNavHint(text, visible = true) {
+        return HDHudManager.createBadge('right', text, visible);
     }
 
     createVisualInventoryUI() {
@@ -67,6 +110,12 @@ export class BaseScene extends Phaser.Scene {
 
         // Inisialisasi HD HTML HUD Controls (Always edge-pinned, immune to camera zoom)
         HDHudManager.attachScene(this);
+        if (!this._hdShutdownRegistered) {
+            this._hdShutdownRegistered = true;
+            this.events.once('shutdown', () => {
+                HDHudManager.clear();
+            });
+        }
 
         // Hamburger Menu Button (Canvas container hidden, handled by HD HTML Overlay)
         this.menuBtnContainer = this.add.container(765, 26).setDepth(25).setVisible(false);
@@ -701,7 +750,8 @@ export class BaseScene extends Phaser.Scene {
             }
 
             if (this.player) {
-                cam.startFollow(this.player, true, 0.08, 0.08);
+                cam.startFollow(this.player, false, 0.045, 0.025);
+                cam.setDeadzone(80, 40);
                 cam._isFollowing = true;
             }
         }
@@ -1609,214 +1659,8 @@ export class BaseScene extends Phaser.Scene {
     }
 
     createDialogueUI() {
-        // Speaker-to-portrait key mapping
-        this.portraitMap = {
-            'Rachael': 'portrait_rachael',
-            'Nenek': 'portrait_nenek',
-            'Aksel': 'portrait_aksel',
-            'Aksel (Goblin)': 'portrait_aksel_goblin',
-            'Aksel (Dalam Hati)': 'portrait_aksel',
-            'Madam Joanne': 'portrait_penyihir',
-            'Madam Joanne (Penyihir)': 'portrait_penyihir',
-            'Penyihir': 'portrait_penyihir',
-            'Grandma Mary': 'portrait_mary',
-            'Nenek Mary': 'portrait_mary',
-            'Mr. Heinreich': 'portrait_heinreich',
-            'Heinreich': 'portrait_heinreich',
-            'Mr. Breado': 'portrait_breado',
-            'Breado': 'portrait_breado',
-            'Pemburu Desa': 'portrait_hunter',
-            'Pemburu': 'portrait_hunter',
-            'Hunter': 'portrait_hunter',
-            'Pak Thomas': 'portrait_thomas',
-            'Thomas': 'portrait_thomas',
-            'Ibu Sarah': 'portrait_sarah',
-            'Sarah': 'portrait_sarah',
-            'Paman Bob': 'portrait_bob',
-            'Bob': 'portrait_bob',
-            'Rachael (Sembuh)': 'portrait_rachael_sembuh'
-        };
-
-        // Track previous speaker for animation direction
-        this._prevSpeaker = null;
-
-        // ===== OVERLAY (dim background) =====
-        this.dialogueOverlay = this.add.rectangle(400, 225, 800, 450, 0x000000, 0.45).setDepth(20).setVisible(false);
-
-        // ===== ORNATE DIALOGUE BOX (Fire Emblem style golden frame) =====
-        const boxY = 382;
-        const boxW = 720;
-        const boxH = 120;
-
-        // Outer golden frame border (thick)
-        this.dialogueFrameOuter = this.add.rectangle(400, boxY, boxW + 12, boxH + 12, 0x8b6914, 1)
-            .setDepth(21).setVisible(false);
-
-        // Inner golden accent border
-        this.dialogueFrameInner = this.add.rectangle(400, boxY, boxW + 4, boxH + 4, 0xd4a017, 1)
-            .setDepth(21).setVisible(false);
-
-        // Main dialogue box background (dark navy)
-        this.dialogueBox = this.add.rectangle(400, boxY, boxW, boxH, 0x0a0e27, 0.97)
-            .setStrokeStyle(2, 0xb8941f)
-            .setDepth(21).setVisible(false);
-
-        // Corner ornaments (golden diamond accents at 4 corners)
-        const cornerOffsetX = boxW / 2 + 2;
-        const cornerOffsetY = boxH / 2 + 2;
-        this.cornerOrnaments = [];
-        const cornerPositions = [
-            { x: 400 - cornerOffsetX, y: boxY - cornerOffsetY },
-            { x: 400 + cornerOffsetX, y: boxY - cornerOffsetY },
-            { x: 400 - cornerOffsetX, y: boxY + cornerOffsetY },
-            { x: 400 + cornerOffsetX, y: boxY + cornerOffsetY }
-        ];
-        cornerPositions.forEach(pos => {
-            const ornament = this.add.rectangle(pos.x, pos.y, 10, 10, 0xf5c842, 1)
-                .setAngle(45).setDepth(22).setVisible(false);
-            this.cornerOrnaments.push(ornament);
-        });
-
-        // Horizontal decorative gold lines (top & bottom of box)
-        this.decoLineTop = this.add.rectangle(400, boxY - boxH / 2, boxW - 30, 2, 0xd4a017, 0.6)
-            .setDepth(22).setVisible(false);
-        this.decoLineBottom = this.add.rectangle(400, boxY + boxH / 2, boxW - 30, 2, 0xd4a017, 0.6)
-            .setDepth(22).setVisible(false);
-
-        // ===== SPEAKER NAME TAB (centered ornamental banner) =====
-        const nameTabY = boxY - boxH / 2 - 5;
-
-        // Name tab background (golden banner shape)
-        this.nameTabBg = this.add.rectangle(400, nameTabY, 180, 28, 0x1a1440, 0.97)
-            .setStrokeStyle(2, 0xd4a017)
-            .setDepth(22).setVisible(false);
-
-        // Name tab side ornaments (small golden diamonds on each side)
-        this.nameTabOrnL = this.add.rectangle(400 - 95, nameTabY, 8, 8, 0xf5c842, 1)
-            .setAngle(45).setDepth(22).setVisible(false);
-        this.nameTabOrnR = this.add.rectangle(400 + 95, nameTabY, 8, 8, 0xf5c842, 1)
-            .setAngle(45).setDepth(22).setVisible(false);
-
-        // Speaker name text
-        this.speakerText = this.add.text(400, nameTabY, '', {
-            fontSize: '14px', fontStyle: 'bold', fill: '#f5c842', fontFamily: FONT_BODY
-        }).setOrigin(0.5).setDepth(23).setVisible(false);
-
-        // ===== DIALOGUE BODY TEXT =====
-        this.dialogueBodyText = this.add.text(400, boxY + 2, '', {
-            fontSize: '15px', fill: '#f0f0f0', fontFamily: FONT_BODY,
-            wordWrap: { width: boxW - 60 }, align: 'center', lineSpacing: 4
-        }).setOrigin(0.5, 0.5).setDepth(23).setVisible(false);
-
-        // ===== CHARACTER PORTRAIT (FE-style, body behind dialogue box) =====
-        const portraitDisplayH = 270;
-        const portraitDisplayW = 250;
-        // Portrait positioned left, body overlaps behind dialogue box
-        const portraitBaseX = 155;
-        const portraitBaseY = boxY - boxH / 2 - portraitDisplayH / 2 + 65;
-
-        this.portraitImage = this.add.image(portraitBaseX, portraitBaseY, 'portrait_aksel')
-            .setDisplaySize(portraitDisplayW, portraitDisplayH)
-            .setDepth(20)
-            .setVisible(false);
-
-        // Store portrait base position for animations
-        this._portraitBaseX = portraitBaseX;
-        this._portraitBaseY = portraitBaseY;
-        this._portraitDisplayW = portraitDisplayW;
-        this._portraitDisplayH = portraitDisplayH;
-
-        // Subtle portrait shadow/glow effect underneath
-        this.portraitShadow = this.add.ellipse(portraitBaseX, boxY - boxH / 2 + 10, 130, 16, 0x000000, 0.35)
-            .setDepth(19).setVisible(false);
-
-        // Fallback speaker icon (for speakers without portrait e.g. Narator)
-        this.portraitFallbackIcon = this.add.text(portraitBaseX, portraitBaseY + 20, '💬', {
-            fontSize: '32px'
-        }).setOrigin(0.5).setDepth(20).setVisible(false);
-
-        // ===== SKIP BUTTON (top-right of dialogue frame) =====
-        this.skipBtn = this.add.rectangle(720, nameTabY, 100, 24, 0x1a1440, 0.9)
-            .setStrokeStyle(1.5, 0xd4a017)
-            .setDepth(22)
-            .setVisible(false)
-            .setInteractive({ useHandCursor: true });
-
-        const skipLabel = isMobileDevice() ? '⏩ LEWATI' : '⏩ SKIP [S]';
-        this.skipBtnText = this.add.text(720, nameTabY, skipLabel, {
-            fontSize: '10px', fontStyle: 'bold', fill: '#f5c842', fontFamily: FONT_BODY
-        }).setOrigin(0.5).setDepth(23).setVisible(false);
-
-        this.skipBtn.on('pointerover', () => {
-            this.skipBtn.setFillStyle(0x2a2460, 1);
-            this.skipBtn.setStrokeStyle(2, 0xf5c842);
-        });
-        this.skipBtn.on('pointerout', () => {
-            this.skipBtn.setFillStyle(0x1a1440, 0.9);
-            this.skipBtn.setStrokeStyle(1.5, 0xd4a017);
-        });
-        this.skipBtn.on('pointerdown', (pointer, localX, localY, event) => {
-            if (event && event.stopPropagation) event.stopPropagation();
-            this.skipDialogue();
-        });
-
-        // ===== CONTINUE PROMPT =====
-        const continueLabel = isMobileDevice() ? '▼  Sentuh Layar untuk Lanjut' : '▼  Sentuh Layar / [E] / [SPASI]';
-        this.continuePrompt = this.add.text(400, boxY + boxH / 2 - 8, continueLabel, {
-            fontSize: '10px', fontStyle: 'bold', fill: '#d4a017', fontFamily: FONT_BODY
-        }).setOrigin(0.5, 1).setDepth(23).setVisible(false);
-
-        // Blinking animation for continue prompt
-        this._continueBlinkTween = null;
-
-        // ===== CLICK DIALOGUE BOX TO ADVANCE =====
-        this.dialogueBox.setInteractive({ useHandCursor: true });
-        this.dialogueBox.on('pointerdown', () => {
-            if (this.isTalking) this.nextDialogue();
-        });
-
-        // ===== KEYBOARD SHORTCUTS =====
-        this.input.keyboard.on('keydown-ESC', () => {
-            if (this.isTalking) {
-                this.skipDialogue();
-            } else if (this.isSettingsOpen) {
-                this.toggleSettingsModal(false);
-            } else if (this.isInvOpen) {
-                this.toggleInventoryModal();
-            } else if (this.isQuestModalOpen) {
-                this.toggleQuestModal();
-            } else {
-                this.toggleSettingsModal(true);
-            }
-        });
-        this.input.keyboard.on('keydown-S', () => {
-            if (this.isTalking) this.skipDialogue();
-        });
-
-        // Container for dialogue UI elements so they zoom and follow camera seamlessly
-        this.dialogueContainer = this.add.container(0, 0).setDepth(21);
-        const dialogueList = [
-            this.portraitShadow,
-            this.portraitImage,
-            this.portraitFallbackIcon,
-            this.dialogueFrameOuter,
-            this.dialogueFrameInner,
-            this.dialogueBox,
-            ...this.cornerOrnaments,
-            this.decoLineTop,
-            this.decoLineBottom,
-            this.nameTabBg,
-            this.nameTabOrnL,
-            this.nameTabOrnR,
-            this.speakerText,
-            this.dialogueBodyText,
-            this.skipBtn,
-            this.skipBtnText,
-            this.continuePrompt
-        ];
-        this.dialogueContainer.add(dialogueList);
-        this.registerUIElement(this.dialogueContainer, 0, 0);
-        this.registerUIElement(this.dialogueOverlay, 400, 225);
+        HDDialogueManager.init();
+        this.isTalking = false;
     }
 
     startDialogue(dialogueList, onCompleteCallback = null) {
@@ -1827,196 +1671,45 @@ export class BaseScene extends Phaser.Scene {
 
         this.isTalking = true;
         this.activeDialogueList = dialogueList;
-        this.currentDialogueIndex = 0;
         this.onDialogueComplete = onCompleteCallback;
-        this._prevSpeaker = null;
-        GameAudio.playDialogue();
         if (this.player && this.player.body) this.player.setVelocityX(0);
         this.updateMobileControlsVisibility();
-
-        // Show all dialogue UI elements
-        const showElements = [
-            this.dialogueOverlay, this.dialogueFrameOuter, this.dialogueFrameInner,
-            this.dialogueBox, this.decoLineTop, this.decoLineBottom,
-            this.nameTabBg, this.nameTabOrnL, this.nameTabOrnR,
-            this.speakerText, this.dialogueBodyText, this.continuePrompt,
-            this.skipBtn, this.skipBtnText, this.portraitShadow
-        ];
-        showElements.forEach(el => { if (el) el.setVisible(true); });
-        this.cornerOrnaments.forEach(o => o.setVisible(true));
         if (this.promptText) this.promptText.setVisible(false);
 
-        // Start blinking continue prompt
-        if (this._continueBlinkTween) this._continueBlinkTween.stop();
-        this._continueBlinkTween = this.tweens.add({
-            targets: this.continuePrompt,
-            alpha: { from: 1, to: 0.3 },
-            duration: 600,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
+        HDDialogueManager.start(this, dialogueList, () => {
+            this.isTalking = false;
+            this.updateMobileControlsVisibility();
+            if (onCompleteCallback) onCompleteCallback();
         });
-
-        // Entrance animation: box slides up from below
-        const targets = [this.dialogueFrameOuter, this.dialogueFrameInner, this.dialogueBox];
-        targets.forEach(t => { if (t) { t.setAlpha(0); t.y += 30; } });
-        this.tweens.add({
-            targets,
-            y: '-=30',
-            alpha: 1,
-            duration: 250,
-            ease: 'Back.easeOut'
-        });
-
-        this.displayCurrentDialogue();
     }
 
     displayCurrentDialogue() {
-        const currentData = this.activeDialogueList[this.currentDialogueIndex];
-        this.speakerText.setText(currentData.speaker);
-        this.dialogueBodyText.setText('');
-
-        // Update character portrait based on speaker or explicit override
-        this.updatePortrait(currentData.speaker, currentData.portrait);
-
-        let charIndex = 0;
-        if (this.typeTimer) this.typeTimer.remove();
-
-        this.typeTimer = this.time.addEvent({
-            delay: 22,
-            callback: () => {
-                this.dialogueBodyText.setText(currentData.text.substring(0, charIndex));
-                charIndex++;
-            },
-            repeat: currentData.text.length
-        });
+        HDDialogueManager.displayCurrent();
     }
 
     updatePortrait(speakerName, explicitPortrait = null) {
-        let portraitKey = explicitPortrait || this.portraitMap[speakerName];
-        if (!explicitPortrait && speakerName === 'Rachael' && this.registry && this.registry.get('rachaelHealed')) {
-            portraitKey = 'portrait_rachael_sembuh';
-        }
-        if (!portraitKey && speakerName) {
-            if (speakerName.includes('Madam Joanne') || speakerName.includes('Penyihir')) {
-                portraitKey = 'portrait_penyihir';
-            } else if (speakerName.startsWith('Aksel')) {
-                portraitKey = 'portrait_aksel';
-            } else if (speakerName.startsWith('Rachael')) {
-                portraitKey = (this.registry && this.registry.get('rachaelHealed')) ? 'portrait_rachael_sembuh' : 'portrait_rachael';
-            }
-        }
-        const isSameSpeaker = (this._prevSpeaker === (explicitPortrait ? `${speakerName}_${explicitPortrait}` : speakerName));
-        this._prevSpeaker = (explicitPortrait ? `${speakerName}_${explicitPortrait}` : speakerName);
-
-        if (portraitKey && this.textures.exists(portraitKey)) {
-            // Show the character portrait image
-            this.portraitImage.setTexture(portraitKey);
-            this.portraitImage.setDisplaySize(this._portraitDisplayW, this._portraitDisplayH);
-            const targetScaleX = this.portraitImage.scaleX;
-            const targetScaleY = this.portraitImage.scaleY;
-            this.portraitImage.setVisible(true);
-            if (this.portraitFallbackIcon) this.portraitFallbackIcon.setVisible(false);
-            if (this.portraitShadow) this.portraitShadow.setVisible(true);
-
-            if (!isSameSpeaker) {
-                // Slide-in animation from the left (Fire Emblem style entrance)
-                this.portraitImage.setAlpha(0);
-                this.portraitImage.x = this._portraitBaseX - 40;
-                this.portraitImage.y = this._portraitBaseY;
-                this.portraitImage.setScale(targetScaleX * 0.9, targetScaleY * 0.9);
-
-                this.tweens.add({
-                    targets: this.portraitImage,
-                    x: this._portraitBaseX,
-                    alpha: 1,
-                    duration: 280,
-                    ease: 'Back.easeOut'
-                });
-
-                // Subtle scale bounce retaining correct display size
-                this.tweens.add({
-                    targets: this.portraitImage,
-                    scaleX: targetScaleX,
-                    scaleY: targetScaleY,
-                    duration: 300,
-                    ease: 'Back.easeOut',
-                    delay: 50
-                });
-            }
-        } else {
-            // No portrait available - show fallback icon
-            this.portraitImage.setVisible(false);
-            if (this.portraitShadow) this.portraitShadow.setVisible(false);
-            if (this.portraitFallbackIcon) this.portraitFallbackIcon.setVisible(true);
-        }
+        HDDialogueManager.updatePortrait(speakerName, explicitPortrait);
     }
 
     nextDialogue() {
-        const currentData = this.activeDialogueList[this.currentDialogueIndex];
-        if (this.dialogueBodyText.text.length < currentData.text.length) {
-            if (this.typeTimer) this.typeTimer.remove();
-            this.dialogueBodyText.setText(currentData.text);
-            return;
-        }
-
-        this.currentDialogueIndex++;
-        if (this.currentDialogueIndex < this.activeDialogueList.length) {
-            GameAudio.playDialogue();
-            this.displayCurrentDialogue();
-        } else {
-            this.endDialogue();
-        }
+        HDDialogueManager.next();
     }
 
     skipDialogue() {
-        if (!this.isTalking) return;
-        if (this.typeTimer) {
-            this.typeTimer.remove();
-            this.typeTimer = null;
-        }
-        this.endDialogue();
+        this.isTalking = false;
+        HDDialogueManager.skip();
     }
 
     endDialogue() {
         this.isTalking = false;
-        this._prevSpeaker = null;
-        if (this.typeTimer) {
-            this.typeTimer.remove();
-            this.typeTimer = null;
-        }
-
-        // Stop blinking
-        if (this._continueBlinkTween) {
-            this._continueBlinkTween.stop();
-            this._continueBlinkTween = null;
-        }
-
-        // Hide all dialogue UI elements
-        const hideElements = [
-            this.dialogueOverlay, this.dialogueFrameOuter, this.dialogueFrameInner,
-            this.dialogueBox, this.decoLineTop, this.decoLineBottom,
-            this.nameTabBg, this.nameTabOrnL, this.nameTabOrnR,
-            this.speakerText, this.dialogueBodyText, this.continuePrompt,
-            this.skipBtn, this.skipBtnText,
-            this.portraitImage, this.portraitShadow, this.portraitFallbackIcon
-        ];
-        hideElements.forEach(el => { if (el) el.setVisible(false); });
-        if (this.cornerOrnaments) this.cornerOrnaments.forEach(o => o.setVisible(false));
-
-        this.updateMobileControlsVisibility();
-        if (this.onDialogueComplete) {
-            const cb = this.onDialogueComplete;
-            this.onDialogueComplete = null;
-            cb();
-        }
+        HDDialogueManager.end();
     }
 
     showMapLockedNotice(message) {
         if (this.lockedNoticeActive) return;
         this.lockedNoticeActive = true;
 
-        const noticeBox = this.add.container(400, 100).setDepth(35);
+        const noticeBox = this.add.container(400, 100).setDepth(35).setScrollFactor(0);
         const bg = this.add.rectangle(0, 0, 540, 50, 0x7f1d1d, 0.95).setStrokeStyle(2, 0xef4444);
         const txt = this.add.text(0, -7, '🔒 MAP TERKUNCI! QUEST BELUM SELESAI', {
             fontSize: '12px', fontStyle: 'bold', fill: '#f87171', fontFamily: FONT_BODY
@@ -2049,7 +1742,7 @@ export class BaseScene extends Phaser.Scene {
         });
     }
 
-    checkMapGate({ targetScene, targetData, reqQuestNum, reqItem, lockMessage, direction }) {
+    checkMapGate({ targetScene, targetData, reqQuestNum, reqItem, lockMessage, direction, pushBackX }) {
         const qState = getQuestState(this.registry);
         const inv = getInventory(this.registry);
 
@@ -2065,7 +1758,10 @@ export class BaseScene extends Phaser.Scene {
 
         if (isLocked) {
             this.showMapLockedNotice(lockMessage || 'Selesaikan quest di map ini terlebih dahulu!');
-            if (direction === 'right') {
+            if (pushBackX !== undefined) {
+                this.player.setX(pushBackX);
+                this.player.setVelocityX(direction === 'right' ? -150 : 150);
+            } else if (direction === 'right') {
                 this.player.setX(740);
                 this.player.setVelocityX(-150);
             } else if (direction === 'left') {
@@ -2115,21 +1811,35 @@ export class BaseScene extends Phaser.Scene {
             this.setupTapToInteract();
         }
 
-        // Kamera Zooming Dynamic Follow & Mathematical Zero-Void Clamping
+        // Kamera Dynamic Smooth Follow & Mathematical Zero-Void Clamping
         if (this.player && this.cameras.main) {
             const cam = this.cameras.main;
             const Z = cam.zoom || 1.0;
-            if (Z > 1.01) {
+            const worldW = (this.physics && this.physics.world && this.physics.world.bounds && this.physics.world.bounds.width > 800)
+                ? this.physics.world.bounds.width
+                : 800;
+            const isWideWorld = worldW > 800;
+
+            if (Z > 1.01 || isWideWorld) {
                 if (!cam._isFollowing) {
                     cam.removeBounds();
-                    cam.startFollow(this.player, true, 0.08, 0.08);
+                    cam.startFollow(this.player, false, 0.045, 0.025);
+                    cam.setDeadzone(80, 40);
                     cam._isFollowing = true;
                 }
-                // Pastikan batas layar kamera tidak pernah melihat ruang kosong di luar [0, 800] & [0, 450]
+                // Pastikan batas layar kamera tidak pernah melihat ruang kosong di luar [0, worldW] & [0, 450]
                 const halfW = 400 / Z;
                 const halfH = 225 / Z;
-                cam.scrollX = Phaser.Math.Clamp(cam.scrollX, halfW - 400, 400 - halfW);
-                cam.scrollY = Phaser.Math.Clamp(cam.scrollY, halfH - 225, 225 - halfH);
+                const minScrollX = Math.min(halfW - 400, (worldW - 400) - halfW);
+                const maxScrollX = Math.max(halfW - 400, (worldW - 400) - halfW);
+                cam.scrollX = Phaser.Math.Clamp(cam.scrollX, minScrollX, maxScrollX);
+
+                if (Z > 1.01) {
+                    cam.scrollY = Phaser.Math.Clamp(cam.scrollY, halfH - 225, 225 - halfH);
+                } else {
+                    const targetScrollY = 225 / Z - 225;
+                    cam.scrollY = targetScrollY;
+                }
             } else {
                 if (cam._isFollowing) {
                     cam.stopFollow();
@@ -2232,7 +1942,7 @@ export class BaseScene extends Phaser.Scene {
 
         // Batas Layar Kiri (Left Boundary)
         const leftLimit = minX !== undefined ? minX : 20;
-        const leftThreshold = canExitLeft ? 30 : leftLimit;
+        const leftThreshold = canExitLeft ? (leftLimit + 10) : leftLimit;
         if (this.player.x <= leftThreshold) {
             if (canExitLeft && onExitLeft) {
                 GameAudio.playTransition();
@@ -2248,7 +1958,7 @@ export class BaseScene extends Phaser.Scene {
 
         // Batas Layar Kanan (Right Boundary)
         const rightLimit = maxX !== undefined ? maxX : 770;
-        const rightThreshold = canExitRight ? 765 : rightLimit;
+        const rightThreshold = canExitRight ? (rightLimit - 10) : rightLimit;
         if (this.player.x >= rightThreshold) {
             if (canExitRight && onExitRight) {
                 GameAudio.playTransition();

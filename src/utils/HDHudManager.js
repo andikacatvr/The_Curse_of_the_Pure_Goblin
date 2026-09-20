@@ -230,15 +230,20 @@ export class HDHudManager {
         const canvas = document.querySelector('#game-container canvas');
         if (canvas) {
             const rect = canvas.getBoundingClientRect();
-            const padX = Math.max(16, rect.left + 18);
-            const padRight = Math.max(16, window.innerWidth - rect.right + 18);
-            const padY = Math.max(68, rect.top + (rect.height * 0.15));
+            const padX = Math.max(16, Math.round(rect.left + 16));
+            const padRight = Math.max(16, Math.round(window.innerWidth - rect.right + 16));
+            const padY = Math.max(66, Math.round(rect.top + 60));
 
             this.leftBadge.style.left = `${padX}px`;
             this.leftBadge.style.top = `${padY}px`;
 
             this.rightBadge.style.right = `${padRight}px`;
             this.rightBadge.style.top = `${padY}px`;
+        } else {
+            this.leftBadge.style.left = '18px';
+            this.leftBadge.style.top = '66px';
+            this.rightBadge.style.right = '18px';
+            this.rightBadge.style.top = '66px';
         }
     }
 
@@ -417,13 +422,15 @@ export class HDHudManager {
             }
 
             /* --- NAVIGATION BADGES --- */
+            /* --- NAVIGATION BADGES --- */
             .hd-nav-badge {
                 position: fixed;
-                display: flex;
+                top: 66px;
+                display: none;
                 flex-direction: column;
                 max-width: 320px;
                 padding: 7px 14px;
-                background: linear-gradient(135deg, rgba(15, 23, 42, 0.90) 0%, rgba(30, 41, 59, 0.85) 100%);
+                background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.88) 100%);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
                 border-radius: 10px;
@@ -434,14 +441,17 @@ export class HDHudManager {
                 pointer-events: none;
                 user-select: none;
                 -webkit-user-select: none;
+                z-index: 120;
             }
 
             .hd-nav-badge.visible {
-                opacity: 1;
-                transform: translateY(0);
+                display: flex !important;
+                opacity: 1 !important;
+                transform: translateY(0) !important;
             }
 
             .hd-nav-left {
+                left: 18px;
                 border: 1.5px solid rgba(56, 189, 248, 0.55);
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
                 text-align: left;
@@ -449,6 +459,7 @@ export class HDHudManager {
             }
 
             .hd-nav-right {
+                right: 18px;
                 border: 1.5px solid rgba(96, 165, 250, 0.55);
                 box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(96, 165, 250, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
                 text-align: right;
@@ -483,6 +494,34 @@ export class HDHudManager {
                 margin-top: 2px;
                 opacity: 0.92;
                 text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            }
+
+            @keyframes pulseArrowLeft {
+                0%, 100% { transform: translateX(0); }
+                50% { transform: translateX(-3px); }
+            }
+            @keyframes pulseArrowRight {
+                0%, 100% { transform: translateX(0); }
+                50% { transform: translateX(3px); }
+            }
+            @keyframes pulseArrowUp {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-3px); }
+            }
+            .hd-nav-arrow-left {
+                display: inline-block;
+                animation: pulseArrowLeft 1.4s ease-in-out infinite;
+                margin-right: 4px;
+            }
+            .hd-nav-arrow-right {
+                display: inline-block;
+                animation: pulseArrowRight 1.4s ease-in-out infinite;
+                margin-left: 4px;
+            }
+            .hd-nav-arrow-up {
+                display: inline-block;
+                animation: pulseArrowUp 1.4s ease-in-out infinite;
+                margin-right: 4px;
             }
 
             @media (max-width: 640px) {
@@ -596,7 +635,12 @@ export class HDHudManager {
 
     static formatHTML(rawText) {
         if (!rawText) return '';
-        const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+        let processed = rawText
+            .replace(/[◀◄]/g, '<span class="hd-nav-arrow-left">◀</span>')
+            .replace(/[➔►]/g, '<span class="hd-nav-arrow-right">➔</span>')
+            .replace(/[▲]/g, '<span class="hd-nav-arrow-up">▲</span>');
+
+        const lines = processed.split('\n').map(l => l.trim()).filter(Boolean);
         if (lines.length === 0) return '';
         if (lines.length === 1) {
             return `<span class="hd-nav-title">${lines[0]}</span>`;
@@ -614,8 +658,10 @@ export class HDHudManager {
         if (text && visible) {
             this.leftBadge.innerHTML = this.formatHTML(text);
             this.leftBadge.classList.add('visible');
+            this.leftBadge.style.display = 'flex';
         } else {
             this.leftBadge.classList.remove('visible');
+            this.leftBadge.style.display = 'none';
         }
     }
 
@@ -626,8 +672,10 @@ export class HDHudManager {
         if (text && visible) {
             this.rightBadge.innerHTML = this.formatHTML(text);
             this.rightBadge.classList.add('visible');
+            this.rightBadge.style.display = 'flex';
         } else {
             this.rightBadge.classList.remove('visible');
+            this.rightBadge.style.display = 'none';
         }
     }
 

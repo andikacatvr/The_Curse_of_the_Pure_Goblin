@@ -22,7 +22,7 @@ export class TitleScene extends Phaser.Scene {
 
         // 1. Blurred fantasy game background
         const bgKey = this.textures.exists('menu_bg_blurred') ? 'menu_bg_blurred' : 'menu_bg';
-        this.bg = this.add.image(400, 225, bgKey).setDisplaySize(800, 450);
+        this.bg = this.add.image(400, 225, bgKey).setDisplaySize(1100, 450);
 
         // Breathing living-world camera tween
         this.tweens.add({
@@ -38,7 +38,7 @@ export class TitleScene extends Phaser.Scene {
         // Vignette & Dark contrast overlay
         const vignette = this.add.graphics();
         vignette.fillGradientStyle(0x020617, 0x020617, 0x020617, 0x020617, 0.45, 0.45, 0.75, 0.75);
-        vignette.fillRect(0, 0, 800, 450);
+        vignette.fillRect(-200, 0, 1200, 450);
 
         // Ambient Magical Fireflies / Glowing Particles
         this.createParticles();

@@ -22,13 +22,11 @@ export class LakeForestScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2.5, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
         // Ground / Terrain Sprite (Permukaan Tanah Pijakan Tile)
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(2);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 2);
 
 
         let startX = 720;
@@ -58,15 +56,9 @@ export class LakeForestScene extends BaseScene {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
         }).setOrigin(0.5).setDepth(25).setVisible(false);
 
-        // Teks Petunjuk Keluar ke Rumah (Navigasi Map di Atas)
-        this.rightExitText = this.add.text(780, 65, 'Ke Rumah Nenek & Rachael ➔\n(Jalan ke Kanan)', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
-        this.rightExitText.setVisible(true);
-
-        this.leftHint = this.add.text(20, 65, '◀ Ujung Danau Kaki Gunung\n(Jalan ke Kiri)', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
+        // Teks Petunjuk Keluar ke Rumah (Navigasi Map di Atas - HD HTML Overlay)
+        this.rightExitText = this.createRightNavHint('Ke Rumah Nenek & Rachael ➔\n(Jalan ke Kanan)', true);
+        this.leftHint = this.createLeftNavHint('◀ Ujung Danau Kaki Gunung\n(Jalan ke Kiri)', true);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -103,7 +95,7 @@ export class LakeForestScene extends BaseScene {
 
     createLakeForestAtmosphere() {
         // 1. Panoramic Mountain Lake Background (Pixel Art Danau Pegunungan Senja)
-        this.add.image(400, 225, 'lake_forest_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('lake_forest_bg', 0, 1100, 450);
 
         // 2. Drifting Lake Mist (Kabut Tipis Senja yang Melayang Halus di Atas Permukaan Air & Kaki Gunung)
         const mistClouds = [

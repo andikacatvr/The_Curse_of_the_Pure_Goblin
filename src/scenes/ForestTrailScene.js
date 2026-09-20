@@ -16,12 +16,10 @@ export class ForestTrailScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(2);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 2);
 
         const qState = getQuestState(this.registry);
         const inv = getInventory(this.registry);
@@ -81,14 +79,11 @@ export class ForestTrailScene extends BaseScene {
         }).setOrigin(0.5).setDepth(10).setVisible(false);
 
         if (hasCure) {
-            this.add.text(20, 65, '◀ Rumah Rachael (Ending)', { fontSize: '11px', fontStyle: 'bold', fill: '#4ade80', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 } }).setOrigin(0, 0).setDepth(20);
+            this.createLeftNavHint('◀ Rumah Rachael (Ending)', true);
         }
 
         const askedHunter = !!this.registry.get('askedHunterDirections') || (qState.chapter !== 'PROLOG');
-        this.rightExitText = this.add.text(780, 65, 'Lembah Air Terjun ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
-        this.rightExitText.setVisible(askedHunter);
+        this.rightExitText = this.createRightNavHint('Lembah Air Terjun ➔', askedHunter);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -246,7 +241,7 @@ export class ForestTrailScene extends BaseScene {
 
     createForestAtmosphere() {
         // 1. Lush Deep Forest Background (Pixel Art Hutan Hijau Lebat)
-        this.add.image(400, 225, 'forest_trail_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('forest_trail_bg', 0, 1100, 450);
 
         // 2. Light Rays / Sunbeams Filtering Through High Tree Canopy
         const lightShafts = this.add.graphics().setDepth(1);

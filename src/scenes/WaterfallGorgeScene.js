@@ -18,7 +18,7 @@ export class WaterfallGorgeScene extends BaseScene {
         this.platforms = this.physics.add.staticGroup();
 
         // Platform 1 (Left Entrance Cliff) - safe entry from ForestTrailScene
-        this.plat1 = this.platforms.create(75, 395, 'canyon_rock_platform').setScale(1.2, 1).refreshBody().setDepth(3);
+        this.plat1 = this.platforms.create(25, 395, 'canyon_rock_platform').setScale(2.4, 1).refreshBody().setDepth(3);
         // Platform 2 (First Stepping Stone with Thorn Spikes)
         this.plat2 = this.platforms.create(230, 350, 'canyon_rock_platform').setScale(0.8, 1).refreshBody().setDepth(3);
         // Platform 3 (Mid Waterfall Island with Healing Crystal Fruit & Checkpoint)
@@ -26,7 +26,7 @@ export class WaterfallGorgeScene extends BaseScene {
         // Platform 4 (Second Stepping Stone with Thorn Spikes)
         this.plat4 = this.platforms.create(570, 350, 'canyon_rock_platform').setScale(0.8, 1).refreshBody().setDepth(3);
         // Platform 5 (Right Exit Cliff) - safe ground to WitchYardScene
-        this.plat5 = this.platforms.create(725, 395, 'canyon_rock_platform').setScale(1.2, 1).refreshBody().setDepth(3);
+        this.plat5 = this.platforms.create(775, 395, 'canyon_rock_platform').setScale(2.4, 1).refreshBody().setDepth(3);
 
 
         const qState = getQuestState(this.registry);
@@ -140,13 +140,9 @@ export class WaterfallGorgeScene extends BaseScene {
         });
 
 
-        // Navigation labels (Navigasi Map di Atas)
-        this.add.text(20, 65, '◀ Pinggir Hutan', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
-        this.add.text(780, 65, 'Halaman Pondok Penyihir ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        // Navigation labels (HD HTML Overlay Navigasi Map)
+        this.createLeftNavHint('◀ Pinggir Hutan', true);
+        this.createRightNavHint('Halaman Pondok Penyihir ➔', true);
 
         // Interaction Prompt
         this.promptText = this.add.text(0, 0, '', {
@@ -194,7 +190,7 @@ export class WaterfallGorgeScene extends BaseScene {
 
     createWaterfallGorgeAtmosphere() {
         // 1. Background Image (Latar Pixel Art Hutan & Air Terjun Megah)
-        this.add.image(400, 225, 'waterfall_canyon_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('waterfall_canyon_bg', 0, 1100, 450);
 
         // 2. Ambient Sunlight & Mist Glow
         const ambientGlow = this.add.circle(400, 190, 170, 0x99f6e4, 0.06).setDepth(1);

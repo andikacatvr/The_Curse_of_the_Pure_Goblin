@@ -15,12 +15,10 @@ export class VillageResidentialScene extends BaseScene {
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
+        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
         mainPlatform.setVisible(false);
 
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(800 / 770);
+        this.createSeamlessGround('tanah_home', 1);
 
         let startX = 60;
         if (data && data.from === 'EastForestScene') {
@@ -52,12 +50,8 @@ export class VillageResidentialScene extends BaseScene {
             fontSize: '11px', fontStyle: 'bold', fill: '#fef08a', align: 'center', backgroundColor: '#0f172acc', padding: { x: 8, y: 3 }
         }).setOrigin(0.5).setDepth(20);
 
-        this.add.text(20, 65, '◀ Toko Roti Mr. Breado', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
-        this.add.text(780, 65, 'Hutan Timur ➔', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#86efac', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        this.createLeftNavHint('◀ Toko Roti Mr. Breado', true);
+        this.createRightNavHint('Hutan Timur ➔', true);
 
         this.promptText = this.add.text(0, 0, '', {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
@@ -237,7 +231,7 @@ export class VillageResidentialScene extends BaseScene {
 
     createVillageResidentialAtmosphere() {
         // 1. High-fidelity Pixel Art Village Background
-        this.add.image(400, 225, 'village_residential_bg').setDisplaySize(800, 450).setDepth(0);
+        this.createSeamlessBackground('village_residential_bg', 0, 1100, 450);
 
         // 2. Sunrise Sunburst & Light Rays at horizon (Sun position in art is around X: 565, Y: 145)
         const sunGlow = this.add.circle(565, 145, 48, 0xfef08a, 0.28).setDepth(1);
