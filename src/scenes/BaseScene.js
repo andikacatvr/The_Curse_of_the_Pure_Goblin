@@ -11,8 +11,44 @@ import {
 } from '../utils/gameState.js';
 import { GameAudio } from '../audio/GameAudio.js';
 import { DisplayManager } from '../utils/DisplayManager.js';
+import { HDHudManager } from '../utils/HDHudManager.js';
+import { HDSettingsModal } from '../utils/HDSettingsModal.js';
+import { HDInventoryModal } from '../utils/HDInventoryModal.js';
 
 export class BaseScene extends Phaser.Scene {
+    init(data) {
+        this._worldExpanded = false;
+        this._camFollowReady = false;
+        this._registeredUI = [];
+        this._cameraZoomInitialized = false;
+        this._lastPinchDist = null;
+        this._hdHudShutdownAttached = false;
+    }
+
+    /**
+     * Creates a razor-sharp HD HTML navigation badge for scene exits.
+     */
+    createHDNavBadge(direction, text, isVisible = true) {
+        if (!this._hdHudShutdownAttached) {
+            this._hdHudShutdownAttached = true;
+            this.events.once('shutdown', () => {
+                HDHudManager.clear();
+                HDSettingsModal.hide();
+                HDInventoryModal.hide();
+                this._worldExpanded = false;
+                this._camFollowReady = false;
+                this._registeredUI = [];
+            });
+            this.events.once('destroy', () => {
+                HDHudManager.clear();
+                HDSettingsModal.hide();
+                HDInventoryModal.hide();
+                this._registeredUI = [];
+            });
+        }
+        return HDHudManager.createBadge(direction, text, isVisible);
+    }
+
     createVisualInventoryUI() {
         // Inisialisasi dan jalankan chill ambient backsound
         GameAudio.init();
@@ -29,8 +65,11 @@ export class BaseScene extends Phaser.Scene {
             });
         }
 
-        // Hamburger Menu Button (Top Right HUD - Clean, compact & modern)
-        this.menuBtnContainer = this.add.container(765, 26).setDepth(25);
+        // Inisialisasi HD HTML HUD Controls (Always edge-pinned, immune to camera zoom)
+        HDHudManager.attachScene(this);
+
+        // Hamburger Menu Button (Canvas container hidden, handled by HD HTML Overlay)
+        this.menuBtnContainer = this.add.container(765, 26).setDepth(25).setVisible(false);
 
         const menuBtnBg = this.add.rectangle(0, 0, 36, 36, 0x0f172a, 0.9)
             .setStrokeStyle(2, 0x64748b)
@@ -44,32 +83,13 @@ export class BaseScene extends Phaser.Scene {
         this.menuBtnContainer.add([menuBtnBg, line1, line2, line3]);
         this.registerUIElement(this.menuBtnContainer, 765, 26);
 
-        menuBtnBg.on('pointerover', () => {
-            menuBtnBg.setFillStyle(0x1e293b, 1);
-            menuBtnBg.setStrokeStyle(2, 0xf59e0b);
-            line1.setFillStyle(0xfde047);
-            line2.setFillStyle(0xfde047);
-            line3.setFillStyle(0xfde047);
-            this.tweens.add({ targets: this.menuBtnContainer, scaleX: 1.08, scaleY: 1.08, duration: 120, ease: 'Sine.easeOut' });
-            GameAudio.playHover();
-        });
-
-        menuBtnBg.on('pointerout', () => {
-            menuBtnBg.setFillStyle(0x0f172a, 0.9);
-            menuBtnBg.setStrokeStyle(2, 0x64748b);
-            line1.setFillStyle(0xf8fafc);
-            line2.setFillStyle(0xf8fafc);
-            line3.setFillStyle(0xf8fafc);
-            this.tweens.add({ targets: this.menuBtnContainer, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.easeOut' });
-        });
-
         menuBtnBg.on('pointerdown', () => {
             GameAudio.playClick();
             this.toggleSettingsModal();
         });
 
-        // Bag / Inventory Button (Top Right HUD - Next to Settings, Pure White Vector Style)
-        this.bagBtnContainer = this.add.container(720, 26).setDepth(25);
+        // Bag / Inventory Button (Canvas container hidden, handled by HD HTML Overlay)
+        this.bagBtnContainer = this.add.container(720, 26).setDepth(25).setVisible(false);
         this.registerUIElement(this.bagBtnContainer, 720, 26);
 
         const bagBtnBg = this.add.rectangle(0, 0, 36, 36, 0x0f172a, 0.9)
@@ -359,8 +379,8 @@ export class BaseScene extends Phaser.Scene {
     createMobileHUDButton() {
         if (!isMobileDevice()) return;
 
-        // Mobile / Touch Controls HUD Toggle Button (Top Right HUD - Next to Bag at 720)
-        this.mobileToggleBtnContainer = this.add.container(675, 26).setDepth(25);
+        // Mobile / Touch Controls HUD Toggle Button (Canvas container hidden, handled by HD HTML Overlay)
+        this.mobileToggleBtnContainer = this.add.container(675, 26).setDepth(25).setVisible(false);
         this.registerUIElement(this.mobileToggleBtnContainer, 675, 26);
 
         const mobBtnBg = this.add.rectangle(0, 0, 36, 36, 0x0f172a, 0.9)
@@ -402,15 +422,7 @@ export class BaseScene extends Phaser.Scene {
     }
 
     createCinemaBorders() {
-        // Cinema Matte Black Pillarbox Bars (Hanya menutup sisi kiri dan kanan agar panggung simetris di tengah)
         this.cinemaBarsContainer = this.add.container(0, 0).setDepth(20);
-        // Left pillarbox (kiri dari x=0 ke luar)
-        const barLeft = this.add.rectangle(-300, 300, 600, 1400, 0x000000, 1);
-        // Right pillarbox (kanan dari x=800 ke luar)
-        const barRight = this.add.rectangle(1100, 300, 600, 1400, 0x000000, 1);
-
-        this.cinemaBarsContainer.add([barLeft, barRight]);
-
         // Lapisan bawah dinamis sesuai tema map (Deep Teal Abyss untuk air terjun, tanah subur untuk ladang/hutan, dll.)
         this.setupBottomExtension();
     }
@@ -426,14 +438,14 @@ export class BaseScene extends Phaser.Scene {
         if (sceneKey === 'WaterfallGorgeScene') {
             // === TEMA AIR TERJUN & JURANG LEMBAH (DEEP TEAL WATERFALL ABYSS) ===
             // 1. Dasar air jurang gelap menyatu dengan latar air terjun (#041624 / #061b24)
-            const abyssBg = this.add.rectangle(400, 650, 800, 408, 0x061a24, 1);
+            const abyssBg = this.add.rectangle(1000, 700, 4000, 550, 0x061a24, 1);
 
             // 2. Lapisan kedalaman air jurang dan kabut uap
             const rippleG = this.add.graphics();
             rippleG.fillStyle(0x04131d, 0.96);
-            rippleG.fillRect(0, 480, 800, 370);
+            rippleG.fillRect(-1000, 480, 4000, 400);
             rippleG.fillStyle(0x020a10, 1);
-            rippleG.fillRect(0, 550, 800, 300);
+            rippleG.fillRect(-1000, 550, 4000, 350);
 
             // 3. Gelombang riak air terjun (Concentric water ripples yang selaras dengan kolam air terjun)
             rippleG.lineStyle(2.5, 0x144047, 0.75);
@@ -476,36 +488,36 @@ export class BaseScene extends Phaser.Scene {
             cliffG.fillStyle(0x061413, 1);
             // Tebing kiri
             cliffG.beginPath();
-            cliffG.moveTo(0, 442);
+            cliffG.moveTo(-500, 442);
             cliffG.lineTo(130, 442);
             cliffG.lineTo(105, 540);
-            cliffG.lineTo(125, 850);
-            cliffG.lineTo(0, 850);
+            cliffG.lineTo(125, 950);
+            cliffG.lineTo(-500, 950);
             cliffG.closePath();
             cliffG.fillPath();
             // Tebing kanan
             cliffG.beginPath();
-            cliffG.moveTo(800, 442);
+            cliffG.moveTo(2500, 442);
             cliffG.lineTo(670, 442);
             cliffG.lineTo(695, 540);
-            cliffG.lineTo(675, 850);
-            cliffG.lineTo(800, 850);
+            cliffG.lineTo(675, 950);
+            cliffG.lineTo(2500, 950);
             cliffG.closePath();
             cliffG.fillPath();
 
             this.earthExtensionContainer.add([abyssBg, rippleG, mistGlow, cliffG]);
         } else if (sceneKey === 'WitchYardScene') {
             // === TEMA TANAH PENYIHIR MALAM / TWILIGHT (ENCHANTED SOIL) ===
-            const witchSoil = this.add.rectangle(400, 650, 800, 408, 0x120a1f, 1);
+            const witchSoil = this.add.rectangle(1000, 700, 4000, 550, 0x120a1f, 1);
             const witchG = this.add.graphics();
             witchG.fillStyle(0x0a0512, 0.95);
-            witchG.fillRect(0, 500, 800, 350);
+            witchG.fillRect(-1000, 500, 4000, 400);
             witchG.fillStyle(0x05020a, 1);
-            witchG.fillRect(0, 580, 800, 270);
+            witchG.fillRect(-1000, 580, 4000, 320);
 
             // Spora sihir ungu berkilau lembut dari tanah
-            for (let i = 0; i < 6; i++) {
-                const spX = Phaser.Math.Between(40, 760);
+            for (let i = 0; i < 12; i++) {
+                const spX = Phaser.Math.Between(-100, 1300);
                 const spY = Phaser.Math.Between(460, 540);
                 const spore = this.add.circle(spX, spY, 1.5, 0xa855f7, 0.5);
                 this.tweens.add({
@@ -521,32 +533,32 @@ export class BaseScene extends Phaser.Scene {
             this.earthExtensionContainer.add([witchSoil, witchG]);
         } else if (sceneKey === 'WitchCottageScene') {
             // === TEMA LANTAI INTERIOR PONDOK PENYIHIR ===
-            const cottageFloor = this.add.rectangle(400, 650, 800, 408, 0x140d1e, 1);
+            const cottageFloor = this.add.rectangle(1000, 700, 4000, 550, 0x140d1e, 1);
             this.earthExtensionContainer.add(cottageFloor);
         } else if (sceneKey === 'VillageResidentialScene' || sceneKey === 'BakeryMillScene') {
             // === TEMA BEBATUAN / COBBLESTONE DESA ===
-            const stoneBase = this.add.rectangle(400, 650, 800, 408, 0x1e293b, 1);
+            const stoneBase = this.add.rectangle(1000, 700, 4000, 550, 0x1e293b, 1);
             const stoneG = this.add.graphics();
             stoneG.fillStyle(0x0f172a, 0.95);
-            stoneG.fillRect(0, 500, 800, 350);
+            stoneG.fillRect(-1000, 500, 4000, 400);
             stoneG.fillStyle(0x090d16, 1);
-            stoneG.fillRect(0, 580, 800, 270);
+            stoneG.fillRect(-1000, 580, 4000, 320);
             this.earthExtensionContainer.add([stoneBase, stoneG]);
         } else {
             // === TEMA TANAH ALAMI SUBUR (EARTH SOIL) ===
             // (GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, ForestTrailScene, LakeForestScene, HomeScene)
-            const baseSoil = this.add.rectangle(400, 650, 800, 408, 0x54361e, 1);
+            const baseSoil = this.add.rectangle(1000, 700, 4000, 550, 0x54361e, 1);
             const soilG = this.add.graphics();
             // Lapisan tanah semakin dalam semakin gelap
             soilG.fillStyle(0x3e2412, 0.95);
-            soilG.fillRect(0, 490, 800, 360);
+            soilG.fillRect(-1000, 480, 4000, 400);
             soilG.fillStyle(0x24140a, 1);
-            soilG.fillRect(0, 570, 800, 280);
+            soilG.fillRect(-1000, 560, 4000, 320);
 
             // Kerikil dan tekstur bebatuan alami di dalam tanah
             soilG.fillStyle(0x6b482b, 0.55);
-            for (let i = 0; i < 24; i++) {
-                const rx = ((i * 47 + 23) % 780) + 10;
+            for (let i = 0; i < 48; i++) {
+                const rx = ((i * 73 + 37) % 3600) - 800;
                 const ry = 458 + ((i * 29) % 190);
                 soilG.fillCircle(rx, ry, (i % 3) + 1.8);
             }
@@ -557,55 +569,43 @@ export class BaseScene extends Phaser.Scene {
     createZoomHUDButton() {
         const isMobile = isMobileDevice();
         const zoomX = isMobile ? 625 : 675;
-        this.zoomBtnContainer = this.add.container(zoomX, 26).setDepth(25);
+        // Canvas container hidden, handled by HD HTML Overlay
+        this.zoomBtnContainer = this.add.container(zoomX, 26).setDepth(25).setVisible(false);
 
         const zoomBtnBg = this.add.rectangle(0, 0, 48, 36, 0x0f172a, 0.9)
             .setStrokeStyle(2, 0x64748b)
             .setInteractive({ useHandCursor: true });
 
-        const zoomVal = this.currentZoom || 1.0;
-        this.zoomBtnText = this.add.text(0, 0, `🔍 ${zoomVal.toFixed(1)}x`, {
+        const zoomVal = this.currentZoom || 0.85;
+        const initLabel = (zoomVal % 1 === 0) ? `${zoomVal.toFixed(1)}x` : `${zoomVal.toFixed(2)}x`;
+        this.zoomBtnText = this.add.text(0, 0, `🔍 ${initLabel}`, {
             fontSize: '10px', fontStyle: 'bold', fill: '#f8fafc', fontFamily: FONT_BODY
         }).setOrigin(0.5);
 
         this.zoomBtnContainer.add([zoomBtnBg, this.zoomBtnText]);
-
-        zoomBtnBg.on('pointerover', () => {
-            zoomBtnBg.setFillStyle(0x1e293b, 1);
-            zoomBtnBg.setStrokeStyle(2, 0x38bdf8);
-            this.zoomBtnText.setFill('#38bdf8');
-            this.tweens.add({ targets: this.zoomBtnContainer, scaleX: 1.08, scaleY: 1.08, duration: 120, ease: 'Sine.easeOut' });
-            GameAudio.playHover();
-        });
-
-        zoomBtnBg.on('pointerout', () => {
-            zoomBtnBg.setFillStyle(0x0f172a, 0.9);
-            zoomBtnBg.setStrokeStyle(2, 0x64748b);
-            this.zoomBtnText.setFill('#f8fafc');
-            this.tweens.add({ targets: this.zoomBtnContainer, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.easeOut' });
-        });
-
-        zoomBtnBg.on('pointerdown', () => {
-            GameAudio.playClick();
-            let next = 1.0;
-            if (this.currentZoom < 0.95) next = 1.0;
-            else if (this.currentZoom < 1.15) next = 1.25;
-            else if (this.currentZoom < 1.4) next = 1.5;
-            else if (this.currentZoom < 1.55) next = 0.85;
-            else next = 1.0;
-
-            this.setCameraZoom(next, true);
-            const label = next < 1.0 ? `${next.toFixed(2)}x (Sinematik)` : `${next.toFixed(2)}x`;
-            this.showToastNotice(`🔍 Zoom Kamera: ${label}`);
-        });
-
+        zoomBtnBg.on('pointerdown', () => this.cycleCameraZoom());
         this.registerUIElement(this.zoomBtnContainer, zoomX, 26);
     }
 
+    cycleCameraZoom() {
+        let next = 1.0;
+        if (this.currentZoom < 0.95) next = 1.0;
+        else if (this.currentZoom < 1.15) next = 1.25;
+        else if (this.currentZoom < 1.4) next = 1.5;
+        else if (this.currentZoom < 1.55) next = 0.85;
+        else next = 0.85;
+
+        this.setCameraZoom(next, true);
+        const label = next < 1.0 ? `${next.toFixed(2)}x (Sinematik)` : `${next.toFixed(2)}x`;
+        this.showToastNotice(`🔍 Zoom Kamera: ${label}`);
+    }
+
     updateZoomHUDText() {
+        const z = this.currentZoom || 0.85;
+        HDHudManager.updateZoom(z);
         if (this.zoomBtnText) {
-            const z = this.currentZoom || 1.0;
-            this.zoomBtnText.setText(`🔍 ${z.toFixed(1)}x`);
+            const label = (z % 1 === 0) ? `${z.toFixed(1)}x` : `${z.toFixed(2)}x`;
+            this.zoomBtnText.setText(`🔍 ${label}`);
         }
     }
 
@@ -618,11 +618,11 @@ export class BaseScene extends Phaser.Scene {
             this.input.addPointer(1);
         }
 
-        let saved = 1.0;
+        let saved = 0.85;
         try {
             const val = localStorage.getItem('game_camera_zoom');
             if (val) saved = parseFloat(val);
-            if (isNaN(saved) || saved < 0.8 || saved > 1.6) saved = 1.0;
+            if (isNaN(saved) || saved < 0.75 || saved > 1.6) saved = 0.85;
         } catch (e) {}
 
         this.currentZoom = saved;
@@ -694,31 +694,15 @@ export class BaseScene extends Phaser.Scene {
 
         const cam = this.cameras.main;
         if (cam) {
-            cam.removeBounds();
             if (smooth) {
                 cam.zoomTo(clamped, 200, 'Sine.easeOut');
             } else {
                 cam.setZoom(clamped);
             }
 
-            if (clamped > 1.01 && this.player) {
+            if (this.player) {
                 cam.startFollow(this.player, true, 0.08, 0.08);
                 cam._isFollowing = true;
-                const halfW = 400 / clamped;
-                const halfH = 225 / clamped;
-                cam.scrollX = Phaser.Math.Clamp(cam.scrollX, halfW - 400, 400 - halfW);
-                cam.scrollY = Phaser.Math.Clamp(cam.scrollY, halfH - 225, 225 - halfH);
-            } else {
-                if (cam._isFollowing) {
-                    cam.stopFollow();
-                    cam._isFollowing = false;
-                }
-                const targetScrollY = 225 / clamped - 225;
-                if (smooth) {
-                    cam.pan(400, 225 + targetScrollY, 200, 'Sine.easeOut');
-                } else {
-                    cam.setScroll(0, targetScrollY);
-                }
             }
         }
 
@@ -809,6 +793,7 @@ export class BaseScene extends Phaser.Scene {
 
     updateMobileToggleHUD() {
         const isEnabled = this.isMobileControlsEnabled();
+        HDHudManager.updateMobile(isEnabled);
         if (this.mobStatusDot) {
             this.mobStatusDot.setFillStyle(isEnabled ? 0x10b981 : 0x64748b, 1);
         }
@@ -1162,7 +1147,8 @@ export class BaseScene extends Phaser.Scene {
             this.healthContainer.destroy();
         }
 
-        this.healthContainer = this.add.container(16, 12).setDepth(20);
+        // Canvas container hidden, handled by HD HTML Overlay
+        this.healthContainer = this.add.container(16, 12).setDepth(20).setVisible(false);
         this.registerUIElement(this.healthContainer, 16, 12);
 
         // Pill background (132 x 26) — no visible border
@@ -1205,6 +1191,7 @@ export class BaseScene extends Phaser.Scene {
 
     updateHealthHUD() {
         const hp = getPlayerHP(this.registry);
+        HDHudManager.updateHealth(hp, MAX_PLAYER_HP);
         if (this.hpHeartTexts) {
             for (let i = 0; i < MAX_PLAYER_HP; i++) {
                 if (this.hpHeartTexts[i]) {
@@ -1359,327 +1346,7 @@ export class BaseScene extends Phaser.Scene {
 
     createSettingsUI() {
         this.isSettingsOpen = false;
-
-        // Dark modal backdrop
-        this.settingsModalOverlay = this.add.rectangle(400, 225, 800, 450, 0x000000, 0.75)
-            .setDepth(50)
-            .setVisible(false)
-            .setInteractive();
-        this.registerUIElement(this.settingsModalOverlay, 400, 225);
-
-        this.settingsModalOverlay.on('pointerdown', () => this.toggleSettingsModal(false));
-
-        // Settings Container
-        this.settingsModalBox = this.add.container(400, 225).setDepth(51).setVisible(false);
-        this.registerUIElement(this.settingsModalBox, 400, 225);
-
-        const isMobile = isMobileDevice();
-        const modalHeight = isMobile ? 440 : 415;
-        const headerY = isMobile ? -192 : -180;
-        const bgmY = isMobile ? -150 : -140;
-        const sfxY = isMobile ? -116 : -106;
-        const zoomY = isMobile ? -82 : -72;
-        const resY = isMobile ? -48 : -38;
-        const mobY = -14;
-        const dividerY = isMobile ? 18 : 2;
-        const ctrlTitleY = isMobile ? 31 : 15;
-        const ctrlListY = isMobile ? 46 : 30;
-        const actionY = isMobile ? 150 : 140;
-        const locY = isMobile ? 190 : 180;
-
-        // Modal Frame
-        const modalBg = this.add.rectangle(0, 0, 560, modalHeight, 0x0f172a, 0.98)
-            .setStrokeStyle(3, 0xf59e0b);
-        const headerBg = this.add.rectangle(0, headerY, 560, 42, 0x1e1b4b, 1)
-            .setStrokeStyle(1.5, 0x6366f1);
-        const title = this.add.text(0, headerY, '⚙️ PENGATURAN & JEDA PERMAINAN', {
-            fontSize: '18px', fontStyle: 'bold', fill: '#fbbf24', fontFamily: FONT_TITLE
-        }).setOrigin(0.5);
-
-        // 1. Audio BGM
-        const bgmLabel = this.add.text(-240, bgmY, '🎵 Musik Latar (BGM):', {
-            fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
-        });
-        const bgmBtn = this.add.rectangle(45, bgmY + 8, 75, 26, GameAudio.bgmEnabled ? 0x16a34a : 0xdc2626, 0.9)
-            .setStrokeStyle(1.5, 0xffffff)
-            .setInteractive({ useHandCursor: true });
-        const bgmText = this.add.text(45, bgmY + 8, GameAudio.bgmEnabled ? 'ON' : 'OFF', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        const bgmMinusBtn = this.add.rectangle(105, bgmY + 8, 26, 26, 0x334155, 0.95)
-            .setStrokeStyle(1.5, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-        const bgmMinusText = this.add.text(105, bgmY + 8, '➖', { fontSize: '10px' }).setOrigin(0.5);
-
-        const bgmVolText = this.add.text(152, bgmY + 8, `${Math.round(GameAudio.bgmVolume * 100)}%`, {
-            fontSize: '12px', fontStyle: 'bold', fill: '#38bdf8', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        const bgmPlusBtn = this.add.rectangle(200, bgmY + 8, 26, 26, 0x334155, 0.95)
-            .setStrokeStyle(1.5, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-        const bgmPlusText = this.add.text(200, bgmY + 8, '➕', { fontSize: '10px' }).setOrigin(0.5);
-
-        bgmMinusBtn.on('pointerdown', () => {
-            GameAudio.setBGMVolume(GameAudio.bgmVolume - 0.1);
-            bgmVolText.setText(`${Math.round(GameAudio.bgmVolume * 100)}%`);
-            GameAudio.playClick();
-        });
-
-        bgmPlusBtn.on('pointerdown', () => {
-            GameAudio.setBGMVolume(GameAudio.bgmVolume + 0.1);
-            bgmVolText.setText(`${Math.round(GameAudio.bgmVolume * 100)}%`);
-            GameAudio.playClick();
-        });
-
-        bgmBtn.on('pointerdown', () => {
-            GameAudio.bgmEnabled = !GameAudio.bgmEnabled;
-            if (GameAudio.bgmEnabled) {
-                GameAudio.startAmbientBGM();
-                bgmBtn.setFillStyle(0x16a34a, 0.9);
-                bgmText.setText('ON');
-            } else {
-                GameAudio.stopAmbientBGM();
-                bgmBtn.setFillStyle(0xdc2626, 0.9);
-                bgmText.setText('OFF');
-            }
-            GameAudio.updateGainValues();
-            GameAudio.playClick();
-        });
-
-        // 2. Audio SFX
-        const sfxLabel = this.add.text(-240, sfxY, '🔊 Efek Suara (SFX):', {
-            fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
-        });
-        const sfxBtn = this.add.rectangle(45, sfxY + 8, 75, 26, GameAudio.sfxEnabled ? 0x16a34a : 0xdc2626, 0.9)
-            .setStrokeStyle(1.5, 0xffffff)
-            .setInteractive({ useHandCursor: true });
-        const sfxText = this.add.text(45, sfxY + 8, GameAudio.sfxEnabled ? 'ON' : 'OFF', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        const sfxMinusBtn = this.add.rectangle(105, sfxY + 8, 26, 26, 0x334155, 0.95)
-            .setStrokeStyle(1.5, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-        const sfxMinusText = this.add.text(105, sfxY + 8, '➖', { fontSize: '10px' }).setOrigin(0.5);
-
-        const sfxVolText = this.add.text(152, sfxY + 8, `${Math.round(GameAudio.sfxVolume * 100)}%`, {
-            fontSize: '12px', fontStyle: 'bold', fill: '#4ade80', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        const sfxPlusBtn = this.add.rectangle(200, sfxY + 8, 26, 26, 0x334155, 0.95)
-            .setStrokeStyle(1.5, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-        const sfxPlusText = this.add.text(200, sfxY + 8, '➕', { fontSize: '10px' }).setOrigin(0.5);
-
-        sfxMinusBtn.on('pointerdown', () => {
-            GameAudio.setSFXVolume(GameAudio.sfxVolume - 0.1);
-            sfxVolText.setText(`${Math.round(GameAudio.sfxVolume * 100)}%`);
-            GameAudio.playClick();
-        });
-
-        sfxPlusBtn.on('pointerdown', () => {
-            GameAudio.setSFXVolume(GameAudio.sfxVolume + 0.1);
-            sfxVolText.setText(`${Math.round(GameAudio.sfxVolume * 100)}%`);
-            GameAudio.playClick();
-        });
-
-        sfxBtn.on('pointerdown', () => {
-            GameAudio.sfxEnabled = !GameAudio.sfxEnabled;
-            if (GameAudio.sfxEnabled) {
-                sfxBtn.setFillStyle(0x16a34a, 0.9);
-                sfxText.setText('ON');
-                GameAudio.playClick();
-            } else {
-                sfxBtn.setFillStyle(0xdc2626, 0.9);
-                sfxText.setText('OFF');
-            }
-            GameAudio.updateGainValues();
-        });
-
-        // 3. Skala Zoom Kamera
-        const zoomLabel = this.add.text(-240, zoomY, '🔍 Skala Zoom Kamera:', {
-            fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
-        });
-        const zoomMinusBtn = this.add.rectangle(45, zoomY + 8, 26, 26, 0x334155, 0.95)
-            .setStrokeStyle(1.5, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-        const zoomMinusText = this.add.text(45, zoomY + 8, '➖', { fontSize: '10px' }).setOrigin(0.5);
-
-        this.settingsZoomText = this.add.text(88, zoomY + 8, `${(this.currentZoom || 1.0).toFixed(2)}x`, {
-            fontSize: '12px', fontStyle: 'bold', fill: '#38bdf8', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        const zoomPlusBtn = this.add.rectangle(132, zoomY + 8, 26, 26, 0x334155, 0.95)
-            .setStrokeStyle(1.5, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-        const zoomPlusText = this.add.text(132, zoomY + 8, '➕', { fontSize: '10px' }).setOrigin(0.5);
-
-        const zoomResetBtn = this.add.rectangle(200, zoomY + 8, 68, 26, 0x1e3a8a, 0.95)
-            .setStrokeStyle(1.5, 0x38bdf8)
-            .setInteractive({ useHandCursor: true });
-        const zoomResetText = this.add.text(200, zoomY + 8, 'RESET', {
-            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        zoomMinusBtn.on('pointerdown', () => {
-            this.setCameraZoom(this.currentZoom - 0.1, true);
-            GameAudio.playClick();
-        });
-
-        zoomPlusBtn.on('pointerdown', () => {
-            this.setCameraZoom(this.currentZoom + 0.1, true);
-            GameAudio.playClick();
-        });
-
-        zoomResetBtn.on('pointerdown', () => {
-            this.setCameraZoom(1.0, true);
-            GameAudio.playClick();
-        });
-
-        // 4. Ukuran Layar / Resolusi
-        const resLabel = this.add.text(-240, resY, '🖥️ Resolusi Layar:', {
-            fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
-        });
-        const resBtn = this.add.rectangle(115, resY + 8, 200, 26, 0x1e3a8a, 0.95)
-            .setStrokeStyle(1.5, 0x38bdf8)
-            .setInteractive({ useHandCursor: true });
-        const resText = this.add.text(115, resY + 8, DisplayManager.current.label, {
-            fontSize: '11px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        resBtn.on('pointerover', () => resBtn.setFillStyle(0x2563eb, 1));
-        resBtn.on('pointerout', () => resBtn.setFillStyle(0x1e3a8a, 0.95));
-        resBtn.on('pointerdown', () => {
-            const nextRes = DisplayManager.cycleNext();
-            resText.setText(nextRes.label);
-            GameAudio.playClick();
-        });
-
-        // Fullscreen Icon Button
-        const fsBtn = this.add.rectangle(235, resY + 8, 32, 26, 0x334155, 0.9)
-            .setStrokeStyle(1.5, 0x94a3b8)
-            .setInteractive({ useHandCursor: true });
-        const fsIcon = this.add.text(235, resY + 8, '⛶', {
-            fontSize: '13px', fill: '#ffffff'
-        }).setOrigin(0.5);
-
-        fsBtn.on('pointerover', () => fsBtn.setFillStyle(0x475569, 1));
-        fsBtn.on('pointerout', () => fsBtn.setFillStyle(0x334155, 0.9));
-        fsBtn.on('pointerdown', () => {
-            DisplayManager.toggleFullscreen(this);
-            GameAudio.playClick();
-        });
-
-        const settingsElements = [
-            modalBg, headerBg, title,
-            bgmLabel, bgmBtn, bgmText, bgmMinusBtn, bgmMinusText, bgmVolText, bgmPlusBtn, bgmPlusText,
-            sfxLabel, sfxBtn, sfxText, sfxMinusBtn, sfxMinusText, sfxVolText, sfxPlusBtn, sfxPlusText,
-            zoomLabel, zoomMinusBtn, zoomMinusText, this.settingsZoomText, zoomPlusBtn, zoomPlusText, zoomResetBtn, zoomResetText,
-            resLabel, resBtn, resText, fsBtn, fsIcon
-        ];
-
-        if (isMobile) {
-            // 5. Mobile Controls Toggle (Khusus HP/Tablet)
-            const mobLabel = this.add.text(-240, mobY, '📱 Tombol Layar HP (Touch):', {
-                fontSize: '13px', fill: '#f8fafc', fontFamily: FONT_BODY
-            });
-            const isMobActive = this.isMobileControlsEnabled();
-            this.mobileSettingsBtn = this.add.rectangle(160, mobY + 8, 130, 26, isMobActive ? 0x16a34a : 0xdc2626, 0.9)
-                .setStrokeStyle(1.5, 0xffffff)
-                .setInteractive({ useHandCursor: true });
-            this.mobileSettingsBtnText = this.add.text(160, mobY + 8, isMobActive ? 'AKTIF [ON]' : 'MATI [OFF]', {
-                fontSize: '12px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-            }).setOrigin(0.5);
-
-            this.mobileSettingsBtn.on('pointerdown', () => {
-                const next = !this.isMobileControlsEnabled();
-                this.setMobileControlsEnabled(next);
-                GameAudio.playClick();
-            });
-
-            settingsElements.push(mobLabel, this.mobileSettingsBtn, this.mobileSettingsBtnText);
-        }
-
-        // Divider
-        const divider = this.add.rectangle(0, dividerY, 500, 1, 0x334155);
-
-        // Controls List
-        const ctrlTitle = this.add.text(0, ctrlTitleY, '🎮 PANDUAN KONTROL PERMAINAN', {
-            fontSize: '12px', fontStyle: 'bold', fill: '#93c5fd', fontFamily: FONT_TITLE
-        }).setOrigin(0.5);
-
-        const ctrlListStr = isMobile
-            ? '▶ [◀] [▶]             : Bergerak Kiri / Kanan\n' +
-              '▶ [▲]                 : Melompat\n' +
-              '▶ [Sentuh Karakter]   : Langsung Ketuk Karakter / Item untuk Bicara\n' +
-              '▶ [Pinch 2 Jari / 🔍] : Zoom In / Out Kamera Permainan\n' +
-              '▶ [Tas]               : Buka Daftar Lengkap Tas Inventory\n' +
-              '▶ [Quest Bar]         : Buka / Tutup Catatan Misi / Quest\n' +
-              '▶ [📱 Icon HP]        : Pengaturan Tombol Layar Ponsel'
-            : '▶ [A] / [D]        : Bergerak Kiri / Kanan\n' +
-              '▶ [W] / [SPASI]    : Melompat\n' +
-              '▶ [E]              : Berinteraksi dengan Karakter / Objek\n' +
-              '▶ [Pinch / Scroll] : Trackpad Pinch / Mouse Scroll / [+-0] Zoom Kamera\n' +
-              '▶ [1] / [I]        : Buka Daftar Lengkap Tas Inventory\n' +
-              '▶ [Q]              : Buka / Tutup Catatan Misi / Quest\n' +
-              '▶ [☰] / [ESC]     : Buka / Tutup Pengaturan & Jeda';
-
-        const ctrlList = this.add.text(-240, ctrlListY, ctrlListStr, {
-            fontSize: '11px', fill: '#cbd5e1', fontFamily: FONT_BODY, lineSpacing: 3
-        });
-
-        // Action Buttons: Resume & Quit to Title
-        const resumeBtn = this.add.rectangle(-130, actionY, 220, 36, 0x2563eb, 0.95)
-            .setStrokeStyle(2, 0x93c5fd)
-            .setInteractive({ useHandCursor: true });
-        const resumeLabel = isMobile ? '▶ LANJUTKAN' : '▶ LANJUTKAN [ESC]';
-        const resumeText = this.add.text(-130, actionY, resumeLabel, {
-            fontSize: '13px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        resumeBtn.on('pointerover', () => resumeBtn.setFillStyle(0x3b82f6, 1));
-        resumeBtn.on('pointerout', () => resumeBtn.setFillStyle(0x2563eb, 0.95));
-        resumeBtn.on('pointerdown', () => {
-            GameAudio.playClick();
-            this.toggleSettingsModal(false);
-        });
-
-        // Quit to Title Menu Button
-        const quitBtn = this.add.rectangle(130, actionY, 220, 36, 0x991b1b, 0.95)
-            .setStrokeStyle(2, 0xf87171)
-            .setInteractive({ useHandCursor: true });
-        const quitText = this.add.text(130, actionY, '🚪 KELUAR KE MENU', {
-            fontSize: '13px', fontStyle: 'bold', fill: '#ffffff', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        quitBtn.on('pointerover', () => quitBtn.setFillStyle(0xdc2626, 1));
-        quitBtn.on('pointerout', () => quitBtn.setFillStyle(0x991b1b, 0.95));
-        quitBtn.on('pointerdown', () => {
-            GameAudio.playClick();
-            this.toggleSettingsModal(false);
-            this.cameras.main.fadeOut(350, 0, 0, 0);
-            this.time.delayedCall(400, () => {
-                this.scene.start('TitleScene');
-            });
-        });
-
-        // Bottom Location Info Badge (Moved from Top Left HUD into Hamburger Menu)
-        const locBadgeBg = this.add.rectangle(0, locY, 510, 26, 0x060f1e, 0.95)
-            .setStrokeStyle(1.5, 0x1e3a8a);
-        this.settingsLocationText = this.add.text(0, locY, '📍 Lokasi: Rumah Aksel & Rachael (Halaman Teras)', {
-            fontSize: '13px', fontStyle: 'bold', fill: '#4ade80', fontFamily: FONT_TITLE
-        }).setOrigin(0.5);
-
-        settingsElements.push(
-            divider, ctrlTitle, ctrlList,
-            resumeBtn, resumeText,
-            quitBtn, quitText,
-            locBadgeBg, this.settingsLocationText
-        );
-
-        this.settingsModalBox.add(settingsElements);
+        HDSettingsModal.init();
 
         // Key [P] listener for settings
         this.input.keyboard.on('keydown-P', () => {
@@ -1691,26 +1358,18 @@ export class BaseScene extends Phaser.Scene {
         if (this.isTalking) return;
         const nextState = forceState !== null ? forceState : !this.isSettingsOpen;
         if (nextState) {
-            if (this.isInvOpen) this.toggleInventoryModal();
-            if (this.isQuestModalOpen) this.toggleQuestModal();
+            if (this.isInvOpen) this.toggleInventoryModal(false);
+            if (this.isQuestModalOpen) this.toggleQuestModal(false);
             if (this.player && this.player.body) this.player.setVelocity(0, 0);
+            this.isSettingsOpen = true;
+            HDSettingsModal.show(this);
+        } else {
+            this.isSettingsOpen = false;
+            HDSettingsModal.hide();
         }
-        this.isSettingsOpen = nextState;
-        this.settingsModalOverlay.setVisible(nextState);
-        this.settingsModalBox.setVisible(nextState);
         this.updateMobileControlsVisibility();
-
-        if (nextState) {
-            this.settingsModalBox.setScale(0.92);
-            this.tweens.add({
-                targets: this.settingsModalBox,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 180,
-                ease: 'Back.out'
-            });
-        }
     }
+
 
     getItemTextureKey(item) {
         if (!item) return null;
@@ -1743,6 +1402,7 @@ export class BaseScene extends Phaser.Scene {
 
     renderInventorySlots() {
         const inv = getInventory(this.registry);
+        HDHudManager.updateBagCount(inv.length);
 
         // Update bag badge count indicator in HUD
         if (this.bagBadgeBg && this.bagBadgeText) {
@@ -1814,36 +1474,21 @@ export class BaseScene extends Phaser.Scene {
         if (this.isTalking) return;
         const nextState = forceState !== null ? forceState : !this.isInvOpen;
         if (nextState) {
-            if (this.isQuestModalOpen) this.toggleQuestModal();
+            if (this.isQuestModalOpen) this.toggleQuestModal(false);
             if (this.isSettingsOpen) this.toggleSettingsModal(false);
             if (this.player && this.player.body) this.player.setVelocity(0, 0);
+            this.isInvOpen = true;
+            HDInventoryModal.show(this);
+        } else {
+            this.isInvOpen = false;
+            HDInventoryModal.hide();
         }
-        this.isInvOpen = nextState;
-        this.invModalOverlay.setVisible(nextState);
-        this.invModalContainer.setVisible(nextState);
         this.updateMobileControlsVisibility();
-
-        if (nextState) {
-            GameAudio.playClick();
-            if (this.settingsLocationText) {
-                const loc = this.currentLocationName || this.registry.get('currentLocationName') || 'Rumah Aksel & Rachael (Halaman Teras)';
-                this.settingsLocationText.setText(`📍 Lokasi: ${loc.replace(/^📍\s*/, '')}`);
-            }
-            this.renderInventorySlots();
-            this.invModalContainer.setScale(0.92);
-            this.tweens.add({
-                targets: this.invModalContainer,
-                scaleX: 1,
-                scaleY: 1,
-                duration: 160,
-                ease: 'Back.out'
-            });
-        }
     }
 
     createQuestUI() {
-        // Quest button (Top Left HUD, aligned with HP / right-side HUD buttons)
-        this.questBtnContainer = this.add.container(190, 26).setDepth(25);
+        // Quest button (Canvas container hidden, handled by HD HTML Overlay)
+        this.questBtnContainer = this.add.container(190, 26).setDepth(25).setVisible(false);
         this.registerUIElement(this.questBtnContainer, 190, 26);
 
         const questBtnBg = this.add.rectangle(0, 0, 72, 36, 0x0f172a, 0.9)

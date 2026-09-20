@@ -18,6 +18,8 @@ export class HomeScene extends BaseScene {
             return;
         }
 
+        this.physics.world.setBounds(0, 0, 1200, 450);
+        this.cameras.main.setBounds(0, 0, 1200, 450);
         this.cameras.main.setBackgroundColor('#13172e');
         this.createHomeAtmosphere();
 
@@ -26,25 +28,28 @@ export class HomeScene extends BaseScene {
         this.registry.set('currentLocationName', title);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(2, 1).refreshBody();
-        mainPlatform.setVisible(false);
+        for (let px = 200; px <= 1200; px += 400) {
+            const p = this.platforms.create(px, 434, 'platform').setScale(2, 1).refreshBody();
+            p.setVisible(false);
+        }
 
         const hasWood = !!this.registry.get('hasCollectedFirewood');
-        let startX = 360;
+        let startX = 520;
         if (data && data.from === 'LakeForestScene') {
             startX = 60;
         } else if (data && data.from === 'ForestTrailScene') {
-            startX = 720;
+            startX = 1120;
         }
         if (hasCure && data && data.ending === true) {
-            startX = 160;
+            startX = 320;
         }
 
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
 
-        // Rachael di Kursi Goyang
-        this.rachael = this.physics.add.staticSprite(200, 418, 'npc_rachael').setDepth(5).setScale(0.28);
+        // Rachael di Kursi Goyang (Teras Depan Rumah)
+        this.rachael = this.physics.add.staticSprite(320, 418, 'npc_rachael').setDepth(5).setScale(0.28);
         this.rachael.setOrigin(0.5, 1);
         this.rachael.refreshBody();
         if (this.anims.exists('rachael_idle')) {
@@ -56,14 +61,14 @@ export class HomeScene extends BaseScene {
             { speaker: 'Aksel', text: 'Tenanglah Rachael, bertahanlah demi kakak dan Nenek. Aku pasti kembali membawa obat!' }
         ];
 
-        // Nenek di Teras Rumah
-        this.grandma = this.physics.add.staticSprite(275, 418, 'npc_grandma_home').setDepth(5).setScale(0.21);
+        // Nenek di Teras Depan Rumah
+        this.grandma = this.physics.add.staticSprite(395, 418, 'npc_grandma_home').setDepth(5).setScale(0.21);
         this.grandma.setOrigin(0.5, 1);
         this.grandma.refreshBody();
         this.grandma.type = 'npc';
 
-        // Tumpukan Kayu Bakar di Teras (muncul setelah diambil dari Danau)
-        this.firewoodStack = this.add.image(115, 412, 'special_firewood').setDepth(4).setScale(1.2);
+        // Tumpukan Kayu Bakar di Samping Teras (muncul setelah diambil dari Danau)
+        this.firewoodStack = this.add.image(235, 412, 'special_firewood').setDepth(4).setScale(1.2);
         this.firewoodStack.setVisible(hasWood);
 
         this.itemsGroup = this.physics.add.staticGroup();
@@ -72,7 +77,7 @@ export class HomeScene extends BaseScene {
         if (!hasCure && hasWood) {
             const hasDagger = inv.some(i => i.id === 'Pisau Belati');
             if (!hasDagger) {
-                this.dagger = this.itemsGroup.create(380, 405, 'item_dagger');
+                this.dagger = this.itemsGroup.create(500, 405, 'item_dagger');
                 this.dagger.type = 'item';
                 this.dagger.itemId = 'Pisau Belati';
                 this.dagger.itemDesc = 'Senjata belati peninggalan keluarga untuk perlindungan di perjalanan.';
@@ -80,15 +85,15 @@ export class HomeScene extends BaseScene {
             }
         }
 
-        // Teks Petunjuk Arah Kiri & Kanan (Navigasi Map di Atas)
+        // Teks Petunjuk Arah Kiri & Kanan (Fixed HUD Navigasi Map di Atas)
         this.leftExitText = this.add.text(20, 65, '◀ Ke Hutan Danau & Kaki Gunung\n(Cari Kayu Bakar)', {
             fontSize: '11px', fontStyle: 'bold', fill: '#38bdf8', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(0, 0).setDepth(20);
+        }).setOrigin(0, 0).setDepth(20).setScrollFactor(0);
         this.leftExitText.setVisible(!hasWood);
 
         this.rightExitText = this.add.text(780, 65, 'Ke Pinggir Hutan ➔\n(Jalan ke Kanan)', {
             fontSize: '11px', fontStyle: 'bold', fill: '#60a5fa', align: 'right', backgroundColor: '#0f172acc', padding: { x: 6, y: 3 }
-        }).setOrigin(1, 0).setDepth(20);
+        }).setOrigin(1, 0).setDepth(20).setScrollFactor(0);
         this.rightExitText.setVisible(hasWood && !hasCure);
 
         this.promptText = this.add.text(0, 0, '', {
@@ -309,29 +314,119 @@ export class HomeScene extends BaseScene {
     }
 
     createHomeAtmosphere() {
-        // 1. PANORAMIC VILLAGE VALLEY BACKGROUND (Pixel Art Desa Warga Senja)
-        this.add.image(400, 225, 'home_village_bg').setDisplaySize(800, 450).setDepth(0);
+        // =========================================================================
+        // PARALLAX LAYER 0: FAR SKY, CLOUDS & MAJESTIC MOUNTAINS (ScrollFactor: 0.15)
+        // =========================================================================
+        this.bgSky = this.add.image(600, 200, 'home_village_bg')
+            .setDisplaySize(2400, 600)
+            .setDepth(0)
+            .setScrollFactor(0.12, 1);
 
-        // 2. YARD ELEMENTS (Pagar Kayu, Pohon Tepi Pagar, Rumput, Semak, dan Jalan Batu)
+        // Distant Atmospheric Glow & Soft Mountain Peaks (ScrollFactor: 0.20)
+        const farMountainsG = this.add.graphics().setDepth(0).setScrollFactor(0.2, 1);
+        farMountainsG.fillStyle(0x1e183a, 0.55);
+        farMountainsG.fillTriangle(-200, 420, 100, 190, 380, 420);
+        farMountainsG.fillTriangle(200, 420, 480, 160, 750, 420);
+        farMountainsG.fillTriangle(560, 420, 800, 180, 1060, 420);
+        farMountainsG.fillTriangle(900, 420, 1150, 150, 1420, 420);
+        farMountainsG.fillTriangle(1260, 420, 1480, 170, 1700, 420);
+
+        farMountainsG.fillStyle(0xddd6fe, 0.45);
+        farMountainsG.fillTriangle(480, 160, 460, 190, 500, 190);
+        farMountainsG.fillTriangle(1150, 150, 1128, 182, 1172, 182);
+
+        // Drifting Twilight Mist & Clouds (ScrollFactor: 0.15)
+        const clouds = [
+            { x: -50, y: 70, w: 220, h: 28, dur: 18000, dist: 80 },
+            { x: 320, y: 55, w: 260, h: 32, dur: 22000, dist: -90 },
+            { x: 720, y: 85, w: 240, h: 26, dur: 19000, dist: 75 },
+            { x: 1120, y: 65, w: 280, h: 30, dur: 24000, dist: -85 },
+            { x: 1450, y: 75, w: 230, h: 28, dur: 20000, dist: 70 }
+        ];
+        clouds.forEach(c => {
+            const cloudG = this.add.graphics().setDepth(0).setScrollFactor(0.15, 1);
+            cloudG.fillStyle(0xf1f5f9, 0.12);
+            cloudG.fillRoundedRect(c.x, c.y, c.w, c.h, 14);
+            cloudG.fillStyle(0xf8fafc, 0.08);
+            cloudG.fillCircle(c.x + c.w * 0.35, c.y + 2, c.h * 0.7);
+            cloudG.fillCircle(c.x + c.w * 0.65, c.y - 2, c.h * 0.8);
+
+            this.tweens.add({
+                targets: cloudG,
+                x: c.dist,
+                alpha: { from: 0.7, to: 1.0 },
+                duration: c.dur,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        });
+
+        // =========================================================================
+        // PARALLAX LAYER 1: MID-DISTANCE VALLEY HILLS & PINES (ScrollFactor: 0.40)
+        // =========================================================================
+        const midHillsG = this.add.graphics().setDepth(1).setScrollFactor(0.4, 1);
+        midHillsG.fillStyle(0x132a22, 0.75);
+        midHillsG.fillCircle(-100, 460, 220);
+        midHillsG.fillCircle(150, 460, 220);
+        midHillsG.fillCircle(490, 470, 240);
+        midHillsG.fillCircle(850, 465, 230);
+        midHillsG.fillCircle(1210, 470, 250);
+        midHillsG.fillCircle(1520, 465, 230);
+
+        midHillsG.fillStyle(0x0a1f18, 0.85);
+        for (let px = -200; px < 1650; px += 48) {
+            const ph = 60 + ((Math.abs(px) * 37) % 45);
+            midHillsG.fillRect(px + 4, 418 - ph, 4, ph);
+            midHillsG.fillTriangle(px - 10, 418 - ph * 0.3, px + 6, 418 - ph, px + 22, 418 - ph * 0.3);
+            midHillsG.fillTriangle(px - 6, 418 - ph * 0.6, px + 6, 418 - ph * 1.1, px + 18, 418 - ph * 0.6);
+        }
+
+        // =========================================================================
+        // PARALLAX LAYER 2: VILLAGE ROOFTOPS & DISTANT FENCES (ScrollFactor: 0.70)
+        // =========================================================================
+        const villageG = this.add.graphics().setDepth(1).setScrollFactor(0.7, 1);
+        villageG.fillStyle(0x172554, 0.45);
+        villageG.fillRect(660, 340, 110, 78);
+        villageG.fillTriangle(645, 340, 715, 290, 785, 340);
+        villageG.fillRect(980, 335, 120, 83);
+        villageG.fillTriangle(965, 335, 1040, 285, 1115, 335);
+
+        for (let s = 0; s < 3; s++) {
+            const nSmoke = this.add.circle(765, 305, 4 + s * 2, 0x94a3b8, 0.25).setDepth(1).setScrollFactor(0.7, 1);
+            this.tweens.add({
+                targets: nSmoke,
+                x: 765 + 16 + s * 8,
+                y: 250 - s * 15,
+                alpha: 0,
+                scale: 2.0,
+                duration: 2800 + s * 500,
+                delay: s * 700,
+                repeat: -1,
+                ease: 'Sine.easeOut'
+            });
+        }
+
+        // =========================================================================
+        // FOREGROUND GAMEPLAY LAYER: COTTAGE, GROUND, FENCES, PROPS (ScrollFactor: 1.0)
+        // =========================================================================
         const bgG = this.add.graphics().setDepth(2);
 
+        // Ground / Terrain Sprites (tanah_home) tiling seamlessly across wide world [-400, 1600]
+        for (let gx = -400; gx <= 1600; gx += 385) {
+            const groundSprite = this.add.image(gx, 418, 'tanah_home').setDepth(2);
+            groundSprite.setOrigin(0, 117 / 250);
+            groundSprite.setScale(386 / 770);
+        }
 
-        // 3b. GROUND / TERRAIN SPRITE (tanah.png)
-        const groundScale = 800 / 770;
-        const groundSprite = this.add.image(0, 418, 'tanah_home').setDepth(1);
-        groundSprite.setOrigin(0, 117 / 250);
-        groundSprite.setScale(groundScale);
-
-        // 4. THE COTTAGE HOUSE — Using cropped rumah.png pixel art sprite
-        const houseSprite = this.add.image(170, 418, 'building_rumah').setDepth(2);
-        // Anchor from bottom-center so the foundation sits directly on the ground line (y = 418)
+        // The Cottage House (shifted right to x: 290 to give left yard breathing room)
+        const houseSprite = this.add.image(290, 418, 'building_rumah').setDepth(2);
         houseSprite.setOrigin(0.5, 1);
-        // Scale house to ~340px wide to fit the cottage grounds
         const houseScale = 340 / houseSprite.width;
         houseSprite.setScale(houseScale);
 
-        // 5. CHIMNEY SMOKE PUFFS (Animated on top of the house sprite)
-        const smokeX = 170 - (houseSprite.displayWidth / 2) + (60 * houseScale);
+        // Chimney Smoke Puffs
+        const smokeX = 290 - (houseSprite.displayWidth / 2) + (60 * houseScale);
         const smokeY = 418 - houseSprite.displayHeight + (18 * houseScale);
         for (let i = 0; i < 4; i++) {
             const smoke = this.add.circle(smokeX, smokeY, 6 + i * 2, 0xe2e8f0, 0.4).setDepth(3);
@@ -348,15 +443,15 @@ export class HomeScene extends BaseScene {
             });
         }
 
-        // 6. WARM WINDOW GLOW (Subtle light cone from the house)
+        // Warm Window Glow
         bgG.fillStyle(0xfbbf24, 0.08);
         bgG.beginPath();
-        bgG.moveTo(60, 310); bgG.lineTo(140, 310); bgG.lineTo(165, 418); bgG.lineTo(35, 418);
+        bgG.moveTo(180, 310); bgG.lineTo(260, 310); bgG.lineTo(285, 418); bgG.lineTo(155, 418);
         bgG.closePath();
         bgG.fillPath();
 
-        // 7. HANGING PORCH LANTERN GLOW (animated)
-        const lanternGlow = this.add.circle(277, 350, 28, 0xfbbf24, 0.18).setDepth(2);
+        // Hanging Porch Lantern Glow
+        const lanternGlow = this.add.circle(397, 350, 28, 0xfbbf24, 0.18).setDepth(2);
         this.tweens.add({
             targets: lanternGlow,
             alpha: { from: 0.12, to: 0.28 },
@@ -367,18 +462,34 @@ export class HomeScene extends BaseScene {
             ease: 'Sine.easeInOut'
         });
 
+        // Rustic wooden trail signpost in the left garden pointing to Lake Forest
+        bgG.fillStyle(0x5c2b0e, 1);
+        bgG.fillRect(58, 380, 5, 38);
+        bgG.fillStyle(0x78350f, 1);
+        bgG.fillRect(38, 374, 46, 15);
+        this.add.text(61, 381, '◀ Danau', {
+            fontSize: '8px',
+            fill: '#fef08a',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(3);
 
-        // 13. FRONT YARD (Halaman Depan Rumah) & WINDING STONE PATHWAY
+        // Winding Stone Pathway (spanning from left path x: 50 to eastern gate x: 1145)
         const stones = [
-            { x: 380, y: 420, rx: 12, ry: 4 },
-            { x: 415, y: 423, rx: 15, ry: 5 },
-            { x: 455, y: 421, rx: 14, ry: 4 },
-            { x: 520, y: 423, rx: 16, ry: 5 },
-            { x: 565, y: 421, rx: 15, ry: 4 },
-            { x: 615, y: 423, rx: 18, ry: 5 },
-            { x: 665, y: 421, rx: 16, ry: 4 },
-            { x: 715, y: 423, rx: 17, ry: 5 },
-            { x: 760, y: 421, rx: 18, ry: 5 }
+            { x: 50, y: 421, rx: 12, ry: 4 },
+            { x: 95, y: 423, rx: 14, ry: 5 },
+            { x: 500, y: 420, rx: 14, ry: 4 },
+            { x: 545, y: 423, rx: 16, ry: 5 },
+            { x: 595, y: 421, rx: 15, ry: 4 },
+            { x: 650, y: 423, rx: 17, ry: 5 },
+            { x: 705, y: 421, rx: 16, ry: 4 },
+            { x: 760, y: 423, rx: 17, ry: 5 },
+            { x: 815, y: 421, rx: 18, ry: 5 },
+            { x: 870, y: 423, rx: 16, ry: 5 },
+            { x: 925, y: 421, rx: 17, ry: 4 },
+            { x: 980, y: 423, rx: 18, ry: 5 },
+            { x: 1035, y: 421, rx: 16, ry: 4 },
+            { x: 1090, y: 423, rx: 17, ry: 5 },
+            { x: 1145, y: 422, rx: 18, ry: 5 }
         ];
         stones.forEach(st => {
             bgG.fillStyle(0x334155, 1);
@@ -389,12 +500,12 @@ export class HomeScene extends BaseScene {
             bgG.fillEllipse(st.x - 2, st.y - 1, st.rx * 0.6, st.ry * 0.5);
         });
 
-        // 14. RUSTIC WOODEN PICKET FENCE
+        // Rustic Wooden Picket Fence (spanning from x: 615 to 1075)
         bgG.fillStyle(0x5c2b0e, 1);
-        bgG.fillRect(515, 385, 220, 3);
-        bgG.fillRect(515, 400, 220, 3);
+        bgG.fillRect(615, 385, 460, 3);
+        bgG.fillRect(615, 400, 460, 3);
 
-        for (let fx = 520; fx < 735; fx += 16) {
+        for (let fx = 620; fx < 1075; fx += 16) {
             bgG.fillStyle(0x854d0e, 1);
             bgG.fillRect(fx, 375, 8, 38);
             bgG.fillTriangle(fx, 375, fx + 4, 368, fx + 8, 375);
@@ -402,45 +513,56 @@ export class HomeScene extends BaseScene {
             bgG.fillRect(fx + 1, 375, 2, 38);
         }
 
-        // Garden Arch / Gate Posts
+        // Garden Arch / Gate Posts (x: 1075)
         bgG.fillStyle(0x451a03, 1);
-        bgG.fillRect(734, 345, 10, 73);
-        bgG.fillRect(775, 345, 10, 73);
+        bgG.fillRect(1075, 345, 10, 73);
+        bgG.fillRect(1116, 345, 10, 73);
         bgG.fillStyle(0x5c2b0e, 1);
-        bgG.fillRect(730, 345, 58, 6);
+        bgG.fillRect(1071, 345, 58, 6);
         bgG.fillStyle(0x16a34a, 0.9);
-        bgG.fillCircle(735, 355, 6);
-        bgG.fillCircle(742, 350, 5);
-        bgG.fillCircle(765, 350, 5);
-        bgG.fillCircle(774, 358, 6);
+        bgG.fillCircle(1076, 355, 6);
+        bgG.fillCircle(1083, 350, 5);
+        bgG.fillCircle(1106, 350, 5);
+        bgG.fillCircle(1115, 358, 6);
 
-        // 15. FRONT YARD TREE (Pohon Halaman Tepi Hutan)
-        bgG.fillStyle(0x3e1d08, 1);
-        bgG.fillRect(772, 180, 28, 238);
-        bgG.fillStyle(0x5c2b0e, 0.7);
-        bgG.fillRect(775, 180, 4, 238);
-        bgG.fillStyle(0x3e1d08, 1);
-        bgG.fillTriangle(772, 230, 725, 200, 772, 220);
-        bgG.fillTriangle(772, 280, 715, 260, 772, 270);
-
-        const leaves = [
-            { x: 740, y: 170, r: 42, color: 0x14532d },
-            { x: 710, y: 200, r: 35, color: 0x166534 },
-            { x: 780, y: 140, r: 55, color: 0x15803d },
-            { x: 700, y: 250, r: 28, color: 0x16a34a },
-            { x: 760, y: 190, r: 45, color: 0x15803d }
+        // Front Yard Trees
+        const trees = [
+            { x: 840, y: 180, w: 28, h: 238, foliageX: 810 },
+            { x: 1155, y: 160, w: 32, h: 258, foliageX: 1135 }
         ];
-        leaves.forEach(lf => {
-            bgG.fillStyle(lf.color, 0.95);
-            bgG.fillCircle(lf.x, lf.y, lf.r);
+        trees.forEach(t => {
+            bgG.fillStyle(0x3e1d08, 1);
+            bgG.fillRect(t.x, t.y, t.w, t.h);
+            bgG.fillStyle(0x5c2b0e, 0.7);
+            bgG.fillRect(t.x + 3, t.y, 4, t.h);
+            bgG.fillStyle(0x3e1d08, 1);
+            bgG.fillTriangle(t.x, t.y + 50, t.x - 47, t.y + 20, t.x, t.y + 40);
+            bgG.fillTriangle(t.x, t.y + 100, t.x - 57, t.y + 80, t.x, t.y + 90);
+
+            const leaves = [
+                { x: t.foliageX, y: t.y - 10, r: 42, color: 0x14532d },
+                { x: t.foliageX - 30, y: t.y + 20, r: 35, color: 0x166534 },
+                { x: t.foliageX + 40, y: t.y - 40, r: 55, color: 0x15803d },
+                { x: t.foliageX - 40, y: t.y + 70, r: 28, color: 0x16a34a },
+                { x: t.foliageX + 20, y: t.y + 10, r: 45, color: 0x15803d }
+            ];
+            leaves.forEach(lf => {
+                bgG.fillStyle(lf.color, 0.95);
+                bgG.fillCircle(lf.x, lf.y, lf.r);
+            });
         });
 
-        // 16. LAWN DETAILS: FLOWER BUSHES, GRASS TUFTS, WILDFLOWERS
+        // Bushes & Wildflowers across the 1200px terrain
         const bushes = [
-            { x: 505, y: 412, r: 16, c: 0x15803d },
-            { x: 535, y: 414, r: 12, c: 0x16a34a },
-            { x: 635, y: 413, r: 15, c: 0x15803d },
-            { x: 705, y: 414, r: 14, c: 0x166534 }
+            { x: 45, y: 413, r: 14, c: 0x15803d },
+            { x: 85, y: 414, r: 12, c: 0x16a34a },
+            { x: 575, y: 412, r: 16, c: 0x15803d },
+            { x: 610, y: 414, r: 13, c: 0x16a34a },
+            { x: 715, y: 413, r: 15, c: 0x15803d },
+            { x: 805, y: 414, r: 14, c: 0x166534 },
+            { x: 910, y: 412, r: 16, c: 0x15803d },
+            { x: 995, y: 413, r: 15, c: 0x16a34a },
+            { x: 1060, y: 414, r: 14, c: 0x15803d }
         ];
         bushes.forEach(b => {
             bgG.fillStyle(b.c, 0.95);
@@ -450,12 +572,17 @@ export class HomeScene extends BaseScene {
         });
 
         const yardFlowers = [
-            { x: 395, y: 415, c: 0xfde047 },
-            { x: 440, y: 416, c: 0xffffff },
-            { x: 545, y: 414, c: 0xf43f5e },
-            { x: 590, y: 416, c: 0xfde047 },
-            { x: 650, y: 415, c: 0x60a5fa },
-            { x: 690, y: 416, c: 0xffffff }
+            { x: 35, y: 415, c: 0xfde047 },
+            { x: 75, y: 416, c: 0xffffff },
+            { x: 515, y: 415, c: 0xfde047 },
+            { x: 560, y: 416, c: 0xffffff },
+            { x: 645, y: 414, c: 0xf43f5e },
+            { x: 695, y: 416, c: 0xfde047 },
+            { x: 770, y: 415, c: 0x60a5fa },
+            { x: 830, y: 416, c: 0xffffff },
+            { x: 920, y: 415, c: 0xfde047 },
+            { x: 980, y: 416, c: 0xf43f5e },
+            { x: 1045, y: 415, c: 0x60a5fa }
         ];
         yardFlowers.forEach(fl => {
             bgG.fillStyle(0x22c55e, 1);
@@ -467,27 +594,28 @@ export class HomeScene extends BaseScene {
         });
 
         bgG.fillStyle(0x4ade80, 0.9);
-        for (let gx = 370; gx < 790; gx += 22) {
+        for (let gx = -100; gx < 1350; gx += 22) {
             bgG.fillTriangle(gx, 418, gx + 3, 407, gx + 6, 418);
             bgG.fillTriangle(gx + 8, 418, gx + 12, 409, gx + 16, 418);
         }
 
-        // 17. ATMOSPHERIC TWILIGHT FIREFLIES
-        for (let i = 0; i < 16; i++) {
-            const fx = Phaser.Math.Between(50, 770);
+        // Fireflies drifting in the twilight
+        for (let i = 0; i < 24; i++) {
+            const fx = Phaser.Math.Between(50, 1160);
             const fy = Phaser.Math.Between(180, 410);
             const firefly = this.add.circle(fx, fy, Phaser.Math.Between(1.5, 2.5), 0xfde047, 0.75).setDepth(3);
 
             this.tweens.add({
                 targets: firefly,
-                x: fx + Phaser.Math.Between(-25, 25),
-                y: fy + Phaser.Math.Between(-20, 20),
-                alpha: { from: 0.2, to: 0.85 },
-                scale: { from: 0.8, to: 1.3 },
-                duration: Phaser.Math.Between(2000, 4200),
+                x: fx + Phaser.Math.Between(-35, 35),
+                y: fy + Phaser.Math.Between(-25, 25),
+                alpha: { from: 0.2, to: 0.9 },
+                scale: { from: 0.7, to: 1.3 },
+                duration: Phaser.Math.Between(1800, 3200),
                 yoyo: true,
                 repeat: -1,
-                ease: 'Sine.easeInOut'
+                ease: 'Sine.easeInOut',
+                delay: Phaser.Math.Between(0, 1000)
             });
         }
     }
@@ -529,7 +657,7 @@ export class HomeScene extends BaseScene {
             }
         }
 
-        this.itemsGroup.children.iterate((item) => {
+        this.itemsGroup.getChildren().forEach((item) => {
             if (item && item.active && Phaser.Math.Distance.Between(this.player.x, this.player.y, item.x, item.y) < 45) {
                 found = { type: 'item', sprite: item, x: item.x, y: item.y - 25, prompt: `Tekan [E] Ambil ${item.itemId}` };
             }
@@ -557,12 +685,12 @@ export class HomeScene extends BaseScene {
                 }
             },
             canExitRight: true,
-            maxX: 770,
+            maxX: 1170,
             onExitRight: () => {
                 if (hasCure) return;
                 if (!hasWood) {
                     this.showMapLockedNotice('Cari 4 kayu bakar di Hutan Danau dan Ujung Danau Kaki Gunung sebelah barat [◀] terlebih dahulu!');
-                    this.player.setX(720);
+                    this.player.setX(1120);
                     this.player.setVelocityX(-150);
                     return;
                 }

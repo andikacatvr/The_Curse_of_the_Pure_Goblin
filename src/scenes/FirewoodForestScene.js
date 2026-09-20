@@ -155,7 +155,7 @@ export class FirewoodForestScene extends BaseScene {
     update() {
         let found = null;
 
-        this.woodGroup.children.iterate((w) => {
+        this.woodGroup.getChildren().forEach((w) => {
             if (w && w.active && Phaser.Math.Distance.Between(this.player.x, this.player.y, w.x, w.y) < 45) {
                 found = { type: 'firewood', sprite: w, x: w.x, y: w.y - 25, prompt: 'Tekan [E] Ambil Kayu Bakar Khusus' };
             }

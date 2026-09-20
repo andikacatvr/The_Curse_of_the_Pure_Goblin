@@ -3,12 +3,12 @@ export class DisplayManager {
         if (this._initialized) return;
         this._initialized = true;
         this.resolutions = [
-            { id: 'fit', label: '📺 LAYAR PAS (AUTO-FIT 16:9)', desc: 'Menyesuaikan layar browser otomatis' },
+            { id: 'fit', label: '📺 LAYAR PENUH (FULLSCREEN)', desc: 'Menyesuaikan layar penuh tanpa batas hitam' },
             { id: '1280x720', label: '1280 x 720 (BESAR HD)', width: 1280, height: 720 },
             { id: '960x540', label: '960 x 540 (SEDANG)', width: 960, height: 540 },
             { id: '800x450', label: '800 x 450 (KECIL ASLI)', width: 800, height: 450 }
         ];
-        this.currentIdx = 0; // Default to Auto-Fit for large immersive view!
+        this.currentIdx = 0; // Default to Fullscreen for immersive edge-to-edge view!
         try {
             const saved = localStorage.getItem('game_resolution');
             if (saved) {
@@ -40,21 +40,23 @@ export class DisplayManager {
         return this.resolutions[this.currentIdx];
     }
 
+    static cyclePrev() {
+        this.init();
+        this.currentIdx = (this.currentIdx - 1 + this.resolutions.length) % this.resolutions.length;
+        try {
+            localStorage.setItem('game_resolution', this.resolutions[this.currentIdx].id);
+        } catch (e) {}
+        this.applyResolution();
+        return this.resolutions[this.currentIdx];
+    }
+
     static applyResolution() {
         const container = document.getElementById('game-container');
         if (!container) return;
         const res = this.resolutions[this.currentIdx];
         if (res.id === 'fit') {
-            const availW = window.innerWidth;
-            const availH = window.innerHeight;
-            let targetW = availW;
-            let targetH = availW * 9 / 16;
-            if (targetH > availH) {
-                targetH = availH;
-                targetW = availH * 16 / 9;
-            }
-            container.style.width = `${Math.floor(targetW)}px`;
-            container.style.height = `${Math.floor(targetH)}px`;
+            container.style.width = '100vw';
+            container.style.height = '100vh';
         } else {
             const maxW = window.innerWidth - 20;
             const maxH = window.innerHeight - 20;

@@ -201,7 +201,7 @@ export class ForestTrailScene extends BaseScene {
             found = { type: 'npc', dialogue: this.hunter.dialogue, x: this.hunter.x, y: this.hunter.y - 35, prompt: 'Tekan [E] Tanya Arah' };
         }
 
-        this.woodGroup.children.iterate((w) => {
+        this.woodGroup.getChildren().forEach((w) => {
             if (w && w.active && Phaser.Math.Distance.Between(this.player.x, this.player.y, w.x, w.y) < 45) {
                 found = { type: 'firewood', sprite: w, x: w.x, y: w.y - 25, prompt: 'Tekan [E] Ambil Kayu Bakar Khusus' };
             }

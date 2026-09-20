@@ -279,7 +279,7 @@ export class WoodshopScene extends BaseScene {
             found = { type: 'smoker_item', x: this.smokerItem.x, y: this.smokerItem.y - 25, prompt: 'Tekan [E] Ambil Bee Smoker' };
         }
 
-        this.bagsGroup.children.iterate((bag) => {
+        this.bagsGroup.getChildren().forEach((bag) => {
             if (bag && bag.active && Phaser.Math.Distance.Between(this.player.x, this.player.y, bag.x, bag.y) < 45) {
                 found = { type: 'bag', sprite: bag, x: bag.x, y: bag.y - 25, prompt: 'Tekan [E] Rapikan Karung Pupuk' };
             }

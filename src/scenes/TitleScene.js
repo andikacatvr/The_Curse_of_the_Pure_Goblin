@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { FONT_TITLE, FONT_BODY, isMobileDevice } from '../utils/gameState.js';
 import { GameAudio } from '../audio/GameAudio.js';
 import { DisplayManager } from '../utils/DisplayManager.js';
+import { HDHudManager } from '../utils/HDHudManager.js';
 
 export class TitleScene extends Phaser.Scene {
     constructor() {
@@ -9,6 +10,7 @@ export class TitleScene extends Phaser.Scene {
     }
 
     create() {
+        HDHudManager.hideTopHUD();
         // Unlock Web Audio context on user pointer interaction
         this.input.once('pointerdown', () => {
             GameAudio.init();

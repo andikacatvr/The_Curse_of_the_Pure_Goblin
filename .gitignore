@@ -9,12 +9,12 @@ lerna-debug.log*
 
 # Dependencies
 node_modules
-template-game/node_modules
+archive/**/node_modules
 
 # Production build outputs
 dist
 dist-ssr
-template-game/dist
+archive/**/dist
 
 # Editor directories and files
 .vscode/*

@@ -4,14 +4,14 @@ export default defineConfig({
   server: {
     watch: {
       ignored: [
-        '**/narrative_scroll/**',
+        '**/public/**',
+        '**/raw_assets/**',
+        '**/archive/**',
         '**/*.mp4',
-        '**/.git/**',
-        '**/asset_karakter/**',
-        '**/asset/**',
-        '**/building_asset/**',
-        '**/sprite_frozen_characters/**',
-        '**/sprite_sheet_characters/**'
+        '**/*.png',
+        '**/*.jpg',
+        '**/*.jpeg',
+        '**/.git/**'
       ]
     }
   }

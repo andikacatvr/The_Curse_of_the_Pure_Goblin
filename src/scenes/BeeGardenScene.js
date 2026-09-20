@@ -213,7 +213,7 @@ export class BeeGardenScene extends BaseScene {
             found = { type: 'beehive', x: this.beehive.x, y: 320, prompt: 'Tekan [E] Panen Madu Murni' };
         }
 
-        this.weedsGroup.children.iterate((weed) => {
+        this.weedsGroup.getChildren().forEach((weed) => {
             if (weed && weed.active && Phaser.Math.Distance.Between(this.player.x, this.player.y, weed.x, weed.y) < 45) {
                 const promptMsg = this.registry.get('talkedToMary') ? 'Tekan [E] Bersihkan Rumput Liar' : 'Bicara Dulu dengan Nenek Mary!';
                 found = { type: 'weed', sprite: weed, x: weed.x, y: weed.y - 25, prompt: promptMsg };
