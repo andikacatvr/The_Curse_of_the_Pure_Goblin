@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
 import { getInventory, getQuestState, setQuestState } from '../utils/gameState.js';
+import { GameAudio } from '../audio/GameAudio.js';
 
 export class VillageResidentialScene extends BaseScene {
     constructor() {
@@ -95,6 +96,33 @@ export class VillageResidentialScene extends BaseScene {
     }
 
     deliverToHouse(houseKey, name, sprite) {
+        const inv = getInventory(this.registry);
+        const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
+        const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
+
+        // Minta Lada Hitam dari Ibu Sarah
+        if (houseKey === 'sarah' && !hasPepper) {
+            inv.push({
+                id: 'Lada Hitam Pilihan',
+                desc: 'Rempah lada hitam pedas-hangat berkualitas tinggi untuk bumbu roti magis Mr. Breado.'
+            });
+            this.registry.set('inventory', inv);
+            this.renderInventorySlots();
+            GameAudio.playCollect();
+
+            const notice = this.add.text(sprite.x, sprite.y - 40, '✨ + Lada Hitam Pilihan!', {
+                fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000aa', padding: { x: 4, y: 2 }
+            }).setOrigin(0.5);
+            this.tweens.add({ targets: notice, y: notice.y - 25, alpha: 0, duration: 1200, onComplete: () => notice.destroy() });
+
+            this.startDialogue([
+                { speaker: 'Aksel (Goblin)', text: 'Permisi Bu Sarah, Mr. Breado membutuhkan rempah Lada Hitam untuk racikan resep Magic Bread. Apakah Ibu punya simpanan di dapur?' },
+                { speaker: 'Ibu Sarah', text: 'Ohoho! Tentu saja ada, Goblin kecil yang manis! Ini ambillah [Lada Hitam Pilihan] terbaik dari dapuku!' },
+                { speaker: 'Aksel (Goblin)', text: 'Terima kasih banyak Ibu Sarah! Satu bahan rempah lagi berhasil kudapatkan!' }
+            ]);
+            return;
+        }
+
         let delivered = this.registry.get('deliveredHouses') || [];
         if (delivered.includes(houseKey)) {
             let message = '';
@@ -108,8 +136,7 @@ export class VillageResidentialScene extends BaseScene {
             return;
         }
 
-        const qState = getQuestState(this.registry);
-        if (qState.questNumber < 8) {
+        if (!isDeliveryActive) {
             this.startDialogue([
                 { speaker: name, text: 'Halo Goblin kecil! Kami sedang menunggu pesanan roti pagi dari Mr. Breado.' }
             ]);
@@ -136,8 +163,8 @@ export class VillageResidentialScene extends BaseScene {
                 completedQuests: [
                     'Quest 1-3: Bahan 1 Madu Murni',
                     'Quest 4-6: Bahan 2 Mythical Seed',
-                    'Quest 7: Giling Tepung Magis',
-                    'Quest 8: Antar 3 Keranjang Roti Pagi ke Warga'
+                    'Quest 7: Giling Tepung Gandum Murni',
+                    'Quest 8: Kumpulkan Rempah & Antar 3 Roti'
                 ]
             });
             this.updateQuestHUD();
@@ -165,15 +192,23 @@ export class VillageResidentialScene extends BaseScene {
     update() {
         let found = null;
         let delivered = this.registry.get('deliveredHouses') || [];
+        const inv = getInventory(this.registry);
+        const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
+        const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
 
         if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.house1.x, this.house1.y) < 70) {
-            const prompt = delivered.includes('thomas') ? 'Tekan [E] Bicara Pak Thomas' : 'Tekan [E] Antar Roti (Rumah Pak Thomas)';
+            const prompt = isDeliveryActive && !delivered.includes('thomas') ? 'Tekan [E] Antar Roti (Rumah Pak Thomas)' : 'Tekan [E] Bicara Pak Thomas';
             found = { type: 'house1', x: this.house1.x, y: this.house1.y - 45, prompt: prompt };
         } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.house2.x, this.house2.y) < 70) {
-            const prompt = delivered.includes('sarah') ? 'Tekan [E] Bicara Ibu Sarah' : 'Tekan [E] Antar Roti (Rumah Ibu Sarah)';
+            let prompt = 'Tekan [E] Bicara Ibu Sarah';
+            if (!hasPepper) {
+                prompt = 'Tekan [E] Minta Lada Hitam (Ibu Sarah)';
+            } else if (isDeliveryActive && !delivered.includes('sarah')) {
+                prompt = 'Tekan [E] Antar Roti (Rumah Ibu Sarah)';
+            }
             found = { type: 'house2', x: this.house2.x, y: this.house2.y - 45, prompt: prompt };
         } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.house3.x, this.house3.y) < 70) {
-            const prompt = delivered.includes('bob') ? 'Tekan [E] Bicara Paman Bob' : 'Tekan [E] Antar Roti (Rumah Paman Bob)';
+            const prompt = isDeliveryActive && !delivered.includes('bob') ? 'Tekan [E] Antar Roti (Rumah Paman Bob)' : 'Tekan [E] Bicara Paman Bob';
             found = { type: 'house3', x: this.house3.x, y: this.house3.y - 45, prompt: prompt };
         }
 
@@ -189,10 +224,11 @@ export class VillageResidentialScene extends BaseScene {
             canExitLeft: true,
             onExitLeft: () => {
                 const delivered = this.registry.get('deliveredHouses') || [];
+                const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
                 const inv = getInventory(this.registry);
                 const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
 
-                if (delivered.length < 3 && !hasMagicBread) {
+                if (isDeliveryActive && delivered.length < 3 && !hasMagicBread) {
                     this.showMapLockedNotice('Antarkan 3 keranjang roti ke 3 rumah warga desa dulu!');
                     this.player.setX(35);
                     this.player.setVelocityX(150);
@@ -200,7 +236,7 @@ export class VillageResidentialScene extends BaseScene {
                 }
 
                 if (hasMagicBread) {
-                    this.showMapLockedNotice('Magic Bread sudah didapatkan! Segera kembali ke Madam Joanne di timur.');
+                    this.showMapLockedNotice('Magic Bread sudah didapatkan! Segera kembali ke Madam Joanne di timur [➔].');
                     this.player.setX(35);
                     this.player.setVelocityX(150);
                     return;
