@@ -41,12 +41,18 @@ export class WitchCottageScene extends BaseScene {
             });
         }
 
+        const hasHoney = inv.some(i => i.id === 'Bahan 1: Madu Murni');
+        const hasSeed = inv.some(i => i.id === 'Bahan 2: Mythical Seed');
+        const hasBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
+        const has3Ingredients = hasHoney && hasSeed && hasBread;
+
         this.joanne = this.add.sprite(265, 245, 'witch_spirit').setDepth(10);
         this.joanne.setScale(0.23);
         this.joanne.type = 'npc';
         const isCursed = qState.chapter !== 'PROLOG';
-        this.joanne.setVisible(isCursed);
-        if (isCursed) {
+        const joanneVisibleInitial = isCursed && !(has3Ingredients && !hasCure);
+        this.joanne.setVisible(joanneVisibleInitial);
+        if (joanneVisibleInitial) {
             this.startJoanneFloating();
         }
 
@@ -82,11 +88,7 @@ export class WitchCottageScene extends BaseScene {
         this.theftCutsceneDone = false;
         this.epilogueCutsceneDone = false;
         this.isEpilogueDialogueActive = false;
-
-        const hasHoney = inv.some(i => i.id === 'Bahan 1: Madu Murni');
-        const hasSeed = inv.some(i => i.id === 'Bahan 2: Mythical Seed');
-        const hasBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
-        const has3Ingredients = hasHoney && hasSeed && hasBread;
+        this.epilogueJoanneEmerged = false;
 
         // Cutscene otomatis di Prolog
         if (qState.chapter === 'PROLOG') {
@@ -141,7 +143,9 @@ export class WitchCottageScene extends BaseScene {
         this.cutsceneActive = true;
         this.epilogueCutsceneDone = true;
         this.isEpilogueDialogueActive = true;
+        this.epilogueJoanneEmerged = false;
 
+        if (this.joanne) this.joanne.setVisible(false);
         if (this.promptText) this.promptText.setVisible(false);
 
         // Aksel (Goblin) otomatis melangkah maju dari pintu masuk (x: 60) menuju depan kuali (x: 230)
@@ -163,8 +167,15 @@ export class WitchCottageScene extends BaseScene {
             onComplete: () => {
                 waddleTween.stop();
                 this.player.setAngle(0);
-                this.time.delayedCall(300, () => {
-                    this.triggerEpilogueCutscene();
+                // Aksel menoleh mencari keberadaan Madam Joanne
+                this.time.delayedCall(150, () => {
+                    this.player.setFlipX(true);
+                    this.time.delayedCall(300, () => {
+                        this.player.setFlipX(false);
+                        this.time.delayedCall(250, () => {
+                            this.triggerEpilogueCutscene();
+                        });
+                    });
                 });
             }
         });
@@ -176,13 +187,16 @@ export class WitchCottageScene extends BaseScene {
         if (this.promptText) this.promptText.setVisible(false);
 
         this.startDialogue([
-            { speaker: 'Aksel (Goblin)', text: 'Madam Joanne! Aku telah berhasil mengumpulkan ketiga Bahan Magis (Madu Murni, Mythical Seed, dan Magic Bread)!' },
-            { speaker: 'Aksel (Goblin)', text: 'Tolong lepaskan kutukan ini dan berikan obat ramuan untuk adikku Rachael!' },
+            { speaker: 'Aksel (Goblin)', text: 'Halo? Madam Joanne?! Aku sudah membawa apa yang engkau suruh... Kau di mana?' },
+            { speaker: 'Aksel (Goblin)', text: 'Kualinya masih mengepul panas, tapi seisi pondok sepi sekali...' },
+            { speaker: 'Madam Joanne', text: 'Fufufu... Kau tidak perlu berteriak sekeras itu, Goblin kecil! Aku selalu mengawasimu...' },
+            { speaker: 'Aksel (Goblin)', text: 'Madam Joanne! Ini dia ketiga Bahan Magis (Madu Murni, Mythical Seed, dan Magic Bread)!' },
+            { speaker: 'Aksel (Goblin)', text: 'Sesuai janjimu, tolong lepaskan kutukan ini dan berikan obat ramuan untuk adikku Rachael!' },
             { speaker: 'Madam Joanne', text: 'Fufufu... Kau Goblin kerdil yang luar biasa gigih dan tulus, Aksel.' },
             { speaker: 'Madam Joanne', text: 'Ketahuilah... Botol ramuan yang kau curi dulu sebenarnya hanyalah Minyak Pegal Biasa!' },
             { speaker: 'Aksel (Goblin)', text: 'APA?! Ramuan yang kuambil dulu bukan obat?!' },
             { speaker: 'Madam Joanne', text: 'Tentu saja bukan! Tapi dengan 3 Bahan Magis hasil kerja kerasmu membantu warga desa ini, aku meracikkan RAMUAN KESEMBUHAN ASLI untuk adikmu!' },
-            { speaker: 'Madam Joanne', text: 'Dan karena ketulusan hatimu, KUTUKAN GOBLIN DIHAPUSKAN!' }
+            { speaker: 'Madam Joanne', text: 'Dan karena ketulusan hatimu yang begitu murni, KUTUKAN GOBLIN DIHAPUSKAN!' }
         ], () => {
             const flash = this.add.rectangle(400, 225, 800, 450, 0xffffff, 0.95).setDepth(30);
             this.tweens.add({
@@ -359,9 +373,18 @@ export class WitchCottageScene extends BaseScene {
             }
         }
 
-        // Epilogue cutscene effects: When Madam Joanne brews the 3 magical ingredients (index 5)
-        if (this.isEpilogueDialogueActive && index === 5) {
-            this.spawnIngredientBursts();
+        // Epilogue cutscene effects:
+        if (this.isEpilogueDialogueActive) {
+            // Madam Joanne dramatically emerges when she answers Aksel's call!
+            if (currentData && currentData.speaker === 'Madam Joanne' && !this.epilogueJoanneEmerged) {
+                this.epilogueJoanneEmerged = true;
+                this.emergeJoanneFromCauldron();
+            }
+
+            // When Madam Joanne brews the 3 magical ingredients (index 8)
+            if (index === 8) {
+                this.spawnIngredientBursts();
+            }
         }
     }
 
