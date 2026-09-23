@@ -80,11 +80,23 @@ export class WitchCottageScene extends BaseScene {
 
         this.cutsceneActive = false;
         this.theftCutsceneDone = false;
+        this.epilogueCutsceneDone = false;
+        this.isEpilogueDialogueActive = false;
 
-        // Solusi 1: Cutscene otomatis saat Aksel melangkah masuk di Prolog
+        const hasHoney = inv.some(i => i.id === 'Bahan 1: Madu Murni');
+        const hasSeed = inv.some(i => i.id === 'Bahan 2: Mythical Seed');
+        const hasBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
+        const has3Ingredients = hasHoney && hasSeed && hasBread;
+
+        // Cutscene otomatis di Prolog
         if (qState.chapter === 'PROLOG') {
             this.time.delayedCall(450, () => {
                 this.startPrologEntryCutscene();
+            });
+        } else if (has3Ingredients && !hasCure) {
+            // Cutscene otomatis di Epilogue saat Aksel kembali membawa 3 bahan magis
+            this.time.delayedCall(450, () => {
+                this.startEpilogueEntryCutscene();
             });
         }
     }
@@ -124,14 +136,52 @@ export class WitchCottageScene extends BaseScene {
         }
     }
 
+    startEpilogueEntryCutscene() {
+        if (this.cutsceneActive || this.epilogueCutsceneDone) return;
+        this.cutsceneActive = true;
+        this.epilogueCutsceneDone = true;
+        this.isEpilogueDialogueActive = true;
+
+        if (this.promptText) this.promptText.setVisible(false);
+
+        // Aksel (Goblin) otomatis melangkah maju dari pintu masuk (x: 60) menuju depan kuali (x: 230)
+        this.player.setFlipX(false);
+        const waddleTween = this.tweens.add({
+            targets: this.player,
+            angle: { from: -5, to: 5 },
+            yoyo: true,
+            repeat: -1,
+            duration: 170,
+            ease: 'Sine.easeInOut'
+        });
+
+        this.tweens.add({
+            targets: this.player,
+            x: 230,
+            duration: 1400,
+            ease: 'Linear',
+            onComplete: () => {
+                waddleTween.stop();
+                this.player.setAngle(0);
+                this.time.delayedCall(300, () => {
+                    this.triggerEpilogueCutscene();
+                });
+            }
+        });
+    }
+
     triggerEpilogueCutscene() {
+        this.cutsceneActive = true;
+        this.isEpilogueDialogueActive = true;
+        if (this.promptText) this.promptText.setVisible(false);
+
         this.startDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Madam Joanne! Aku telah berhasil mengumpulkan ketiga Bahan Magis (Madu Murni, Mythical Seed, dan Magic Bread)!' },
             { speaker: 'Aksel (Goblin)', text: 'Tolong lepaskan kutukan ini dan berikan obat ramuan untuk adikku Rachael!' },
             { speaker: 'Madam Joanne', text: 'Fufufu... Kau Goblin kerdil yang luar biasa gigih dan tulus, Aksel.' },
             { speaker: 'Madam Joanne', text: 'Ketahuilah... Botol ramuan yang kau curi dulu sebenarnya hanyalah Minyak Pegal Biasa!' },
             { speaker: 'Aksel (Goblin)', text: 'APA?! Ramuan yang kuambil dulu bukan obat?!' },
-            { speaker: 'Madam Joanne', text: 'Tentu saja bukan! Tapi dengan 3 Bahan Magis hasil kerja kerasmu membantu warga desa ini, aku meracikkan RAMUAN KESEMBUHAN ASLI untuk adiknya!' },
+            { speaker: 'Madam Joanne', text: 'Tentu saja bukan! Tapi dengan 3 Bahan Magis hasil kerja kerasmu membantu warga desa ini, aku meracikkan RAMUAN KESEMBUHAN ASLI untuk adikmu!' },
             { speaker: 'Madam Joanne', text: 'Dan karena ketulusan hatimu, KUTUKAN GOBLIN DIHAPUSKAN!' }
         ], () => {
             const flash = this.add.rectangle(400, 225, 800, 450, 0xffffff, 0.95).setDepth(30);
@@ -168,7 +218,21 @@ export class WitchCottageScene extends BaseScene {
                         { speaker: 'Madam Joanne', text: 'Ini [Ramuan Kesembuhan Asli]. Keluarlah ke barat melalui Jalan Hutan untuk pulang ke rumahmu!' },
                         { speaker: 'Aksel (Manusia)', text: 'Terima kasih banyak Madam Joanne! Aku akan segera pulang membawa ramuan ini!' }
                     ], () => {
-                        this.scene.start('WitchYardScene', { from: 'WitchCottageScene' });
+                        this.isEpilogueDialogueActive = false;
+                        if (this.player && this.player.anims) {
+                            const walkKey = this.anims.exists('aksel_human_walk') ? 'aksel_human_walk' : 'walk';
+                            this.player.anims.play(walkKey, true);
+                            this.player.setFlipX(true);
+                        }
+                        this.tweens.add({
+                            targets: this.player,
+                            x: 35,
+                            duration: 1200,
+                            ease: 'Linear',
+                            onComplete: () => {
+                                this.scene.start('WitchYardScene', { from: 'WitchCottageScene' });
+                            }
+                        });
                     });
                 }
             });
@@ -282,17 +346,54 @@ export class WitchCottageScene extends BaseScene {
 
     onDialogueLine(index, currentData) {
         // Only trigger during the theft confrontation cutscene
-        if (!this.theftCutsceneActive) return;
+        if (this.theftCutsceneActive) {
+            // Line 1+: When Madam Joanne speaks ("BOCAH PENCURI!"), she emerges from cauldron with smoke burst!
+            if (currentData && currentData.speaker === 'Madam Joanne' && !this.joanneHasEmerged) {
+                this.joanneHasEmerged = true;
+                this.emergeJoanneFromCauldron();
+            }
 
-        // Line 1+: When Madam Joanne speaks ("BOCAH PENCURI!"), she emerges from cauldron with smoke burst!
-        if (currentData && currentData.speaker === 'Madam Joanne' && !this.joanneHasEmerged) {
-            this.joanneHasEmerged = true;
-            this.emergeJoanneFromCauldron();
+            // Line with goblin transformation
+            if (currentData && currentData.speaker === 'Aksel (Goblin)' && this.player) {
+                this.player.setTexture('player_goblin');
+            }
         }
 
-        // Line with goblin transformation
-        if (currentData && currentData.speaker === 'Aksel (Goblin)' && this.player) {
-            this.player.setTexture('player_goblin');
+        // Epilogue cutscene effects: When Madam Joanne brews the 3 magical ingredients (index 5)
+        if (this.isEpilogueDialogueActive && index === 5) {
+            this.spawnIngredientBursts();
+        }
+    }
+
+    spawnIngredientBursts() {
+        // Madu Murni (Golden honey burst)
+        this.spawnColoredBurst(265, 325, [0xfbbf24, 0xfde047, 0xf59e0b]);
+        // Mythical Seed (Emerald mythical burst)
+        this.time.delayedCall(250, () => {
+            this.spawnColoredBurst(265, 325, [0x10b981, 0x34d399, 0x059669]);
+        });
+        // Magic Bread (Cosmic purple & rose burst)
+        this.time.delayedCall(500, () => {
+            this.spawnColoredBurst(265, 325, [0xa855f7, 0xc084fc, 0xec4899]);
+        });
+    }
+
+    spawnColoredBurst(x, y, colors = [0xa855f7, 0x10b981, 0xfacc15]) {
+        for (let i = 0; i < 22; i++) {
+            const color = Phaser.Utils.Array.GetRandom(colors);
+            const p = this.add.circle(x + Phaser.Math.Between(-15, 15), y + Phaser.Math.Between(-5, 5), Phaser.Math.Between(7, 18), color, 0.85).setDepth(6);
+            const targetX = x + Phaser.Math.Between(-60, 60);
+            const targetY = y - Phaser.Math.Between(45, 130);
+            this.tweens.add({
+                targets: p,
+                x: targetX,
+                y: targetY,
+                scale: { from: 0.5, to: Phaser.Math.FloatBetween(2.0, 3.2) },
+                alpha: { from: 0.9, to: 0 },
+                duration: Phaser.Math.Between(700, 1300),
+                ease: 'Cubic.easeOut',
+                onComplete: () => p.destroy()
+            });
         }
     }
 
