@@ -138,7 +138,7 @@ export class VillageResidentialScene extends BaseScene {
 
         if (!isDeliveryActive) {
             this.startDialogue([
-                { speaker: name, text: 'Halo Goblin kecil! Kami sedang menunggu pesanan roti pagi dari Mr. Breado.' }
+                { speaker: name, text: 'Halo Goblin kecil! Kami sedang menunggu pesanan roti pagi dari Mr. Breado. Kudengar beliau sedang membutuhkan bahan rempah & saffron langka dari monster di Hutan Timur sebelah kanan [➔]!' }
             ]);
             return;
         }
@@ -147,6 +147,18 @@ export class VillageResidentialScene extends BaseScene {
         this.registry.set('deliveredHouses', delivered);
         const count = delivered.length;
         this.registry.set('breadDeliverCount', count);
+
+        // Update inventory item Keranjang Roti Pagi jika ada
+        const basketIndex = inv.findIndex(i => i.id === 'Keranjang Roti Pagi');
+        if (count >= 3) {
+            if (basketIndex !== -1) {
+                inv.splice(basketIndex, 1);
+            }
+        } else if (basketIndex !== -1) {
+            inv[basketIndex].desc = `Keranjang roti gandum hangat untuk warga desa (Sisa ${3 - count} keranjang lagi).`;
+        }
+        this.registry.set('inventory', inv);
+        this.renderInventorySlots();
 
         const notice = this.add.text(sprite.x, sprite.y - 40, `✨ Roti Terantar! (${count}/3)`, {
             fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000aa', padding: { x: 4, y: 2 }
@@ -158,7 +170,7 @@ export class VillageResidentialScene extends BaseScene {
             setQuestState(this.registry, {
                 chapter: 'BAB 3',
                 title: 'Quest 9: Minta Hadiah Magic Bread',
-                objective: '3 Roti Warga Terantar! Kembali & temui Mr. Breado [E] untuk menerima [Magic Bread] sebagai hadiah.',
+                objective: '3 Roti Warga Terantar! Kembali & temui Mr. Breado [E] di Toko Roti [◀] untuk menerima [Magic Bread] sebagai hadiah.',
                 questNumber: 9,
                 completedQuests: [
                     'Quest 1-3: Bahan 1 Madu Murni',
@@ -171,7 +183,7 @@ export class VillageResidentialScene extends BaseScene {
 
             this.startDialogue([
                 { speaker: name, text: `Terima kasih banyak Goblin kecil yang baik hati! Ini roti pesanan yang kami tunggu!` },
-                { speaker: 'Aksel (Goblin)', text: 'Hore! Semua 3 rumah warga desa sudah menerima roti pagi mereka! Sekarang aku harus kembali menemui Mr. Breado di Toko Roti!' }
+                { speaker: 'Aksel (Goblin)', text: 'Hore! Semua 3 rumah warga desa sudah menerima roti pagi mereka! Sekarang aku harus kembali menemui Mr. Breado di Toko Roti [◀] untuk mengambil Magic Bread!' }
             ]);
         } else {
             setQuestState(this.registry, {
@@ -249,18 +261,27 @@ export class VillageResidentialScene extends BaseScene {
                 const delivered = this.registry.get('deliveredHouses') || [];
                 const inv = getInventory(this.registry);
                 const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
+                const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
 
-                if (delivered.length < 3) {
+                // Jika sedang dalam quest antar roti dan belum selesai 3 rumah
+                if (isDeliveryActive && delivered.length < 3) {
                     this.showMapLockedNotice('Antarkan 3 keranjang roti ke 3 rumah warga desa dulu!');
                     this.player.setX(740);
                     this.player.setVelocityX(-150);
-                } else if (!hasMagicBread) {
+                    return;
+                }
+
+                // Jika sudah antar 3 roti tapi belum ambil Magic Bread dari Mr. Breado di Toko Roti
+                if (delivered.length >= 3 && !hasMagicBread) {
                     this.showMapLockedNotice('Kembali ke Toko Roti di kiri [◀] & temui Mr. Breado untuk terima Magic Bread!');
                     this.player.setX(740);
                     this.player.setVelocityX(-150);
-                } else {
-                    this.scene.start('EastForestScene', { from: 'VillageResidentialScene' });
+                    return;
                 }
+
+                // Jika belum masuk fase antar roti (masih cari Saffron di Hutan Timur),
+                // ATAU jika sudah memiliki Magic Bread -> Boleh masuk ke EastForestScene!
+                this.scene.start('EastForestScene', { from: 'VillageResidentialScene' });
             }
         });
     }
