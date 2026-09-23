@@ -100,9 +100,7 @@ export class WitchYardScene extends BaseScene {
         if (this.registry.get('justCursed')) {
             this.registry.set('justCursed', false);
 
-            this.showChapterBanner('BAB 1: MENCARI MADU MAGIS', 'Bahan 1 Dari 3 Bahan Magis');
-
-            this.time.delayedCall(1000, () => {
+            this.time.delayedCall(500, () => {
                 this.startDialogue([
                     { speaker: 'Aksel (Goblin)', text: 'Uggggh... wujudku benar-benar berubah jadi Goblin hijau kerdil seperti ini...' },
                     { speaker: 'Aksel (Goblin)', text: 'Maafkan aku, Rachael... Karena kecerobohanku mencuri, kau harus menahan sakit lebih lama lagi...' },

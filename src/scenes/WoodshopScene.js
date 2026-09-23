@@ -38,12 +38,6 @@ export class WoodshopScene extends BaseScene {
         const hasHoney = inv.some(i => i.id === 'Bahan 1: Madu Murni');
         const hasSeed = inv.some(i => i.id === 'Bahan 2: Mythical Seed');
 
-        // Trigger Chapter 2 Banner when arriving with Honey
-        if (hasHoney && qState.chapter === 'BAB 2' && !this.registry.get('ch2BannerShown')) {
-            this.registry.set('ch2BannerShown', true);
-            this.showChapterBanner('BAB 2: BERBURU MYTHICAL SEED', 'Bahan 2 Dari 3 Bahan Magis');
-        }
-
         // Dialogue setup based on Chapter 2 progress
         if (hasSeed) {
             this.heinreich.dialogue = [
@@ -239,9 +233,6 @@ export class WoodshopScene extends BaseScene {
         GameAudio.playCollect();
 
         this.renderInventorySlots();
-
-        // Trigger Chapter 3 Banner & Quest State
-        this.showChapterBanner('BAB 3: MEMBUAT MAGIC BREAD', 'Bahan 3 Dari 3 Bahan Magis');
 
         setQuestState(this.registry, {
             chapter: 'BAB 3',

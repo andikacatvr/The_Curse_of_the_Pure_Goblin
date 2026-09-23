@@ -228,9 +228,7 @@ export class BakeryMillScene extends BaseScene {
             { speaker: 'Mr. Breado', text: 'Sebagai hadiah atas kebaikan dan bantuanmu, ini aku serahkan [Bahan 3: Magic Bread] yang baru saja selesai kupanggang dengan sempurna!' },
             { speaker: 'Aksel (Goblin)', text: 'HOREEE!! [Bahan 3: Magic Bread] akhirnya kudapatkan! Terima kasih banyak Mr. Breado!' },
             { speaker: 'Aksel (Dalam Hati)', text: '(Ketiga Bahan Magis akhirnya lengkap! Sekarang aku bisa kembali ke Madam Joanne untuk melepaskan kutukan dan menyembuhkan Rachael!)' }
-        ], () => {
-            this.showChapterBanner('SEMUA 3 BAHAN MAGIS LENGKAP!', 'Segera Temui Madam Joanne untuk Menyembuhkan Rachael!');
-        });
+        ]);
     }
 
     update() {
