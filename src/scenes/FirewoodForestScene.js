@@ -248,17 +248,8 @@ export class FirewoodForestScene extends BaseScene {
             });
         }
 
-        // 4. Forest Floor Props: Mossy boulder & ancient moss-covered log
+        // 4. Forest Floor Props: ancient moss-covered log & ferns
         const floorG = this.add.graphics().setDepth(2);
-        // Mossy Boulder (X: 165, Y: 412)
-        floorG.fillStyle(0x1e293b, 1);
-        floorG.fillCircle(165, 412, 18);
-        floorG.fillStyle(0x334155, 1);
-        floorG.fillCircle(163, 408, 14);
-        floorG.fillStyle(0x15803d, 0.85);
-        floorG.fillCircle(163, 402, 9);
-        floorG.fillStyle(0x22c55e, 0.7);
-        floorG.fillCircle(166, 400, 5);
 
         // Ancient Fallen Log (X: 535, Y: 412)
         floorG.fillStyle(0x451a03, 1);
