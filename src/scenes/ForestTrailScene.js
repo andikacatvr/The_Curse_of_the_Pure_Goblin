@@ -28,7 +28,7 @@ export class ForestTrailScene extends BaseScene {
         const playerTexture = (qState.chapter !== 'PROLOG' && !hasCure) ? 'player_goblin' : 'player_human';
         
         let startX = 50;
-        if (data && (data.from === 'WitchYardScene' || data.from === 'WaterfallGorgeScene')) {
+        if (data && (data.from === 'WitchYardScene' || data.from === 'WaterfallGorgeScene' || data.from === 'WoodshopScene')) {
             startX = 740;
         } else if ((data && data.from === 'HomeScene') || (data && data.from === 'GrandmaGardenScene')) {
             startX = 60;
@@ -48,15 +48,38 @@ export class ForestTrailScene extends BaseScene {
         }
 
         if (qState.chapter === 'BAB 1') {
+            const weedCount = this.registry.get('weedCount') || 0;
+            const hasTalkedMary = !!this.registry.get('talkedToMary');
+            const hasSmoker = inv.some(i => i.id === 'Bee Smoker');
+
+            if (hasSmoker) {
+                this.hunter.dialogue = [
+                    { speaker: 'Pemburu Desa', text: 'Bagus Aksel, kamu sudah mendapatkan Bee Smoker itu! Cepat kembali ke kebun Nenek Mary di barat [◀] untuk menenangkan lebah magis!' }
+                ];
+            } else if (weedCount >= 5) {
+                this.hunter.dialogue = [
+                    { speaker: 'Aksel (Goblin)', text: 'Paman Pemburu! Nenek Mary menyuruhku meminjam Bee Smoker dari Mr. Heinreich di sebelah timur.' },
+                    { speaker: 'Pemburu Desa', text: 'Oh, alat pengasap lebah itu? Teruslah lurus ke timur [➔] menyusuri jalan hutan ini, bengkel kayu Heinreich ada di depan!' }
+                ];
+            } else if (hasTalkedMary) {
+                this.hunter.dialogue = [
+                    { speaker: 'Pemburu Desa', text: 'Grandma Mary di ujung barat [◀] adalah orang yang sangat baik. Bantulah dia membersihkan kebunnya terlebih dahulu, Aksel!' }
+                ];
+            } else {
+                this.hunter.dialogue = [
+                    { speaker: 'Pemburu Desa', text: 'WAAAH! G-Goblin liar?! Dari mana asalmu?! Jangan serang aku!' },
+                    { speaker: 'Aksel (Goblin)', text: 'T-tunggu paman Pemburu! Ini aku, Aksel! Aku dikutuk oleh penyihir itu... Tolong beritahu aku di mana letak kebun Nenek Mary!' },
+                    { speaker: 'Pemburu Desa', text: 'Hah?! Aksel?! Ya ampun... apa yang diperbuat nenek sihir itu padamu... Cepatlah ke barat [◀], rumah dan kebun Nenek Mary ada di ujung jalan ini!' }
+                ];
+            }
+        } else if (qState.chapter === 'BAB 2') {
             this.hunter.dialogue = [
-                { speaker: 'Pemburu Desa', text: 'WAAAH! G-Goblin liar?! Dari mana asalmu?! Jangan serang aku!' },
-                { speaker: 'Aksel (Goblin)', text: 'T-tunggu paman Pemburu! Ini aku, Aksel! Aku dikutuk oleh penyihir itu... Tolong beritahu aku di mana letak kebun Nenek Mary!' },
-                { speaker: 'Pemburu Desa', text: 'Hah?! Aksel?! Ya ampun... apa yang diperbuat nenek sihir itu padamu... Cepatlah ke barat [◀], rumah dan kebun Nenek Mary ada di ujung jalan ini!' }
+                { speaker: 'Aksel (Goblin)', text: 'Paman Pemburu, Nenek Mary bilang Mr. Heinreich tahu sesuatu tentang Mythical Seed. Apakah bengkel kayunya lewat timur?' },
+                { speaker: 'Pemburu Desa', text: 'Benar sekali, Aksel! Teruslah berjalan ke timur [➔] menyusuri jalan hutan ini. Bengkel kayu Heinreich ada di lembah timur!' }
             ];
-        } else if (qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
+        } else if (qState.chapter === 'BAB 3') {
             this.hunter.dialogue = [
-                { speaker: 'Aksel (Goblin)', text: 'Permisi paman, apakah paman tahu di mana letak Madu Magis Murni?' },
-                { speaker: 'Pemburu Desa', text: 'Madu Magis? Oh! Lebah magis itu ada di kebun milik Grandma Mary di sebelah barat!' }
+                { speaker: 'Pemburu Desa', text: 'Semangat terus, Aksel! Kebaikan hatimu akan selalu bersinar apa pun wujud fisikmu.' }
             ];
         } else {
             this.hunter.dialogue = [
@@ -91,7 +114,14 @@ export class ForestTrailScene extends BaseScene {
         }
 
         const askedHunter = !!this.registry.get('askedHunterDirections') || (qState.chapter !== 'PROLOG');
-        this.rightExitText = this.createRightNavHint('Lembah Air Terjun ➔', askedHunter);
+        let rightNavHintText = 'Lembah Air Terjun ➔';
+        if (qState.chapter === 'BAB 1') {
+            const talkedToMary = !!this.registry.get('talkedToMary');
+            rightNavHintText = talkedToMary ? 'Bengkel Heinreich ➔' : 'Lembah Air Terjun ➔';
+        } else if (qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
+            rightNavHintText = 'Bengkel Heinreich ➔';
+        }
+        this.rightExitText = this.createRightNavHint(rightNavHintText, askedHunter);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -248,6 +278,22 @@ export class ForestTrailScene extends BaseScene {
                     this.player.setVelocityX(-150);
                     return;
                 }
+
+                if (qState.chapter === 'BAB 1') {
+                    const talkedToMary = !!this.registry.get('talkedToMary');
+                    if (!talkedToMary) {
+                        this.showMapLockedNotice('Aksel harus mencari Grandma Mary di sebelah barat [◀] terlebih dahulu!');
+                        this.player.setX(740);
+                        this.player.setVelocityX(-150);
+                        return;
+                    }
+                    this.scene.start('WoodshopScene', { from: 'ForestTrailScene' });
+                    return;
+                } else if (qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
+                    this.scene.start('WoodshopScene', { from: 'ForestTrailScene' });
+                    return;
+                }
+
                 this.scene.start('WaterfallGorgeScene', { from: 'ForestTrailScene' });
             }
         });

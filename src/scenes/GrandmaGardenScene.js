@@ -81,7 +81,7 @@ export class GrandmaGardenScene extends BaseScene {
         }).setOrigin(0.5).setDepth(10).setVisible(false);
 
         this.createLeftNavHint('◀ Kebun Lebah & Sarang Lebah\n(Jalan ke Barat)', true);
-        this.createRightNavHint('Ke Bengkel Heinreich ➔', true);
+        this.createRightNavHint('Jalan Hutan (Arah Bengkel) ➔', true);
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.keys = this.input.keyboard.addKeys({
@@ -169,7 +169,7 @@ export class GrandmaGardenScene extends BaseScene {
             },
             canExitRight: true,
             onExitRight: () => {
-                this.scene.start('WoodshopScene', { from: 'GrandmaGardenScene' });
+                this.scene.start('ForestTrailScene', { from: 'GrandmaGardenScene' });
             }
         });
     }

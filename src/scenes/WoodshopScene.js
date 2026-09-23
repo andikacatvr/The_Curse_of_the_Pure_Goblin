@@ -100,7 +100,7 @@ export class WoodshopScene extends BaseScene {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
         }).setOrigin(0.5).setDepth(10).setVisible(false);
 
-        this.createLeftNavHint('◀ Kebun Grandma Mary', true);
+        this.createLeftNavHint('◀ Jalan Hutan', true);
         this.createRightNavHint('Pinggir Hutan (Kayu) ➔', true);
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -289,7 +289,7 @@ export class WoodshopScene extends BaseScene {
                     this.player.setVelocityX(150);
                     return;
                 }
-                this.scene.start('GrandmaGardenScene', { from: 'WoodshopScene' });
+                this.scene.start('ForestTrailScene', { from: 'WoodshopScene' });
             },
             canExitRight: true,
             onExitRight: () => {
