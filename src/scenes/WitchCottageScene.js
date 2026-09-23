@@ -178,6 +178,8 @@ export class WitchCottageScene extends BaseScene {
     startPrologEntryCutscene() {
         if (this.cutsceneActive || this.theftCutsceneDone) return;
         this.cutsceneActive = true;
+        this.theftCutsceneActive = false;
+        if (this.joanne) this.joanne.setVisible(false);
 
         if (this.player && this.player.anims) {
             const walkKey = this.anims.exists('aksel_human_walk') ? 'aksel_human_walk' : 'walk';
@@ -241,8 +243,9 @@ export class WitchCottageScene extends BaseScene {
         if (this.theftCutsceneDone) return;
         this.theftCutsceneDone = true;
         this.cutsceneActive = true;
+        this.theftCutsceneActive = true;
         this.joanneHasEmerged = false;
-        this.joanne.setVisible(false);
+        if (this.joanne) this.joanne.setVisible(false);
 
         this.startDialogue([
             { speaker: 'Aksel', text: 'Ini dia ramuannya! Aku berhasil mengambilnya—' },
@@ -262,6 +265,7 @@ export class WitchCottageScene extends BaseScene {
             { speaker: 'Madam Joanne', text: 'CEPAT PERGILAH! KAU TIDAK PUNYA BANYAK WAKTU JIKA INGIN MENYELAMATKAN ADIKMU! HAHAHAHA!' }
         ], () => {
             this.cutsceneActive = false;
+            this.theftCutsceneActive = false;
             this.registry.set('justCursed', true);
             this.registry.set('monsterDefeated', true);
             setQuestState(this.registry, {
@@ -277,21 +281,25 @@ export class WitchCottageScene extends BaseScene {
     }
 
     onDialogueLine(index, currentData) {
-        // Line 1+: When Madam Joanne shouts "BOCAH PENCURI!", she emerges from cauldron with smoke burst!
-        if (index >= 1 && !this.joanneHasEmerged) {
+        // Only trigger during the theft confrontation cutscene
+        if (!this.theftCutsceneActive) return;
+
+        // Line 1+: When Madam Joanne speaks ("BOCAH PENCURI!"), she emerges from cauldron with smoke burst!
+        if (currentData && currentData.speaker === 'Madam Joanne' && !this.joanneHasEmerged) {
             this.joanneHasEmerged = true;
             this.emergeJoanneFromCauldron();
         }
 
-        // Line 5+: Aksel gets cursed and transforms into goblin
-        if (index >= 5 && this.player) {
+        // Line with goblin transformation
+        if (currentData && currentData.speaker === 'Aksel (Goblin)' && this.player) {
             this.player.setTexture('player_goblin');
         }
     }
 
     displayCurrentDialogue() {
         super.displayCurrentDialogue();
-        this.onDialogueLine(this.currentDialogueIndex);
+        const currentData = (this.currentDialogue && this.currentDialogue[this.currentDialogueIndex]) || null;
+        this.onDialogueLine(this.currentDialogueIndex, currentData);
     }
 
     emergeJoanneFromCauldron() {
