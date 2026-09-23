@@ -47,7 +47,13 @@ export class ForestTrailScene extends BaseScene {
             if (this.hunter.body) this.hunter.body.enable = false;
         }
 
-        if (qState.chapter === 'BAB 1' || qState.chapter === 'BAB 2') {
+        if (qState.chapter === 'BAB 1') {
+            this.hunter.dialogue = [
+                { speaker: 'Pemburu Desa', text: 'WAAAH! G-Goblin liar?! Dari mana asalmu?! Jangan serang aku!' },
+                { speaker: 'Aksel (Goblin)', text: 'T-tunggu paman Pemburu! Ini aku, Aksel! Aku dikutuk oleh penyihir itu... Tolong beritahu aku di mana letak kebun Nenek Mary!' },
+                { speaker: 'Pemburu Desa', text: 'Hah?! Aksel?! Ya ampun... apa yang diperbuat nenek sihir itu padamu... Cepatlah ke barat [◀], rumah dan kebun Nenek Mary ada di ujung jalan ini!' }
+            ];
+        } else if (qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
             this.hunter.dialogue = [
                 { speaker: 'Aksel (Goblin)', text: 'Permisi paman, apakah paman tahu di mana letak Madu Magis Murni?' },
                 { speaker: 'Pemburu Desa', text: 'Madu Magis? Oh! Lebah magis itu ada di kebun milik Grandma Mary di sebelah barat!' }
@@ -80,6 +86,8 @@ export class ForestTrailScene extends BaseScene {
 
         if (hasCure) {
             this.createLeftNavHint('◀ Rumah Rachael (Ending)', true);
+        } else if (qState.chapter === 'BAB 1' || qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
+            this.createLeftNavHint('◀ Kebun Nenek Mary', true);
         }
 
         const askedHunter = !!this.registry.get('askedHunterDirections') || (qState.chapter !== 'PROLOG');
@@ -213,8 +221,14 @@ export class ForestTrailScene extends BaseScene {
         this.handlePlayerMovementAndBoundaries({
             canExitLeft: true,
             onExitLeft: () => {
+                const qState = getQuestState(this.registry);
                 const inv = getInventory(this.registry);
                 const hasCure = inv.some(i => i.id === 'Ramuan Kesembuhan Asli');
+
+                if (qState.chapter === 'BAB 1' || qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
+                    this.scene.start('GrandmaGardenScene', { from: 'ForestTrailScene' });
+                    return;
+                }
 
                 if (!hasCure) {
                     this.showMapLockedNotice('Aksel berjanji tidak akan pulang sebelum membawa obat untuk Rachael!');

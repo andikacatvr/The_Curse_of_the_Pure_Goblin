@@ -365,12 +365,10 @@ export class WitchYardScene extends BaseScene {
                 const inv = getInventory(this.registry);
                 const hasCure = inv.some(i => i.id === 'Ramuan Kesembuhan Asli');
 
-                if (hasCure || qState.chapter === 'PROLOG') {
+                if (hasCure || qState.chapter === 'PROLOG' || qState.chapter === 'BAB 1' || qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
                     this.scene.start('WaterfallGorgeScene', { from: 'WitchYardScene' });
                 } else if (qState.chapter === 'BAB 4') {
                     this.scene.start('EastForestScene', { from: 'WitchYardScene' });
-                } else if (qState.chapter === 'BAB 1' || qState.chapter === 'BAB 2' || qState.chapter === 'BAB 3') {
-                    this.scene.start('GrandmaGardenScene');
                 } else {
                     this.showMapLockedNotice('Aksel harus menyelinap masuk ke rumah penyihir untuk mencari obat Rachael!');
                     this.player.setX(35);

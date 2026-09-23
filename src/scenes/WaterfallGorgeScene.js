@@ -141,8 +141,19 @@ export class WaterfallGorgeScene extends BaseScene {
 
 
         // Navigation labels (HD HTML Overlay Navigasi Map)
-        this.createLeftNavHint('◀ Pinggir Hutan', true);
+        this.createLeftNavHint('◀ Jalan Hutan', true);
         this.createRightNavHint('Halaman Pondok Penyihir ➔', true);
+
+        // Monolog Aksel (Goblin) saat baru keluar dari sarang penyihir menyeberangi air terjun
+        if (qState.chapter === 'BAB 1' && !this.registry.get('waterfallGorgeGoblinMonologueDone')) {
+            this.registry.set('waterfallGorgeGoblinMonologueDone', true);
+            this.time.delayedCall(450, () => {
+                this.startDialogue([
+                    { speaker: 'Aksel (Goblin)', text: 'Arus jurang air terjun ini deras sekali... Bayanganku di air sungai benar-benar monster hijau kerdil.' },
+                    { speaker: 'Aksel (Goblin)', text: 'Aku harus segera melompat menyeberangi bebatuan lembah ini menuju jalan hutan di barat [◀]!' }
+                ]);
+            });
+        }
 
         // Interaction Prompt
         this.promptText = this.add.text(0, 0, '', {
