@@ -14,27 +14,37 @@ export class MountainFootLakeScene extends BaseScene {
     }
 
     create(data = {}) {
-        this.cameras.main.setBackgroundColor('#1e1435');
+        this.physics.world.setBounds(0, 0, 1200, 450);
+        this.cameras.main.setBounds(0, 0, 1200, 450);
+        this.cameras.main.setBackgroundColor('#141724');
         this.createMountainFootAtmosphere();
 
         this.currentLocationName = 'Ujung Danau Kaki Gunung (Mencari Kayu)';
         this.registry.set('currentLocationName', this.currentLocationName);
 
         this.platforms = this.physics.add.staticGroup();
-        const mainPlatform = this.platforms.create(400, 434, 'platform').setScale(4.5, 1).refreshBody();
-        mainPlatform.setVisible(false);
+        for (let px = 200; px <= 1200; px += 400) {
+            const p = this.platforms.create(px, 434, 'platform').setScale(2, 1).refreshBody();
+            p.setVisible(false);
+        }
 
         this.createSeamlessGround('tanah_home', 2);
 
-        let startX = 720;
+        let startX = 1120;
+        if (data && data.startX) {
+            startX = data.startX;
+        }
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
+        this.cameras.main.startFollow(this.player, false, 0.045, 0.025);
+        this.cameras.main.setDeadzone(80, 40);
+        this.cameras.main._isFollowing = true;
 
         // 2 Batang Kayu Bakar di Ujung Danau Kaki Gunung
         this.woodGroup = this.physics.add.staticGroup();
         const mountainWoodPositions = [
-            { id: 'mountain_wood_1', x: 240, y: 412 },
-            { id: 'mountain_wood_2', x: 500, y: 412 }
+            { id: 'mountain_wood_1', x: 420, y: 412 },
+            { id: 'mountain_wood_2', x: 820, y: 412 }
         ];
 
         mountainWoodPositions.forEach(pos => {
@@ -97,19 +107,37 @@ export class MountainFootLakeScene extends BaseScene {
     }
 
     createMountainFootAtmosphere() {
-        // 1. Panoramic Snowy Mountain Lake Background (Pixel Art Danau Kaki Gunung Megah)
-        this.createSeamlessBackground('mountain_foot_bg', 0, 1100, 450);
+        // =========================================================================
+        // TRUE MULTI-LAYER CINEMATIC PARALLAX (MOUNTAIN FOOT LAKE)
+        // =========================================================================
+        // Layer 0: Far Sky & Majestic Snowy Mountain Peaks (Slowest scroll: 0.08)
+        this.bgSky = this.add.image(600, 215, 'mountain_parallax_sky')
+            .setDisplaySize(1600, 460)
+            .setDepth(0)
+            .setScrollFactor(0.08, 1);
 
-        // 2. Alpine Mountain Mist & Chill Fog (Kabut Dingin Kaki Gunung Salju yang Melayang)
+        // Layer 1: Midground Snowy Gorge, Waterfall & River (Medium scroll: 0.28)
+        this.bgMid = this.add.image(600, 215, 'mountain_parallax_mid')
+            .setDisplaySize(1600, 460)
+            .setDepth(1)
+            .setScrollFactor(0.28, 1);
+
+        // Layer 2: Foreground Framing Silhouette Trees & Branches (Close scroll: 0.55)
+        this.bgTrees = this.add.image(600, 215, 'mountain_parallax_trees')
+            .setDisplaySize(1600, 460)
+            .setDepth(1.8)
+            .setScrollFactor(0.55, 1);
+
+        // Alpine Mountain Mist & Chill Fog (ScrollFactor: 0.30)
         const mistClouds = [
-            { x: 140, y: 310, w: 250, h: 26, dur: 14000, dist: 80 },
-            { x: 360, y: 290, w: 280, h: 28, dur: 18000, dist: -90 },
-            { x: 580, y: 320, w: 230, h: 22, dur: 13000, dist: 70 },
-            { x: 260, y: 340, w: 310, h: 25, dur: 15000, dist: -80 }
+            { x: 180, y: 300, w: 280, h: 26, dur: 14000, dist: 80 },
+            { x: 520, y: 275, w: 320, h: 28, dur: 18000, dist: -90 },
+            { x: 860, y: 310, w: 260, h: 22, dur: 13000, dist: 70 },
+            { x: 380, y: 335, w: 340, h: 25, dur: 15000, dist: -80 }
         ];
 
         mistClouds.forEach((m) => {
-            const mist = this.add.graphics().setDepth(1);
+            const mist = this.add.graphics().setDepth(1.2).setScrollFactor(0.30, 1);
             mist.fillStyle(0xe0f2fe, 0.09);
             mist.fillRoundedRect(m.x, m.y, m.w, m.h, 12);
             mist.fillStyle(0xbae6fd, 0.07);
@@ -127,22 +155,22 @@ export class MountainFootLakeScene extends BaseScene {
             });
         });
 
-        // 3. Dynamic Water Shimmer & Mountain Reflection Waves (Kilauan Riak Air Danau Pemantul Gunung)
+        // Dynamic Water Shimmer & Mountain Reflection Waves (ScrollFactor: 0.28)
         const lakeRipples = [
-            { x: 280, y: 305, w: 60, h: 2.5, col: 0x99f6e4, dur: 2300 },
-            { x: 420, y: 320, w: 75, h: 2.8, col: 0xfef08a, dur: 2700 },
-            { x: 560, y: 315, w: 85, h: 2.5, col: 0x99f6e4, dur: 3100 },
-            { x: 350, y: 345, w: 90, h: 3.0, col: 0xfde047, dur: 2500 },
-            { x: 510, y: 350, w: 100, h: 3.2, col: 0x67e8f9, dur: 2900 },
-            { x: 420, y: 375, w: 120, h: 3.5, col: 0x99f6e4, dur: 2600 },
-            { x: 620, y: 365, w: 80, h: 3.0, col: 0xfef08a, dur: 3300 }
+            { x: 360, y: 315, w: 65, h: 2.5, col: 0x99f6e4, dur: 2300 },
+            { x: 540, y: 325, w: 80, h: 2.8, col: 0xbae6fd, dur: 2700 },
+            { x: 720, y: 320, w: 90, h: 2.5, col: 0x99f6e4, dur: 3100 },
+            { x: 440, y: 350, w: 95, h: 3.0, col: 0x7dd3fc, dur: 2500 },
+            { x: 640, y: 355, w: 105, h: 3.2, col: 0x67e8f9, dur: 2900 }
         ];
 
         lakeRipples.forEach((wr, i) => {
-            const rip = this.add.rectangle(wr.x, wr.y, wr.w, wr.h, wr.col, 0.42).setDepth(1);
+            const rip = this.add.rectangle(wr.x, wr.y, wr.w, wr.h, wr.col, 0.45)
+                .setDepth(1.1)
+                .setScrollFactor(0.28, 1);
             this.tweens.add({
                 targets: rip,
-                alpha: { from: 0.12, to: 0.65 },
+                alpha: { from: 0.15, to: 0.7 },
                 scaleX: { from: 0.75, to: 1.3 },
                 duration: wr.dur,
                 delay: i * 420,
@@ -152,36 +180,21 @@ export class MountainFootLakeScene extends BaseScene {
             });
         });
 
-        // 4. Subtle Ripples at Mountain Pier / Shore (Riak Air di Sekitar Dermaga Kayu)
-        for (let r = 0; r < 2; r++) {
-            const pierRipple = this.add.ellipse(490, 392, 42, 8).setDepth(1);
-            pierRipple.setStrokeStyle(1.2, 0x99f6e4, 0.5);
-            pierRipple.setFillStyle(0, 0);
-            this.tweens.add({
-                targets: pierRipple,
-                scaleX: 1.8,
-                scaleY: 1.5,
-                alpha: 0,
-                duration: 2800,
-                delay: r * 1400,
-                repeat: -1,
-                ease: 'Sine.easeOut'
-            });
-        }
-
-        // 5. Alpine Glowing Wisps & Frost Fireflies (Spora Salju & Kunang-kunang Dingin)
-        for (let i = 0; i < 18; i++) {
-            const fx = Phaser.Math.Between(40, 760);
-            const fy = Phaser.Math.Between(180, 410);
-            const col = (i % 2 === 0) ? 0xfde047 : 0x7dd3fc;
-            const ff = this.add.circle(fx, fy, Phaser.Math.FloatBetween(1.5, 2.5), col, 0.75).setDepth(3);
+        // Alpine Glowing Frost Fireflies (ScrollFactor: 0.70)
+        for (let i = 0; i < 20; i++) {
+            const fx = Phaser.Math.Between(60, 1140);
+            const fy = Phaser.Math.Between(160, 410);
+            const col = (i % 2 === 0) ? 0x93c5fd : 0x67e8f9;
+            const ff = this.add.circle(fx, fy, Phaser.Math.FloatBetween(1.5, 2.5), col, 0.75)
+                .setDepth(3)
+                .setScrollFactor(0.70, 1);
 
             this.tweens.add({
                 targets: ff,
                 x: fx + Phaser.Math.Between(-30, 30),
                 y: fy + Phaser.Math.Between(-20, 20),
-                alpha: { from: 0.15, to: 0.9 },
-                scale: { from: 0.7, to: 1.3 },
+                alpha: { from: 0.2, to: 0.95 },
+                scale: { from: 0.7, to: 1.35 },
                 duration: Phaser.Math.Between(2000, 4200),
                 yoyo: true,
                 repeat: -1,
@@ -274,6 +287,7 @@ export class MountainFootLakeScene extends BaseScene {
             canExitLeft: false,
             minX: 20,
             canExitRight: true,
+            maxX: 1180,
             onExitRight: () => {
                 this.scene.start('LakeForestScene', { from: 'MountainFootLakeScene' });
             }

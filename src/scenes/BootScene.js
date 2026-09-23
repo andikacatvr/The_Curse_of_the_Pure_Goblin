@@ -28,9 +28,18 @@ export class BootScene extends Phaser.Scene {
         this.load.image('building_rumah', '/assets/rumah_aksel_rachael.png');
         this.load.image('tanah_home', '/assets/tanah_home.png');
         this.load.image('waterfall_canyon_bg', '/assets/waterfallbackg.jpg');
-        this.load.image('home_village_bg', '/assets/rumahwargabackg.jpg');
+        this.load.image('home_village_bg', '/assets/parallax/home/HOME_BG.png');
+        this.load.image('home_parallax_sky', '/assets/parallax/home/layer0_sky.png');
+        this.load.image('home_parallax_mid', '/assets/parallax/home/layer1_mid.png');
+        this.load.image('home_parallax_trees', '/assets/parallax/home/layer2_trees.png');
         this.load.image('lake_forest_bg', '/assets/lakebackgr.png');
-        this.load.image('mountain_foot_bg', '/assets/kakigunungbackgr.png');
+        this.load.image('lake_parallax_sky', '/assets/parallax/lake_forest/layer0_sky.png');
+        this.load.image('lake_parallax_mid', '/assets/parallax/lake_forest/layer1_mid.png');
+        this.load.image('lake_parallax_trees', '/assets/parallax/lake_forest/layer2_trees.png');
+        this.load.image('mountain_foot_bg', '/assets/kakigunung_landscape.png');
+        this.load.image('mountain_parallax_sky', '/assets/parallax/mountain_foot_lake/layer0_sky.png');
+        this.load.image('mountain_parallax_mid', '/assets/parallax/mountain_foot_lake/layer1_mid.png');
+        this.load.image('mountain_parallax_trees', '/assets/parallax/mountain_foot_lake/layer2_trees.png');
         this.load.image('forest_trail_bg', '/assets/hutanhijaulebat.jpg');
         this.load.image('witch_yard_bg', '/assets/latarbelakangrumahpenyihir.jpg');
         this.load.image('witch_yard_house', '/assets/rumahpenyihirbackgr.png');
@@ -46,6 +55,8 @@ export class BootScene extends Phaser.Scene {
         this.load.image('bakery_mill_bg', '/assets/latarbelakangmrbreado.jpg');
         this.load.image('village_residential_bg', '/assets/latarbelakangrumahwargahutanbackgr.png');
         this.load.image('east_forest_bg', '/assets/hutanmenujugpenyihir.png');
+        this.load.image('belati_pixel', '/assets/belati_pixel.png');
+        this.load.image('item_dagger', '/assets/belati_pixel.png');
 
         // NPC Nenek Sprite (frozen/static PNG)
         this.load.image('npc_grandma_home', '/assets/nenek_aksel_rachael_sprite.png');
@@ -376,14 +387,6 @@ export class BootScene extends Phaser.Scene {
         heinreichG.fillStyle(0xef4444, 1);
         heinreichG.fillRect(16, 21, 6, 2); // Red tongue
         heinreichG.generateTexture('npc_heinreich', 38, 48);
-
-        // 8. Item Dagger
-        const daggerG = this.make.graphics({ x: 0, y: 0, add: false });
-        daggerG.fillStyle(0xbdc3c7, 1);
-        daggerG.fillRect(8, 0, 4, 18);
-        daggerG.fillStyle(0xe74c3c, 1);
-        daggerG.fillRect(4, 14, 12, 4);
-        daggerG.generateTexture('item_dagger', 20, 20);
 
         // 9. Item Bread
         const breadG = this.make.graphics({ x: 0, y: 0, add: false });

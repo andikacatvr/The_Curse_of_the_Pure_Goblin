@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HDInventoryModal.js
  * Modern HTML/CSS Glassmorphic Inventory Modal (5x4 Grid, 20 Slots).
  */
@@ -161,7 +161,7 @@ export class HDInventoryModal {
         if (name.includes('ramuan') || name.includes('cure') || name.includes('potion') || name.includes('obat')) return 'item_potion';
         if (name.includes('kunci') || name.includes('key')) return 'item_key';
         if (name.includes('seed') || name.includes('permata') || name.includes('gem') || name.includes('kristal') || name.includes('diamond')) return 'item_gem';
-        if (name.includes('pisau') || name.includes('belati') || name.includes('dagger') || name.includes('pedang')) return 'item_dagger';
+        if (name.includes('pisau') || name.includes('belati') || name.includes('dagger') || name.includes('pedang')) return 'belati_pixel';
         if (name.includes('magic bread') || name.includes('roti magis')) return 'item_magic_bread';
         if (name.includes('roti') || name.includes('bread')) return 'item_bread';
         if (name.includes('madu') || name.includes('honey')) return 'item_honey';

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HDSettingsModal.js
  * Modern, high-definition HTML/CSS Glassmorphic Settings & Pause Modal.
  */
@@ -184,7 +184,7 @@ export class HDSettingsModal {
                             <button class="hd-btn-icon" id="hd-sfx-plus">+</button>
                         </div>
                     </div>
-                    <div class="hd-set-row">
+                    <div class="hd-set-row" id="hd-zoom-row">
                         <div class="hd-set-label"><span>&#128269;</span> Zoom Kamera:</div>
                         <div class="hd-set-controls">
                             <button class="hd-btn-icon" id="hd-zoom-minus">-</button>
@@ -298,7 +298,9 @@ export class HDSettingsModal {
         GameAudio.playClick();
         if (this._currentScene) {
             this._currentScene.isSettingsOpen = false;
-            this._currentScene.updateMobileControlsVisibility();
+            if (typeof this._currentScene.updateMobileControlsVisibility === 'function') {
+                this._currentScene.updateMobileControlsVisibility();
+            }
         }
     }
 
@@ -308,6 +310,8 @@ export class HDSettingsModal {
 
     static updateUI() {
         if (!this.isOpen) return;
+        const isTitleScene = this._currentScene && (this._currentScene.scene?.key === 'TitleScene' || this._currentScene.constructor?.name === 'TitleScene');
+
         const bgmToggle = document.getElementById('hd-bgm-toggle');
         if (bgmToggle) { bgmToggle.className = `hd-btn-toggle ${GameAudio.bgmEnabled ? 'on' : 'off'}`; bgmToggle.textContent = GameAudio.bgmEnabled ? 'ON' : 'OFF'; }
         const bgmVal = document.getElementById('hd-bgm-val');
@@ -316,19 +320,33 @@ export class HDSettingsModal {
         if (sfxToggle) { sfxToggle.className = `hd-btn-toggle ${GameAudio.sfxEnabled ? 'on' : 'off'}`; sfxToggle.textContent = GameAudio.sfxEnabled ? 'ON' : 'OFF'; }
         const sfxVal = document.getElementById('hd-sfx-val');
         if (sfxVal) sfxVal.textContent = `${Math.round(GameAudio.sfxVolume * 100)}%`;
+        
+        const zoomRow = document.getElementById('hd-zoom-row');
+        if (zoomRow) zoomRow.style.display = isTitleScene ? 'none' : 'flex';
         const zoomVal = document.getElementById('hd-zoom-val');
         if (zoomVal && this._currentScene) zoomVal.textContent = `${(this._currentScene.currentZoom || 1.0).toFixed(2)}x`;
+        
         const resCurrent = document.getElementById('hd-res-current');
         if (resCurrent) resCurrent.textContent = DisplayManager.current.label;
+        
         const mobRow = document.getElementById('hd-mobile-row');
         const mobToggle = document.getElementById('hd-mobile-toggle');
-        if (isMobileDevice() && this._currentScene) {
+        if (isMobileDevice() && this._currentScene && typeof this._currentScene.isMobileControlsEnabled === 'function') {
             if (mobRow) mobRow.style.display = 'flex';
             if (mobToggle) { const active = this._currentScene.isMobileControlsEnabled(); mobToggle.className = `hd-btn-toggle ${active ? 'on' : 'off'}`; mobToggle.textContent = active ? 'AKTIF [ON]' : 'MATI [OFF]'; }
         } else if (mobRow) { mobRow.style.display = 'none'; }
+        
+        const quitBtn = document.getElementById('hd-action-quit');
+        if (quitBtn) quitBtn.style.display = isTitleScene ? 'none' : 'flex';
+
+        const resumeBtn = document.getElementById('hd-action-resume');
+        if (resumeBtn) {
+            resumeBtn.innerHTML = isTitleScene ? '&#10006; TUTUP [ESC]' : '&#9654; LANJUTKAN [ESC]';
+        }
+
         const locText = document.getElementById('hd-location-text');
         if (locText && this._currentScene) {
-            const loc = this._currentScene.currentLocationName || (this._currentScene.registry ? this._currentScene.registry.get('currentLocationName') : '') || 'Dunia Petualangan Goblin';
+            const loc = isTitleScene ? 'Menu Utama' : (this._currentScene.currentLocationName || (this._currentScene.registry ? this._currentScene.registry.get('currentLocationName') : '') || 'Dunia Petualangan Goblin');
             locText.textContent = `Lokasi: ${loc}`;
         }
     }

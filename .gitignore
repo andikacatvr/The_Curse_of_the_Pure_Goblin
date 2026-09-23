@@ -30,3 +30,4 @@ archive/**/dist
 .env.local
 .env.*.local
 .vercel
+scratch/

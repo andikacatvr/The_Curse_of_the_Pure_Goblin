@@ -41,7 +41,7 @@ export class WitchCottageScene extends BaseScene {
             });
         }
 
-        this.joanne = this.add.sprite(265, 245, 'witch_spirit').setDepth(4);
+        this.joanne = this.add.sprite(265, 245, 'witch_spirit').setDepth(10);
         this.joanne.setScale(0.23);
         this.joanne.type = 'npc';
         const isCursed = qState.chapter !== 'PROLOG';
@@ -77,6 +77,16 @@ export class WitchCottageScene extends BaseScene {
         this.input.keyboard.on('keydown-SPACE', () => { if (this.isTalking) this.nextDialogue(); });
         this.input.keyboard.on('keydown-I', () => { if (!this.isTalking) this.toggleInventoryModal(); });
         this.input.keyboard.on('keydown-Q', () => { if (!this.isTalking) this.toggleQuestModal(); });
+
+        this.cutsceneActive = false;
+        this.theftCutsceneDone = false;
+
+        // Solusi 1: Cutscene otomatis saat Aksel melangkah masuk di Prolog
+        if (qState.chapter === 'PROLOG') {
+            this.time.delayedCall(450, () => {
+                this.startPrologEntryCutscene();
+            });
+        }
     }
 
     handleActionKey() {
@@ -165,7 +175,72 @@ export class WitchCottageScene extends BaseScene {
         });
     }
 
+    startPrologEntryCutscene() {
+        if (this.cutsceneActive || this.theftCutsceneDone) return;
+        this.cutsceneActive = true;
+
+        if (this.player && this.player.anims) {
+            const walkKey = this.anims.exists('aksel_human_walk') ? 'aksel_human_walk' : 'walk';
+            this.player.anims.play(walkKey, true);
+            this.player.setFlipX(false);
+        }
+
+        this.tweens.add({
+            targets: this.player,
+            x: 180,
+            duration: 1100,
+            ease: 'Linear',
+            onComplete: () => {
+                if (this.player && this.player.anims) {
+                    const idleKey = this.anims.exists('aksel_human_idle') ? 'aksel_human_idle' : 'idle';
+                    this.player.anims.play(idleKey, true);
+                }
+
+                this.startDialogue([
+                    {
+                        speaker: 'Aksel (Dalam Hati)',
+                        text: 'Suasananya sepi sekali... Bau herbal dan ramuan tercium pekat. Sepertinya penyihir itu sedang keluar!'
+                    },
+                    {
+                        speaker: 'Aksel',
+                        text: 'Itu dia! Botol ramuan penyembuh berkilau di atas meja sebelah kanan! Aku harus segera mengambilnya untuk Rachael!'
+                    }
+                ], () => {
+                    this.autoWalkToShelfAndSteal();
+                });
+            }
+        });
+    }
+
+    autoWalkToShelfAndSteal() {
+        if (this.player && this.player.anims) {
+            const walkKey = this.anims.exists('aksel_human_walk') ? 'aksel_human_walk' : 'walk';
+            this.player.anims.play(walkKey, true);
+            this.player.setFlipX(false);
+        }
+
+        this.tweens.add({
+            targets: this.player,
+            x: 480,
+            duration: 1800,
+            ease: 'Linear',
+            onComplete: () => {
+                if (this.player && this.player.anims) {
+                    const idleKey = this.anims.exists('aksel_human_idle') ? 'aksel_human_idle' : 'idle';
+                    this.player.anims.play(idleKey, true);
+                }
+
+                this.time.delayedCall(300, () => {
+                    this.triggerTheftCutscene();
+                });
+            }
+        });
+    }
+
     triggerTheftCutscene() {
+        if (this.theftCutsceneDone) return;
+        this.theftCutsceneDone = true;
+        this.cutsceneActive = true;
         this.joanneHasEmerged = false;
         this.joanne.setVisible(false);
 
@@ -186,6 +261,7 @@ export class WitchCottageScene extends BaseScene {
             { speaker: 'Madam Joanne', text: 'Bawa ketiga bahan itu kembali padaku jika kau ingin lepas dari kutukan dan mendapatkan obat asli adikmu!' },
             { speaker: 'Madam Joanne', text: 'CEPAT PERGILAH! KAU TIDAK PUNYA BANYAK WAKTU JIKA INGIN MENYELAMATKAN ADIKMU! HAHAHAHA!' }
         ], () => {
+            this.cutsceneActive = false;
             this.registry.set('justCursed', true);
             this.registry.set('monsterDefeated', true);
             setQuestState(this.registry, {
@@ -200,22 +276,27 @@ export class WitchCottageScene extends BaseScene {
         });
     }
 
-    displayCurrentDialogue() {
-        super.displayCurrentDialogue();
-
-        // Line 1: When Madam Joanne shouts "BOCAH PENCURI!", she emerges from cauldron with smoke burst!
-        if (this.currentDialogueIndex === 1 && !this.joanneHasEmerged) {
+    onDialogueLine(index, currentData) {
+        // Line 1+: When Madam Joanne shouts "BOCAH PENCURI!", she emerges from cauldron with smoke burst!
+        if (index >= 1 && !this.joanneHasEmerged) {
             this.joanneHasEmerged = true;
             this.emergeJoanneFromCauldron();
         }
 
-        if (this.currentDialogueIndex === 5) {
+        // Line 5+: Aksel gets cursed and transforms into goblin
+        if (index >= 5 && this.player) {
             this.player.setTexture('player_goblin');
         }
     }
 
+    displayCurrentDialogue() {
+        super.displayCurrentDialogue();
+        this.onDialogueLine(this.currentDialogueIndex);
+    }
+
     emergeJoanneFromCauldron() {
         this.joanne.setVisible(true);
+        this.joanne.setDepth(10);
         this.joanne.setPosition(265, 335);
         this.joanne.setScale(0.04);
         this.joanne.setAlpha(0);
@@ -274,6 +355,11 @@ export class WitchCottageScene extends BaseScene {
     }
 
     update() {
+        if (this.cutsceneActive) {
+            if (this.promptText) this.promptText.setVisible(false);
+            return;
+        }
+
         let found = null;
 
         const qState = getQuestState(this.registry);

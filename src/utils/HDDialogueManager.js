@@ -533,6 +533,14 @@ export class HDDialogueManager {
 
         this.updatePortrait(speakerName, currentData.portrait);
 
+        // Notify active scene of current dialogue line & index
+        if (this._activeScene) {
+            this._activeScene.currentDialogueIndex = this._currentIndex;
+            if (typeof this._activeScene.onDialogueLine === 'function') {
+                this._activeScene.onDialogueLine(this._currentIndex, currentData);
+            }
+        }
+
         // Typewriter effect
         this._currentText = currentData.text || '';
         this._charIndex = 0;

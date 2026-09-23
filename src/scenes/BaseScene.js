@@ -14,16 +14,41 @@ import { DisplayManager } from '../utils/DisplayManager.js';
 import { HDHudManager } from '../utils/HDHudManager.js';
 import { HDSettingsModal } from '../utils/HDSettingsModal.js';
 import { HDInventoryModal } from '../utils/HDInventoryModal.js';
+import { HDQuestModal } from '../utils/HDQuestModal.js';
 import { HDDialogueManager } from '../utils/HDDialogueManager.js';
+import { HDPromptManager } from '../utils/HDPromptManager.js';
+import { HDNoticeManager } from '../utils/HDNoticeManager.js';
 
 export class BaseScene extends Phaser.Scene {
     init(data) {
+        HDNoticeManager.hide();
         this._worldExpanded = false;
         this._camFollowReady = false;
         this._registeredUI = [];
         this._cameraZoomInitialized = false;
         this._lastPinchDist = null;
         this._hdHudShutdownAttached = false;
+        this._promptText = null;
+
+        this.events.once('shutdown', () => {
+            HDPromptManager.hide();
+            HDNoticeManager.hide();
+        });
+        this.events.once('destroy', () => {
+            HDPromptManager.hide();
+            HDNoticeManager.hide();
+        });
+    }
+
+    get promptText() {
+        return this._promptText;
+    }
+
+    set promptText(val) {
+        this._promptText = val;
+        if (val) {
+            this.initInteractivePrompt();
+        }
     }
 
     /**
@@ -37,6 +62,7 @@ export class BaseScene extends Phaser.Scene {
                 HDSettingsModal.hide();
                 HDInventoryModal.hide();
                 HDDialogueManager.hide();
+                HDPromptManager.hide();
                 this._worldExpanded = false;
                 this._camFollowReady = false;
                 this._registeredUI = [];
@@ -46,6 +72,7 @@ export class BaseScene extends Phaser.Scene {
                 HDSettingsModal.hide();
                 HDInventoryModal.hide();
                 HDDialogueManager.hide();
+                HDPromptManager.hide();
                 this._registeredUI = [];
             });
         }
@@ -1090,31 +1117,52 @@ export class BaseScene extends Phaser.Scene {
     }
 
     initInteractivePrompt() {
-        if (!this.promptText || this.promptText._interactiveReady) return;
-        this.promptText._interactiveReady = true;
+        if (!this._promptText || this._promptText._hdPromptReady) return;
+        this._promptText._hdPromptReady = true;
 
-        if (isMobileDevice()) {
-            this.promptText.setFontSize('12px');
-            this.promptText.setPadding(10, 6);
-            this.promptText.setBackgroundColor('#0a0f1dee');
-            this.promptText.setColor('#fde047');
-            this.promptText.setDepth(26);
-        }
+        HDPromptManager.attachScene(this);
 
-        this.promptText.setInteractive({ useHandCursor: true });
-        this.promptText.on('pointerdown', (pointer, localX, localY, event) => {
-            if (event && event.stopPropagation) event.stopPropagation();
-            if (this.isTalking) {
-                this.nextDialogue();
-            } else if (this.handleActionKey) {
-                this.handleActionKey();
+        // Hide raw Phaser canvas text completely so it never draws pixelated font
+        this._promptText.setAlpha(0);
+        this._promptText.setVisible(false);
+
+        this._promptText._targetX = this._promptText.x || 0;
+        this._promptText._targetY = this._promptText.y || 0;
+        this._promptText._currentPrompt = '';
+        this._promptText._isPromptVisible = false;
+
+        const origSetPosition = this._promptText.setPosition.bind(this._promptText);
+        this._promptText.setPosition = (x, y) => {
+            origSetPosition(x, y);
+            this._promptText._targetX = x;
+            this._promptText._targetY = y;
+            if (this._promptText._isPromptVisible) {
+                HDPromptManager.updateTarget(x, y);
             }
-        });
+            return this._promptText;
+        };
 
-        const origSetText = this.promptText.setText.bind(this.promptText);
-        this.promptText.setText = (val) => {
+        const origSetText = this._promptText.setText.bind(this._promptText);
+        this._promptText.setText = (val) => {
             const formatted = this.formatPromptText(val);
-            return origSetText(formatted);
+            origSetText(formatted);
+            this._promptText._currentPrompt = formatted;
+            if (this._promptText._isPromptVisible) {
+                HDPromptManager.setText(formatted);
+            }
+            return this._promptText;
+        };
+
+        const origSetVisible = this._promptText.setVisible.bind(this._promptText);
+        this._promptText.setVisible = (val) => {
+            origSetVisible(false); // keep canvas text invisible
+            this._promptText._isPromptVisible = !!val;
+            if (val) {
+                HDPromptManager.show(this._promptText._targetX, this._promptText._targetY, this._promptText._currentPrompt, this);
+            } else {
+                HDPromptManager.hide();
+            }
+            return this._promptText;
         };
     }
 
@@ -1427,7 +1475,7 @@ export class BaseScene extends Phaser.Scene {
         if (name.includes('ramuan') || name.includes('cure') || name.includes('potion') || name.includes('obat')) return 'item_potion';
         if (name.includes('kunci') || name.includes('key')) return 'item_key';
         if (name.includes('seed') || name.includes('permata') || name.includes('gem') || name.includes('kristal') || name.includes('diamond')) return 'item_gem';
-        if (name.includes('pisau') || name.includes('belati') || name.includes('dagger') || name.includes('pedang')) return 'item_dagger';
+        if (name.includes('pisau') || name.includes('belati') || name.includes('dagger') || name.includes('pedang')) return 'belati_pixel';
         if (name.includes('magic bread') || name.includes('roti magis')) return 'item_magic_bread';
         if (name.includes('roti') || name.includes('bread')) return 'item_bread';
         if (name.includes('madu') || name.includes('honey')) return 'item_honey';
@@ -1537,98 +1585,28 @@ export class BaseScene extends Phaser.Scene {
     }
 
     createQuestUI() {
-        // Quest button (Canvas container hidden, handled by HD HTML Overlay)
-        this.questBtnContainer = this.add.container(190, 26).setDepth(25).setVisible(false);
-        this.registerUIElement(this.questBtnContainer, 190, 26);
-
-        const questBtnBg = this.add.rectangle(0, 0, 72, 36, 0x0f172a, 0.9)
-            .setStrokeStyle(2, 0x64748b)
-            .setInteractive({ useHandCursor: true });
-
-        const questBtnText = this.add.text(0, 0, 'Quest', {
-            fontSize: '14px',
-            fontStyle: 'bold',
-            fill: '#f8fafc',
-            fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        this.questBtnContainer.add([questBtnBg, questBtnText]);
-
-        questBtnBg.on('pointerover', () => {
-            questBtnBg.setFillStyle(0x1e293b, 1);
-            questBtnBg.setStrokeStyle(2, 0xf59e0b);
-            questBtnText.setFill('#fde047');
-            this.tweens.add({ targets: this.questBtnContainer, scaleX: 1.08, scaleY: 1.08, duration: 120, ease: 'Sine.easeOut' });
-            GameAudio.playHover();
-        });
-
-        questBtnBg.on('pointerout', () => {
-            questBtnBg.setFillStyle(0x0f172a, 0.9);
-            questBtnBg.setStrokeStyle(2, 0x64748b);
-            questBtnText.setFill('#f8fafc');
-            this.tweens.add({ targets: this.questBtnContainer, scaleX: 1, scaleY: 1, duration: 120, ease: 'Sine.easeOut' });
-        });
-
-        questBtnBg.on('pointerdown', () => {
-            GameAudio.playClick();
-            this.toggleQuestModal();
-        });
-
-        this.questModalOverlay = this.add.rectangle(400, 225, 800, 450, 0x000000, 0.6).setDepth(30).setVisible(false);
-        this.registerUIElement(this.questModalOverlay, 400, 225);
-
-        this.questModalBox = this.add.rectangle(400, 225, 520, 320, 0x1e1b4b, 0.98).setStrokeStyle(3, 0x818cf8).setDepth(31).setVisible(false);
-        this.registerUIElement(this.questModalBox, 400, 225);
-
-        this.questTitleText = this.add.text(400, 95, '📜 CATATAN QUEST & OBJEKTIF', { fontSize: '17px', fontStyle: 'bold', fill: '#a5b4fc', fontFamily: FONT_BODY }).setOrigin(0.5).setDepth(32).setVisible(false);
-        this.registerUIElement(this.questTitleText, 400, 95);
-
-        this.questContentText = this.add.text(170, 135, '', { fontSize: '14px', fill: '#f8fafc', fontFamily: FONT_BODY, lineSpacing: 8 }).setDepth(32).setVisible(false);
-        this.registerUIElement(this.questContentText, 170, 135);
-
-        this.questCloseHint = this.add.text(400, 360, 'Tekan [Q] atau Klik untuk Tutup', { fontSize: '12px', fill: '#94a3b8' }).setOrigin(0.5).setDepth(32).setVisible(false);
-        this.registerUIElement(this.questCloseHint, 400, 360);
-
-        this.questModalOverlay.setInteractive();
-        this.questModalOverlay.on('pointerdown', () => this.toggleQuestModal());
         this.isQuestModalOpen = false;
-
         this.updateQuestHUD();
     }
 
     updateQuestHUD() {
-        // Quest details live in the modal; HUD is a compact button only.
+        // Quest details live in HDQuestModal HTML overlay
     }
 
-    toggleQuestModal() {
-        if (this.isInvOpen) this.toggleInventoryModal();
-        if (this.isSettingsOpen) this.toggleSettingsModal(false);
-        this.isQuestModalOpen = !this.isQuestModalOpen;
-        const visible = this.isQuestModalOpen;
-        this.questModalOverlay.setVisible(visible);
-        this.questModalBox.setVisible(visible);
-        this.questTitleText.setVisible(visible);
-        this.questContentText.setVisible(visible);
-        this.questCloseHint.setVisible(visible);
-        this.updateMobileControlsVisibility();
-
-        if (visible) {
-            const qState = getQuestState(this.registry);
-            let txt = `Bab/Status :  ${qState.chapter}\n`;
-            txt += `Misi Aktif  :  ${qState.title}\n\n`;
-            txt += `📌 OBJEKTIF UTAMA:\n   ${qState.objective}\n\n`;
-            
-            if (qState.completedQuests && qState.completedQuests.length > 0) {
-                txt += `✅ QUEST SELESAI:\n`;
-                qState.completedQuests.forEach(q => {
-                    txt += `   ✔ ${q}\n`;
-                });
-            } else {
-                txt += `💡 Tips: Ikuti alur cerita & bicaralah dengan NPC.`;
-            }
-            
-            this.questContentText.setText(txt);
+    toggleQuestModal(forceState = null) {
+        if (this.isTalking) return;
+        const nextState = forceState !== null ? forceState : !this.isQuestModalOpen;
+        if (nextState) {
+            if (this.isInvOpen) this.toggleInventoryModal(false);
+            if (this.isSettingsOpen) this.toggleSettingsModal(false);
+            if (this.player && this.player.body) this.player.setVelocity(0, 0);
+            this.isQuestModalOpen = true;
+            HDQuestModal.show(this);
+        } else {
+            this.isQuestModalOpen = false;
+            HDQuestModal.hide();
         }
+        this.updateMobileControlsVisibility();
     }
 
     showChapterBanner(titleText, subText = '') {
@@ -1687,6 +1665,10 @@ export class BaseScene extends Phaser.Scene {
         HDDialogueManager.displayCurrent();
     }
 
+    onDialogueLine(index, currentData) {
+        // Subclass hook for handling events on specific dialogue lines
+    }
+
     updatePortrait(speakerName, explicitPortrait = null) {
         HDDialogueManager.updatePortrait(speakerName, explicitPortrait);
     }
@@ -1706,40 +1688,7 @@ export class BaseScene extends Phaser.Scene {
     }
 
     showMapLockedNotice(message) {
-        if (this.lockedNoticeActive) return;
-        this.lockedNoticeActive = true;
-
-        const noticeBox = this.add.container(400, 100).setDepth(35).setScrollFactor(0);
-        const bg = this.add.rectangle(0, 0, 540, 50, 0x7f1d1d, 0.95).setStrokeStyle(2, 0xef4444);
-        const txt = this.add.text(0, -7, '🔒 MAP TERKUNCI! QUEST BELUM SELESAI', {
-            fontSize: '12px', fontStyle: 'bold', fill: '#f87171', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-        const sub = this.add.text(0, 11, message, {
-            fontSize: '11px', fill: '#fecaca', fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
-        noticeBox.add([bg, txt, sub]);
-
-        this.tweens.add({
-            targets: noticeBox,
-            y: 110,
-            duration: 350,
-            ease: 'Back.out',
-            onComplete: () => {
-                this.time.delayedCall(2200, () => {
-                    this.tweens.add({
-                        targets: noticeBox,
-                        alpha: 0,
-                        y: 85,
-                        duration: 400,
-                        onComplete: () => {
-                            noticeBox.destroy();
-                            this.lockedNoticeActive = false;
-                        }
-                    });
-                });
-            }
-        });
+        HDNoticeManager.showLocked(message);
     }
 
     checkMapGate({ targetScene, targetData, reqQuestNum, reqItem, lockMessage, direction, pushBackX }) {
@@ -1804,12 +1753,15 @@ export class BaseScene extends Phaser.Scene {
         if (!this.player || !this.player.body) return;
 
         // Inisialisasi prompt interaktif & tap-to-interact jika belum aktif
-        if (this.promptText && !this.promptText._interactiveReady) {
+        if (this._promptText && !this._promptText._hdPromptReady) {
             this.initInteractivePrompt();
         }
         if (!this._tapToInteractReady) {
             this.setupTapToInteract();
         }
+
+        // Update posisi HD interaction prompt setiap frame agar selalu sinkron dengan target & kamera
+        HDPromptManager.updatePosition();
 
         // Kamera Dynamic Smooth Follow & Mathematical Zero-Void Clamping
         if (this.player && this.cameras.main) {

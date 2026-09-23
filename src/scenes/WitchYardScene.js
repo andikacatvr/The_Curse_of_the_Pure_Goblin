@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
 import { getInventory, getQuestState, setQuestState, isMobileDevice } from '../utils/gameState.js';
+import { HDNoticeManager } from '../utils/HDNoticeManager.js';
 
 export class WitchYardScene extends BaseScene {
     constructor() {
@@ -140,11 +141,9 @@ export class WitchYardScene extends BaseScene {
             }).setOrigin(0.5).setDepth(15);
 
             const hintText = isMobileDevice()
-                ? '⚔️ DEKATI & KETUK MONSTER UNTUK MENEBAS DENGAN PISAU!'
-                : '⚔️ TEKAN [F] / [SPACE] DI DEKAT MONSTER UNTUK MENYERANG DENGAN PISAU!';
-            this.battleHint = this.add.text(400, 110, hintText, {
-                fontSize: '13px', fontStyle: 'bold', fill: '#f59e0b', backgroundColor: '#000000cc', padding: { x: 8, y: 4 }
-            }).setOrigin(0.5).setDepth(15);
+                ? 'Dekati & ketuk monster untuk menebas dengan pisau!'
+                : 'Tekan [F] / [SPACE] di dekat monster untuk menyerang!';
+            HDNoticeManager.showBattleHint(hintText, '⚔️ PERTEMPURAN MONSTER');
 
             if (!this.registry.get('witchYardIntroSaid')) {
                 this.registry.set('witchYardIntroSaid', true);
@@ -289,13 +288,10 @@ export class WitchYardScene extends BaseScene {
         this.registry.set('monsterDefeated', true);
         this.hideMobileCombatButton();
 
-        if (this.battleHint) {
-            const defeatedText = isMobileDevice()
-                ? '✨ MONSTER DIKALAHKAN! DEKATI & KETUK PINTU RUMAH UNTUK MASUK!'
-                : '✨ MONSTER DIKALAHKAN! DEKATI PINTU RUMAH & TEKAN [E] UNTUK MENYELINAP!';
-            this.battleHint.setText(defeatedText);
-            this.battleHint.setStyle({ fill: '#10b981' });
-        }
+        const defeatedText = isMobileDevice()
+            ? 'Dekati & ketuk pintu rumah untuk masuk menyelinap!'
+            : 'Dekati pintu rumah penyihir & tekan [E] untuk menyelinap masuk!';
+        HDNoticeManager.showSuccess(defeatedText, '✨ MONSTER DIKALAHKAN!', 6000);
 
         // Pisau hancur setelah pertarungan sengit
         const inv = getInventory(this.registry);

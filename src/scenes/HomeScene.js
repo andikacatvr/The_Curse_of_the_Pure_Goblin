@@ -79,11 +79,22 @@ export class HomeScene extends BaseScene {
         if (!hasCure && hasWood) {
             const hasDagger = inv.some(i => i.id === 'Pisau Belati');
             if (!hasDagger) {
-                this.dagger = this.itemsGroup.create(500, 405, 'item_dagger');
+                this.dagger = this.itemsGroup.create(500, 405, 'belati_pixel');
+                this.dagger.setDisplaySize(11, 38);
+                this.dagger.setAngle(-12);
                 this.dagger.type = 'item';
                 this.dagger.itemId = 'Pisau Belati';
                 this.dagger.itemDesc = 'Senjata belati peninggalan keluarga untuk perlindungan di perjalanan.';
                 this.dagger.setDepth(5);
+
+                this.tweens.add({
+                    targets: this.dagger,
+                    y: 401,
+                    duration: 1200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
             }
         }
 
@@ -170,11 +181,22 @@ export class HomeScene extends BaseScene {
 
                     // Tampilkan Belati di Meja Teras
                     if (!this.dagger && !curInv.some(i => i.id === 'Pisau Belati')) {
-                        this.dagger = this.itemsGroup.create(380, 405, 'item_dagger');
+                        this.dagger = this.itemsGroup.create(500, 405, 'belati_pixel');
+                        this.dagger.setDisplaySize(11, 38);
+                        this.dagger.setAngle(-12);
                         this.dagger.type = 'item';
                         this.dagger.itemId = 'Pisau Belati';
                         this.dagger.itemDesc = 'Senjata belati peninggalan keluarga untuk perlindungan di perjalanan.';
                         this.dagger.setDepth(5);
+
+                        this.tweens.add({
+                            targets: this.dagger,
+                            y: 401,
+                            duration: 1200,
+                            yoyo: true,
+                            repeat: -1,
+                            ease: 'Sine.easeInOut'
+                        });
                     }
 
                     setQuestState(this.registry, {
@@ -310,95 +332,45 @@ export class HomeScene extends BaseScene {
 
     createHomeAtmosphere() {
         // =========================================================================
-        // PARALLAX LAYER 0: FAR SKY, CLOUDS & MAJESTIC MOUNTAINS (ScrollFactor: 0.15)
+        // TRUE MULTI-LAYER CINEMATIC PARALLAX
         // =========================================================================
-        this.bgSky = this.add.image(600, 200, 'home_village_bg')
-            .setDisplaySize(2400, 600)
+        // Layer 0: Far Sky & Majestic Mountain Peaks (Slowest scroll: 0.08)
+        this.bgSky = this.add.image(600, 215, 'home_parallax_sky')
+            .setDisplaySize(1600, 460)
             .setDepth(0)
-            .setScrollFactor(0.12, 1);
+            .setScrollFactor(0.08, 1);
 
-        // Distant Atmospheric Glow & Soft Mountain Peaks (ScrollFactor: 0.20)
-        const farMountainsG = this.add.graphics().setDepth(0).setScrollFactor(0.2, 1);
-        farMountainsG.fillStyle(0x1e183a, 0.55);
-        farMountainsG.fillTriangle(-200, 420, 100, 190, 380, 420);
-        farMountainsG.fillTriangle(200, 420, 480, 160, 750, 420);
-        farMountainsG.fillTriangle(560, 420, 800, 180, 1060, 420);
-        farMountainsG.fillTriangle(900, 420, 1150, 150, 1420, 420);
-        farMountainsG.fillTriangle(1260, 420, 1480, 170, 1700, 420);
+        // Layer 1: Midground Rolling Pine Forests & Misty Lake (Medium scroll: 0.25)
+        this.bgMid = this.add.image(600, 215, 'home_parallax_mid')
+            .setDisplaySize(1600, 460)
+            .setDepth(1)
+            .setScrollFactor(0.25, 1);
 
-        farMountainsG.fillStyle(0xddd6fe, 0.45);
-        farMountainsG.fillTriangle(480, 160, 460, 190, 500, 190);
-        farMountainsG.fillTriangle(1150, 150, 1128, 182, 1172, 182);
+        // Layer 2: Foreground Framing Trees & Ancient Oaks (Close scroll: 0.50)
+        this.bgTrees = this.add.image(600, 215, 'home_parallax_trees')
+            .setDisplaySize(1600, 460)
+            .setDepth(1.8)
+            .setScrollFactor(0.50, 1);
 
-        // Drifting Twilight Mist & Clouds (ScrollFactor: 0.15)
-        const clouds = [
-            { x: -50, y: 70, w: 220, h: 28, dur: 18000, dist: 80 },
-            { x: 320, y: 55, w: 260, h: 32, dur: 22000, dist: -90 },
-            { x: 720, y: 85, w: 240, h: 26, dur: 19000, dist: 75 },
-            { x: 1120, y: 65, w: 280, h: 30, dur: 24000, dist: -85 },
-            { x: 1450, y: 75, w: 230, h: 28, dur: 20000, dist: 70 }
-        ];
-        clouds.forEach(c => {
-            const cloudG = this.add.graphics().setDepth(0).setScrollFactor(0.15, 1);
-            cloudG.fillStyle(0xf1f5f9, 0.12);
-            cloudG.fillRoundedRect(c.x, c.y, c.w, c.h, 14);
-            cloudG.fillStyle(0xf8fafc, 0.08);
-            cloudG.fillCircle(c.x + c.w * 0.35, c.y + 2, c.h * 0.7);
-            cloudG.fillCircle(c.x + c.w * 0.65, c.y - 2, c.h * 0.8);
+        // Soft Drifting Twilight Mist over the Distant Lake (ScrollFactor: 0.28)
+        for (let i = 0; i < 4; i++) {
+            const mist = this.add.ellipse(
+                Phaser.Math.Between(150, 1050),
+                Phaser.Math.Between(260, 360),
+                Phaser.Math.Between(220, 380),
+                Phaser.Math.Between(20, 35),
+                0xdbeafe,
+                0.08
+            ).setDepth(1.2).setScrollFactor(0.28, 1);
 
             this.tweens.add({
-                targets: cloudG,
-                x: c.dist,
-                alpha: { from: 0.7, to: 1.0 },
-                duration: c.dur,
+                targets: mist,
+                x: mist.x + Phaser.Math.Between(-40, 40),
+                alpha: { from: 0.05, to: 0.12 },
+                duration: Phaser.Math.Between(5000, 8000),
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
-            });
-        });
-
-        // =========================================================================
-        // PARALLAX LAYER 1: MID-DISTANCE VALLEY HILLS & PINES (ScrollFactor: 0.40)
-        // =========================================================================
-        const midHillsG = this.add.graphics().setDepth(1).setScrollFactor(0.4, 1);
-        midHillsG.fillStyle(0x132a22, 0.75);
-        midHillsG.fillCircle(-100, 460, 220);
-        midHillsG.fillCircle(150, 460, 220);
-        midHillsG.fillCircle(490, 470, 240);
-        midHillsG.fillCircle(850, 465, 230);
-        midHillsG.fillCircle(1210, 470, 250);
-        midHillsG.fillCircle(1520, 465, 230);
-
-        midHillsG.fillStyle(0x0a1f18, 0.85);
-        for (let px = -200; px < 1650; px += 48) {
-            const ph = 60 + ((Math.abs(px) * 37) % 45);
-            midHillsG.fillRect(px + 4, 418 - ph, 4, ph);
-            midHillsG.fillTriangle(px - 10, 418 - ph * 0.3, px + 6, 418 - ph, px + 22, 418 - ph * 0.3);
-            midHillsG.fillTriangle(px - 6, 418 - ph * 0.6, px + 6, 418 - ph * 1.1, px + 18, 418 - ph * 0.6);
-        }
-
-        // =========================================================================
-        // PARALLAX LAYER 2: VILLAGE ROOFTOPS & DISTANT FENCES (ScrollFactor: 0.70)
-        // =========================================================================
-        const villageG = this.add.graphics().setDepth(1).setScrollFactor(0.7, 1);
-        villageG.fillStyle(0x172554, 0.45);
-        villageG.fillRect(660, 340, 110, 78);
-        villageG.fillTriangle(645, 340, 715, 290, 785, 340);
-        villageG.fillRect(980, 335, 120, 83);
-        villageG.fillTriangle(965, 335, 1040, 285, 1115, 335);
-
-        for (let s = 0; s < 3; s++) {
-            const nSmoke = this.add.circle(765, 305, 4 + s * 2, 0x94a3b8, 0.25).setDepth(1).setScrollFactor(0.7, 1);
-            this.tweens.add({
-                targets: nSmoke,
-                x: 765 + 16 + s * 8,
-                y: 250 - s * 15,
-                alpha: 0,
-                scale: 2.0,
-                duration: 2800 + s * 500,
-                delay: s * 700,
-                repeat: -1,
-                ease: 'Sine.easeOut'
             });
         }
 
@@ -522,7 +494,6 @@ export class HomeScene extends BaseScene {
 
         // Front Yard Trees
         const trees = [
-            { x: 840, y: 180, w: 28, h: 238, foliageX: 810 },
             { x: 1155, y: 160, w: 32, h: 258, foliageX: 1135 }
         ];
         trees.forEach(t => {
@@ -588,11 +559,6 @@ export class HomeScene extends BaseScene {
             bgG.fillCircle(fl.x + 1, fl.y - 1, 1);
         });
 
-        bgG.fillStyle(0x4ade80, 0.9);
-        for (let gx = -100; gx < 1350; gx += 22) {
-            bgG.fillTriangle(gx, 418, gx + 3, 407, gx + 6, 418);
-            bgG.fillTriangle(gx + 8, 418, gx + 12, 409, gx + 16, 418);
-        }
 
         // Fireflies drifting in the twilight
         for (let i = 0; i < 24; i++) {
