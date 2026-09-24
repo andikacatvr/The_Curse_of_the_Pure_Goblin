@@ -237,8 +237,8 @@ export class WoodshopScene extends BaseScene {
 
         setQuestState(this.registry, {
             chapter: 'BAB 3',
-            title: 'Bab 3: Olah Tepung Magis',
-            objective: 'Bawa Mythical Seed ke Mesin Gilingan Batu Desa & temui Mr. Breado.',
+            title: 'Bab 3: Toko Roti Mr. Breado',
+            objective: 'Pergilah ke Toko Roti di sebelah timur [➔] dan temui Mr. Breado untuk mencari Bahan 3 (Magic Bread).',
             questNumber: 7,
             completedQuests: [
                 'Quest 1-3: Bahan 1 Madu Murni',
@@ -251,8 +251,8 @@ export class WoodshopScene extends BaseScene {
 
         this.startCinematicDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Hore!! Aku mendapatkan [Bahan 2: Mythical Seed]!' },
-            { speaker: 'Mr. Heinreich', text: 'Simpan baik-baik benih magis itu dan bawa ke Mr. Breado si koki roti desa untuk diolah menjadi Magic Bread!' },
-            { speaker: 'Aksel (Goblin)', text: 'Terima kasih banyak atas kebaikan dan kemurahan hatimu, Mr. Heinreich! 2 Bahan Magis selesai, sekarang aku menuju Mr. Breado!' }
+            { speaker: 'Mr. Heinreich', text: 'Simpan baik-baik [Bahan 2: Mythical Seed] itu di tasmu! Sekarang, pergilah ke Toko Roti di timur [➔] dan temui Mr. Breado si koki roti untuk mencari [Bahan 3: Magic Bread]!' },
+            { speaker: 'Aksel (Goblin)', text: 'Terima kasih banyak atas kebaikanmu, Mr. Heinreich! 2 Bahan Magis selesai, sekarang aku bergegas menuju Toko Roti Mr. Breado!' }
         ], null, { zoom: 1.25, targetX: this.heinreich.x, targetY: this.heinreich.y - 30 });
     }
 

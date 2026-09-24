@@ -265,21 +265,17 @@ export class SaffronFarmScene extends BaseScene {
 
         this.startDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Berhasil! [Bunga Saffron Langka] dengan tangkai emas berkilau sudah berhasil kupetik!' },
-            { speaker: 'Aksel (Goblin)', text: 'Sekarang seluruh bahan khusus Magic Bread sudah lengkap: Tepung Gandum, Lada Hitam, dan Bunga Saffron!' },
-            { speaker: 'Aksel (Goblin)', text: 'Aku harus segera kembali ke Toko Roti Mr. Breado di sebelah barat [◀] untuk mulai memanggang roti magis!' }
+            { speaker: 'Aksel (Goblin)', text: 'Semua 3 roti warga sudah kuantar, dan kedua rempah (Lada Hitam & Bunga Saffron) sudah lengkap!' },
+            { speaker: 'Aksel (Goblin)', text: 'Aku harus segera kembali ke Toko Roti Mr. Breado di sebelah barat [◀] untuk memanggang Magic Bread!' }
         ]);
 
-        const hasFlour = inv.some(i => i.id === 'Tepung Gandum Murni');
-        const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
-        if (hasFlour && hasPepper) {
-            setQuestState(this.registry, {
-                chapter: 'BAB 3',
-                title: 'Quest 8: Serahkan Bahan ke Mr. Breado',
-                objective: '3 Bahan Magic Bread lengkap! Kembali ke Toko Roti [◀] dan serahkan bahan ke Mr. Breado.',
-                questNumber: 8
-            });
-            this.updateQuestHUD();
-        }
+        setQuestState(this.registry, {
+            chapter: 'BAB 3',
+            title: 'Bab 3: Panggang Magic Bread di Toko Roti',
+            objective: 'Pesanan roti warga selesai & rempah lengkap! Kembali ke Toko Roti Mr. Breado [◀] untuk memanggang Magic Bread.',
+            questNumber: 9
+        });
+        this.updateQuestHUD();
     }
 
     createSaffronFarmAtmosphere() {

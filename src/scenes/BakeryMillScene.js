@@ -78,10 +78,8 @@ export class BakeryMillScene extends BaseScene {
 
     updateDialogueState() {
         const inv = getInventory(this.registry);
-        const hasFlour = inv.some(i => i.id === 'Tepung Gandum Murni');
         const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
         const hasSaffron = inv.some(i => i.id === 'Bunga Saffron Langka');
-        const has3Ingredients = hasFlour && hasPepper && hasSaffron;
         const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
         const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
         const delivered = this.registry.get('deliveredHouses') || [];
@@ -91,27 +89,19 @@ export class BakeryMillScene extends BaseScene {
                 { speaker: 'Mr. Breado', text: 'Selamat ya Goblin kecil yang baik hati! Ketiga Bahan Magis utama sudah lengkap di tanganmu!' },
                 { speaker: 'Mr. Breado', text: 'Segera kembali ke kediaman Madam Joanne di timur untuk melepaskan kutukan & menyembuhkan adikmu!' }
             ];
-        } else if (delivered.length >= 3 && isDeliveryActive) {
+        } else if (delivered.length >= 3 && hasPepper && hasSaffron) {
             this.breado.dialogue = [
-                { speaker: 'Mr. Breado', text: 'Wah, kamu sudah kembali! Terima kasih banyak sudah mengantarkan seluruh roti ke rumah warga desa!' },
-                { speaker: 'Mr. Breado', text: 'Tekan [E] lagi untuk mengambil hadiah mahakaryaku: [Bahan 3: Magic Bread]!' }
+                { speaker: 'Mr. Breado', text: 'Wah, kamu sudah kembali, Aksel! 3 roti warga sudah terantar dan kedua rempah langka sudah kau bawa!' },
+                { speaker: 'Mr. Breado', text: 'Tekan [E] untuk mulai memanggang mahakarya [Bahan 3: Magic Bread] di Oven Magis!' }
             ];
         } else if (isDeliveryActive) {
-            this.breado.dialogue = [
-                { speaker: 'Mr. Breado', text: 'Sembari adonan Magic Bread dipanggang di Oven Magis, antarkan 3 Keranjang Roti Pagi ke 3 rumah warga di Pemukiman (sebelah kanan) ya, Aksel!' }
-            ];
-        } else if (has3Ingredients) {
-            this.breado.dialogue = [
-                { speaker: 'Mr. Breado', text: 'Luar biasa Aksel! Tepung Gandum, Lada Hitam, dan Bunga Saffron sudah lengkap di tanganmu!' },
-                { speaker: 'Mr. Breado', text: 'Sembari aku menguleni adonannya dan memanggang di Oven Magis, tolong bantu aku mengantarkan 3 Keranjang Roti Pagi ke 3 rumah warga desa di sebelah kanan ya!' }
-            ];
-        } else if (hasFlour) {
             const missing = [];
-            if (!hasPepper) missing.push('[Lada Hitam Pilihan] dari Ibu Sarah di Pemukiman');
-            if (!hasSaffron) missing.push('[Bunga Saffron Langka] dari monster di Kebun Saffron');
+            if (delivered.length < 3) missing.push(`Antar roti ke warga desa (${delivered.length}/3)`);
+            if (!hasPepper) missing.push('Minta Lada Hitam ke Bu Sarah');
+            if (!hasSaffron) missing.push('Petik Bunga Saffron di Kebun Saffron');
             this.breado.dialogue = [
-                { speaker: 'Mr. Breado', text: 'Tepung Gandum Murni sudah siap! Sekarang kamu masih membutuhkan: ' + missing.join(' dan ') + '!' },
-                { speaker: 'Mr. Breado', text: 'Pergilah ke arah kanan [➔] menuju Pemukiman Warga dan Kebun Saffron!' }
+                { speaker: 'Mr. Breado', text: 'Semangat Aksel! Tugas yang masih perlu diselesaikan: ' + missing.join(', ') + '!' },
+                { speaker: 'Mr. Breado', text: 'Pergilah ke arah kanan [➔] melintasi Pemukiman Warga hingga Kebun Saffron!' }
             ];
         } else {
             this.breado.dialogue = [
@@ -119,11 +109,12 @@ export class BakeryMillScene extends BaseScene {
                 { speaker: 'Mr. Breado', text: 'Ohoho! Halo juga kawan kecil bertubuh hijau! Aku Mr. Breado si pembuat roti desa. Ada alasan apa gerangan yang membawamu datang kemari?' },
                 { speaker: 'Aksel (Goblin)', text: 'Mr. Breado, kedatanganku kemari demi menyelamatkan adik perempuanku yang sedang sakit parah di rumah...' },
                 { speaker: 'Aksel (Goblin)', text: 'Untuk menyelamatkannya dan melepaskan kutukan ini, aku membutuhkan [Magic Bread] sesuai petunjuk dari penyihir Madam Joanne.' },
-                { speaker: 'Mr. Breado', text: 'Astaga... Kisah perjuangan yang begitu menyentuh hati demi seorang adik! Tentu saja aku akan membantumu mendapatkan Magic Bread, Aksel!' },
-                { speaker: 'Mr. Breado', text: 'Namun ketahuilah, Magic Bread adalah roti legendaris dengan resep yang sangat istimewa! Biji [Mythical Seed] yang kau bawa dari Mr. Heinreich itu simpan baik-baik, jangan sampai rusak!' },
-                { speaker: 'Mr. Breado', text: 'Untuk adonan Magic Bread, kita memerlukan 3 bahan khusus: [Tepung Gandum Murni], [Lada Hitam Pilihan], dan [Bunga Saffron Langka]!' },
-                { speaker: 'Mr. Breado', text: 'Pertama-tama, gilinglah bulir gandum pilihan di Mesin Gilingan Batu sebelahku ini untuk menghasilkan Tepung Gandum Murni!' },
-                { speaker: 'Aksel (Goblin)', text: 'Baik Mr. Breado! Aku akan segera menggiling gandum ini!' }
+                { speaker: 'Mr. Breado', text: 'Astaga... Kisah perjuangan yang begitu menyentuh hati demi seorang adik! Tentu saja aku akan membantumu memanggang Magic Bread, Aksel!' },
+                { speaker: 'Mr. Breado', text: 'Ketahuilah, Magic Bread adalah resep roti legendaris dengan aroma dan kehangatan magis luar biasa!' },
+                { speaker: 'Mr. Breado', text: 'Adonan tepung gandum terbaik sudah kusiapkan di dapurku. Tapi agar keajaibannya terpancar sempurna, kita memerlukan 2 bahan langka: [Lada Hitam Pilihan] dan [Bunga Saffron Langka]!' },
+                { speaker: 'Mr. Breado', text: 'Kebetulan sekali, kamu akan melangkah ke arah timur menuju Kebun Saffron. Tolong bawakan [3 Keranjang Roti Pagi] ini untuk 3 rumah warga di Pemukiman (Pak Thomas, Ibu Sarah, Paman Bob).' },
+                { speaker: 'Mr. Breado', text: 'Saat mengantar roti ke rumah Ibu Sarah, mintalah sekalian rempah [Lada Hitam Pilihan] dari dapurnya! Setelah itu, langsung lanjutkan ke timur ke Kebun Saffron untuk memetik [Bunga Saffron Langka]!' },
+                { speaker: 'Aksel (Goblin)', text: 'Baik Mr. Breado! Aku akan mengantarkan semua roti pagi ke warga, mengambil lada hitam, dan memetik bunga saffron!' }
             ];
         }
     }
@@ -132,192 +123,105 @@ export class BakeryMillScene extends BaseScene {
         if (this.isTalking) {
             this.nextDialogue();
         } else if (this.nearTarget) {
-            if (this.nearTarget.type === 'npc') {
+            if (this.nearTarget.type === 'npc' || this.nearTarget.type === 'oven') {
                 const inv = getInventory(this.registry);
-                const hasFlour = inv.some(i => i.id === 'Tepung Gandum Murni');
                 const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
                 const hasSaffron = inv.some(i => i.id === 'Bunga Saffron Langka');
                 const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
                 const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
                 const delivered = this.registry.get('deliveredHouses') || [];
 
-                if (delivered.length >= 3 && isDeliveryActive && !hasMagicBread) {
-                    this.giveMagicBreadReward();
-                } else if (hasFlour && hasPepper && hasSaffron && !isDeliveryActive && !hasMagicBread) {
-                    this.registry.set('breadDeliveryActive', true);
-                    setQuestState(this.registry, {
-                        chapter: 'BAB 3',
-                        title: 'Quest 8: Antar 3 Roti Pagi',
-                        objective: 'Antarkan 3 Keranjang Roti Pagi ke rumah Pak Thomas, Ibu Sarah, dan Paman Bob di Pemukiman Warga [➔].',
-                        questNumber: 8
-                    });
-                    this.updateQuestHUD();
-                    this.updateDialogueState();
+                if (delivered.length >= 3 && hasPepper && hasSaffron && !hasMagicBread) {
+                    this.bakeMagicBreadCutscene();
+                } else if (!isDeliveryActive && !hasMagicBread) {
+                    this.startCinematicDialogue(this.breado.dialogue, () => {
+                        this.registry.set('breadDeliveryActive', true);
+                        if (!inv.some(i => i.id === 'Keranjang Roti Pagi')) {
+                            inv.push({
+                                id: 'Keranjang Roti Pagi',
+                                desc: '3 keranjang roti gandum hangat untuk diantarkan ke rumah Pak Thomas, Ibu Sarah, dan Paman Bob di Pemukiman Warga.'
+                            });
+                            this.registry.set('inventory', inv);
+                            this.renderInventorySlots();
+                            GameAudio.playCollect();
 
-                    // Berikan item Keranjang Roti Pagi ke inventory pemain
-                    if (!inv.some(i => i.id === 'Keranjang Roti Pagi')) {
-                        inv.push({
-                            id: 'Keranjang Roti Pagi',
-                            desc: '3 keranjang roti gandum hangat untuk diantarkan ke rumah Pak Thomas, Ibu Sarah, dan Paman Bob di Pemukiman Warga.'
+                            const notice = this.add.text(this.breado.x, this.breado.y - 45, '✨ + 3 Keranjang Roti Pagi!', {
+                                fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000aa', padding: { x: 5, y: 2 }
+                            }).setOrigin(0.5);
+                            this.tweens.add({ targets: notice, y: notice.y - 25, alpha: 0, duration: 1500, onComplete: () => notice.destroy() });
+                        }
+
+                        setQuestState(this.registry, {
+                            chapter: 'BAB 3',
+                            title: 'Bab 3: Pesanan Roti & Rempah Ajaib',
+                            objective: 'Antarkan 3 Roti Pagi ke Pemukiman [➔], minta Lada Hitam dari Bu Sarah, dan petik Bunga Saffron di Kebun Saffron.',
+                            questNumber: 8,
+                            completedQuests: [
+                                'Quest 1-3: Bahan 1 Madu Murni',
+                                'Quest 4-6: Bahan 2 Mythical Seed'
+                            ]
                         });
-                        this.registry.set('inventory', inv);
-                        this.renderInventorySlots();
-                        GameAudio.playCollect();
-
-                        const notice = this.add.text(this.breado.x, this.breado.y - 45, '✨ + 3 Keranjang Roti Pagi!', {
-                            fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000aa', padding: { x: 5, y: 2 }
-                        }).setOrigin(0.5);
-                        this.tweens.add({ targets: notice, y: notice.y - 25, alpha: 0, duration: 1500, onComplete: () => notice.destroy() });
-                    }
-
-                    // Flame & aroma burst in Magic Oven
-                    this.spawnOvenBakingFX();
-
-                    this.startCinematicDialogue([
-                        { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Tepung Gandum Murni, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Kebun Saffron sudah terkumpul lengkap!' },
-                        { speaker: 'Mr. Breado', text: 'Luar biasa! Harumnya semerbak luar biasa! Sekarang aku akan menguleni adonannya dan memanggang Magic Bread di Oven Magis.' },
-                        { speaker: 'Mr. Breado', text: 'Sembari menunggu rotinya matang, tolong bantu aku mengantarkan 3 Keranjang Roti Pagi ini ke 3 rumah warga desa di sebelah kanan [➔] ya!' },
-                        { speaker: 'Aksel (Goblin)', text: 'Siap Mr. Breado! Keranjang rotinya sudah kubawa, aku akan langsung mengantarkannya ke rumah Pak Thomas, Ibu Sarah, dan Paman Bob!' }
-                    ], null, { zoom: 1.25, targetX: this.breado.x, targetY: this.breado.y - 25 });
+                        this.updateQuestHUD();
+                        this.updateDialogueState();
+                    }, { zoom: 1.22, targetX: this.breado.x, targetY: this.breado.y - 25 });
                 } else {
                     this.startDialogue(this.breado.dialogue);
                 }
             } else if (this.nearTarget.type === 'mill') {
-                this.grindSeed();
+                this.startDialogue([
+                    { speaker: 'Aksel (Goblin)', text: 'Mesin gilingan batu milik Mr. Breado. Tepung gandum berkualitas tinggi untuk adonan roti digiling di sini.' }
+                ]);
             } else if (this.nearTarget.type === 'basket') {
-                this.deliverBread();
-            } else if (this.nearTarget.type === 'oven') {
-                const inv = getInventory(this.registry);
-                const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
-                const delivered = this.registry.get('deliveredHouses') || [];
-                const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
-
-                if (delivered.length >= 3 && isDeliveryActive && !hasMagicBread) {
-                    this.giveMagicBreadReward();
-                } else if (hasMagicBread) {
-                    this.startDialogue([
-                        { speaker: 'Aksel (Goblin)', text: 'Oven magis ini telah selesai memanggang Magic Bread yang kuterima dari Mr. Breado.' }
-                    ]);
-                } else if (isDeliveryActive) {
-                    this.startDialogue([
-                        { speaker: 'Aksel (Goblin)', text: 'Magic Bread sedang dipanggang di dalam oven ini dengan nyala api sihir keemasan! Sembari menunggu matang, aku harus mengantarkan 3 keranjang roti ke warga desa.' }
-                    ]);
-                } else {
-                    this.startDialogue([
-                        { speaker: 'Aksel (Goblin)', text: 'Oven batu khusus Mr. Breado untuk memanggang roti legendaris dengan nyala api sihir keemasan.' }
-                    ]);
-                }
+                this.startDialogue([
+                    { speaker: 'Aksel (Goblin)', text: 'Meja persiapan roti Mr. Breado yang selalu wangi semerbak adonan gandum segar.' }
+                ]);
             }
         }
     }
 
     spawnOvenBakingFX() {
         const colors = [0xf59e0b, 0xef4444, 0xfde047, 0xfbbf24];
-        for (let i = 0; i < 18; i++) {
+        for (let i = 0; i < 24; i++) {
             const col = Phaser.Utils.Array.GetRandom(colors);
-            const p = this.add.circle(this.oven.x + Phaser.Math.Between(-10, 10), this.oven.y - 10, Phaser.Math.Between(4, 9), col, 0.8).setDepth(6);
+            const p = this.add.circle(this.oven.x + Phaser.Math.Between(-12, 12), this.oven.y - 10, Phaser.Math.Between(4, 9), col, 0.85).setDepth(6);
             this.tweens.add({
                 targets: p,
-                y: p.y - Phaser.Math.Between(30, 60),
+                y: p.y - Phaser.Math.Between(30, 65),
                 alpha: 0,
-                duration: Phaser.Math.Between(800, 1400),
+                scale: 1.4,
+                duration: Phaser.Math.Between(800, 1500),
                 onComplete: () => p.destroy()
             });
         }
     }
 
-    grindSeed() {
-        const inv = getInventory(this.registry);
-        if (inv.some(i => i.id === 'Tepung Gandum Murni')) return;
-
-        inv.push({ id: 'Tepung Gandum Murni', desc: 'Tepung gandum murni beraroma wangi untuk adonan dasar Magic Bread.' });
-        this.registry.set('inventory', inv);
-        this.renderInventorySlots();
-        GameAudio.playCollect();
-
-        const notice = this.add.text(this.mill.x, this.mill.y - 30, '✨ + Tepung Gandum Murni!', {
-            fontSize: '13px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000aa', padding: { x: 4, y: 2 }
-        }).setOrigin(0.5);
-
-        this.tweens.add({ targets: notice, y: notice.y - 30, alpha: 0, duration: 1200, onComplete: () => notice.destroy() });
-
-        setQuestState(this.registry, {
-            chapter: 'BAB 3',
-            title: 'Quest 8: Kumpulkan Rempah & Saffron',
-            objective: 'Minta [Lada Hitam Pilihan] ke Ibu Sarah di Pemukiman dan kalahkan monster untuk memetik [Bunga Saffron Langka] di Kebun Saffron [➔].',
-            questNumber: 8,
-            completedQuests: [
-                'Quest 1-3: Bahan 1 Madu Murni',
-                'Quest 4-6: Bahan 2 Mythical Seed',
-                'Quest 7: Giling Tepung Gandum Murni'
-            ]
-        });
-        this.updateQuestHUD();
-        this.updateDialogueState();
-
-        this.startDialogue([
-            { speaker: 'Aksel (Goblin)', text: 'Berhasil! Bulir gandum sudah digiling halus menjadi [Tepung Gandum Murni]!' },
-            { speaker: 'Mr. Breado', text: 'Bagus sekali! Sekarang tugas berikutnya: Minta [Lada Hitam Pilihan] ke Ibu Sarah di Pemukiman Warga (sebelah kanan), dan kalahkan monster buas untuk memetik [Bunga Saffron Langka] di Kebun Saffron!' }
-        ]);
-    }
-
-    deliverBread() {
-        const inv = getInventory(this.registry);
-        const hasFlour = inv.some(i => i.id === 'Tepung Gandum Murni');
-        const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
-        const hasSaffron = inv.some(i => i.id === 'Bunga Saffron Langka');
-        const isDeliveryActive = !!this.registry.get('breadDeliveryActive');
-        const delivered = this.registry.get('deliveredHouses') || [];
-
-        if (delivered.length >= 3) {
-            this.startDialogue([
-                { speaker: 'Aksel (Goblin)', text: 'Semua 3 keranjang roti pagi sudah berhasil kuantarkan ke rumah warga desa! Sekarang saatnya menemui Mr. Breado untuk mengambil Magic Bread!' }
-            ]);
-            return;
-        }
-
-        if (!isDeliveryActive) {
-            if (!hasFlour || !hasPepper || !hasSaffron) {
-                this.startDialogue([
-                    { speaker: 'Aksel (Goblin)', text: 'Wah, keranjang ini penuh dengan roti sarapan yang baru selesai dibakar!' },
-                    { speaker: 'Mr. Breado', text: 'Itu pesanan warga pagi ini! Tapi sebelum mengantarkannya, bantu aku kumpulkan dulu 3 bahan racikan Magic Bread: Tepung Gandum, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Kebun Saffron!' }
-                ]);
-            } else {
-                this.startDialogue([
-                    { speaker: 'Aksel (Goblin)', text: 'Ketiga bahan Magic Bread sudah lengkap di tasku! Aku harus bicara dengan Mr. Breado dulu agar beliau mulai memanggangnya di oven.' }
-                ]);
-            }
-            return;
-        }
-
-        const hasBasketInInv = inv.some(i => i.id === 'Keranjang Roti Pagi');
-        if (!hasBasketInInv) {
-            inv.push({
-                id: 'Keranjang Roti Pagi',
-                desc: `Keranjang roti gandum hangat untuk diantarkan ke rumah warga desa (${delivered.length}/3 terantar).`
-            });
-            this.registry.set('inventory', inv);
-            this.renderInventorySlots();
+    bakeMagicBreadCutscene() {
+        this.startCinematicDialogue([
+            { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Semua 3 keranjang roti pagi sudah kuantarkan ke warga desa, dan ini rempah [Lada Hitam Pilihan] serta [Bunga Saffron Langka]!' },
+            { speaker: 'Mr. Breado', text: 'Luar biasa sekali, Aksel! Semua warga memuji kehangatan rotimu, dan aroma kedua rempah ini sungguh harum semerbak!' },
+            { speaker: 'Mr. Breado', text: 'Lihatlah oven magisku! Nyala api keemasannya sudah siap memanggang resep legendaris ini!' },
+            { speaker: 'Mr. Breado', text: '(Mr. Breado menguleni adonan dengan cekatan dan memasukkannya ke dalam Oven Magis...)' }
+        ], () => {
+            this.spawnOvenBakingFX();
             GameAudio.playCollect();
 
-            const notice = this.add.text(this.basket.x, this.basket.y - 35, '✨ + Keranjang Roti Pagi!', {
-                fontSize: '12px', fontStyle: 'bold', fill: '#fbbf24', backgroundColor: '#000000aa', padding: { x: 5, y: 2 }
-            }).setOrigin(0.5);
-            this.tweens.add({ targets: notice, y: notice.y - 25, alpha: 0, duration: 1500, onComplete: () => notice.destroy() });
-
-            this.startDialogue([
-                { speaker: 'Aksel (Goblin)', text: 'Aku mengambil keranjang roti pagi dari meja! Segera kuantarkan ke 3 rumah warga di Pemukiman (sebelah kanan).' }
-            ]);
-        } else {
-            this.startDialogue([
-                { speaker: 'Aksel (Goblin)', text: `Keranjang roti sudah kubawa di tas! Aku harus segera mengantarkannya ke 3 rumah warga desa di sebelah kanan [➔] (${delivered.length}/3 terantar).` }
-            ]);
-        }
+            this.time.delayedCall(1200, () => {
+                this.giveMagicBreadReward();
+            });
+        }, { zoom: 1.25, targetX: this.oven.x, targetY: this.oven.y - 25 });
     }
 
     giveMagicBreadReward() {
         const inv = getInventory(this.registry);
         if (inv.some(i => i.id === 'Bahan 3: Magic Bread')) return;
+
+        // Remove ingredients used for baking
+        const pepperIdx = inv.findIndex(i => i.id === 'Lada Hitam Pilihan');
+        if (pepperIdx !== -1) inv.splice(pepperIdx, 1);
+        const saffronIdx = inv.findIndex(i => i.id === 'Bunga Saffron Langka');
+        if (saffronIdx !== -1) inv.splice(saffronIdx, 1);
+        const basketIdx = inv.findIndex(i => i.id === 'Keranjang Roti Pagi');
+        if (basketIdx !== -1) inv.splice(basketIdx, 1);
 
         inv.push({ id: 'Bahan 3: Magic Bread', desc: 'Roti magis emas kaya nutrisi sihir pemulihan, hadiah dari Mr. Breado.' });
         this.registry.set('inventory', inv);
@@ -344,19 +248,16 @@ export class BakeryMillScene extends BaseScene {
         this.updateDialogueState();
 
         this.startCinematicDialogue([
-            { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Semua 3 keranjang roti pagi sudah berhasil kuantarkan ke seluruh rumah warga desa!' },
-            { speaker: 'Mr. Breado', text: 'Luar biasa! Terima kasih banyak ya, Goblin kecil yang baik hati! Warga desa sangat terbantu olehmu.' },
-            { speaker: 'Mr. Breado', text: 'Sebagai hadiah atas kebaikan dan perjuangan kerasmu, ini aku serahkan [Bahan 3: Magic Bread] yang baru saja matang sempurna di oven!' },
-            { speaker: 'Aksel (Goblin)', text: 'HOREEE!! [Bahan 3: Magic Bread] akhirnya kudapatkan! Terima kasih banyak Mr. Breado!' },
-            { speaker: 'Aksel (Dalam Hati)', text: '(Ketiga Bahan Magis akhirnya lengkap: Madu Murni, Mythical Seed, dan Magic Bread! Sekarang aku bisa kembali ke Madam Joanne untuk melepaskan kutukan dan menyembuhkan Rachael!)' }
+            { speaker: 'Mr. Breado', text: '✨ TADA! [Bahan 3: Magic Bread] telah matang sempurna!' },
+            { speaker: 'Mr. Breado', text: 'Kebaikan dan ketulusan hatimu demi adikmu membuat roti ini memancarkan aura kesembuhan yang sangat luar biasa!' },
+            { speaker: 'Aksel (Goblin)', text: 'HOREEE!! Terima kasih tak terhingga, Mr. Breado! Ketiga Bahan Magis akhirnya lengkap: Madu Murni, Mythical Seed, dan Magic Bread!' },
+            { speaker: 'Aksel (Goblin)', text: 'Sekarang aku harus segera kembali ke kediaman Madam Joanne di Hutan Timur untuk melepaskan kutukan dan menyembuhkan Rachael!' }
         ], null, { zoom: 1.25, targetX: this.breado.x, targetY: this.breado.y - 25 });
     }
 
     update() {
         let found = null;
-        const qState = getQuestState(this.registry);
         const inv = getInventory(this.registry);
-        const hasFlour = inv.some(i => i.id === 'Tepung Gandum Murni');
         const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
         const hasSaffron = inv.some(i => i.id === 'Bunga Saffron Langka');
         const hasMagicBread = inv.some(i => i.id === 'Bahan 3: Magic Bread');
@@ -365,26 +266,18 @@ export class BakeryMillScene extends BaseScene {
 
         if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.breado.x, this.breado.y) < 60) {
             let prompt = 'Tekan [E] Bicara Mr. Breado';
-            if (delivered.length >= 3 && isDeliveryActive && !hasMagicBread) {
-                prompt = 'Tekan [E] Ambil Hadiah Magic Bread dari Mr. Breado';
-            } else if (hasFlour && hasPepper && hasSaffron && !isDeliveryActive && !hasMagicBread) {
-                prompt = 'Tekan [E] Serahkan Bahan Roti ke Mr. Breado';
+            if (delivered.length >= 3 && hasPepper && hasSaffron && !hasMagicBread) {
+                prompt = 'Tekan [E] Panggang Magic Bread Bersama Mr. Breado';
             }
             found = { type: 'npc', x: this.breado.x, y: this.breado.y - 35, prompt: prompt };
-        } else if (!hasFlour && !hasMagicBread && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.mill.x, this.mill.y) < 55) {
-            found = { type: 'mill', x: this.mill.x, y: this.mill.y - 30, prompt: 'Tekan [E] Giling Gandum Jadi Tepung Murni' };
+        } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.mill.x, this.mill.y) < 55) {
+            found = { type: 'mill', x: this.mill.x, y: this.mill.y - 30, prompt: 'Tekan [E] Periksa Mesin Gilingan' };
         } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.basket.x, this.basket.y) < 55) {
-            let prompt = 'Tekan [E] Periksa Keranjang Roti';
-            if (isDeliveryActive && delivered.length < 3) {
-                prompt = 'Tekan [E] Ambil Keranjang Roti Pagi';
-            } else if (delivered.length >= 3) {
-                prompt = 'Tekan [E] Keranjang Kosong';
-            }
-            found = { type: 'basket', x: this.basket.x, y: this.basket.y - 25, prompt: prompt };
+            found = { type: 'basket', x: this.basket.x, y: this.basket.y - 25, prompt: 'Tekan [E] Periksa Meja Adonan Roti' };
         } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.oven.x, this.oven.y) < 60) {
-            let prompt = 'Tekan [E] Lihat Oven Magis';
-            if (delivered.length >= 3 && isDeliveryActive && !hasMagicBread) {
-                prompt = 'Tekan [E] Ambil Magic Bread dari Oven Magis';
+            let prompt = 'Tekan [E] Periksa Oven Magis';
+            if (delivered.length >= 3 && hasPepper && hasSaffron && !hasMagicBread) {
+                prompt = 'Tekan [E] Panggang Magic Bread Bersama Mr. Breado';
             }
             found = { type: 'oven', x: this.oven.x, y: this.oven.y - 35, prompt: prompt };
         }
@@ -406,8 +299,8 @@ export class BakeryMillScene extends BaseScene {
             },
             canExitRight: true,
             onExitRight: () => {
-                if (!hasFlour && !hasMagicBread) {
-                    this.showMapLockedNotice('Giling bulir gandum di Mesin Batu dulu untuk membuat Tepung Gandum Murni!');
+                if (!isDeliveryActive && !hasMagicBread) {
+                    this.showMapLockedNotice('Bicaralah dengan Mr. Breado dulu sebelum melangkah ke Pemukiman!');
                     this.player.setX(740);
                     this.player.setVelocityX(-150);
                 } else {
