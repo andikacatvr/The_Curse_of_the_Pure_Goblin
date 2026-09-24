@@ -1646,7 +1646,7 @@ export class BaseScene extends Phaser.Scene {
 
     startCinematicMode({ zoom = 1.18, targetX = null, targetY = null, duration = 800 } = {}) {
         this.isCinematicActive = true;
-        HDHudManager.hideTopHUD();
+        HDHudManager.startCinematic();
 
         const cam = this.cameras.main;
         if (cam) {
@@ -1663,7 +1663,7 @@ export class BaseScene extends Phaser.Scene {
 
     stopCinematicMode({ duration = 650 } = {}) {
         this.isCinematicActive = false;
-        HDHudManager.showTopHUD();
+        HDHudManager.stopCinematic();
 
         const cam = this.cameras.main;
         if (cam) {

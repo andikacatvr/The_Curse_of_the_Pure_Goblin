@@ -170,6 +170,22 @@ export class HDHudManager {
         }
         this.rightBadge = rightBadge;
 
+        // 4. True Screen-Edge HTML Cinematic Letterbox Bars
+        let topCinematic = document.getElementById('hd-cinematic-top');
+        if (!topCinematic) {
+            topCinematic = document.createElement('div');
+            topCinematic.id = 'hd-cinematic-top';
+            topCinematic.className = 'hd-cinematic-bar hd-cinematic-top';
+            document.body.appendChild(topCinematic);
+        }
+        let bottomCinematic = document.getElementById('hd-cinematic-bottom');
+        if (!bottomCinematic) {
+            bottomCinematic = document.createElement('div');
+            bottomCinematic.id = 'hd-cinematic-bottom';
+            bottomCinematic.className = 'hd-cinematic-bar hd-cinematic-bottom';
+            document.body.appendChild(bottomCinematic);
+        }
+
         this.bindEvents();
         this.updateBadgePositioning();
     }
@@ -775,6 +791,35 @@ export class HDHudManager {
                 .hd-qt-title { font-size: 11px; }
                 .hd-qt-objective { font-size: 10px; }
             }
+
+            /* --- CINEMATIC TRUE LETTERBOX (BIOSKOP) --- */
+            .hd-cinematic-bar {
+                position: fixed;
+                left: 0;
+                width: 100vw;
+                height: 0;
+                background: #000000;
+                z-index: 800;
+                transition: height 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+                pointer-events: none;
+                box-sizing: border-box;
+            }
+
+            .hd-cinematic-top {
+                top: 0;
+                box-shadow: 0 4px 25px rgba(0, 0, 0, 0.95);
+            }
+
+            .hd-cinematic-bottom {
+                bottom: 0;
+                box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.95);
+            }
+
+            /* Active Cinematic Letterbox State */
+            body.hd-cinematic-active .hd-cinematic-top,
+            body.hd-cinematic-active .hd-cinematic-bottom {
+                height: clamp(45px, 7.5vh, 65px);
+            }
         `;
         document.head.appendChild(style);
     }
@@ -913,6 +958,22 @@ export class HDHudManager {
         if (this.topRightContainer) this.topRightContainer.style.display = 'none';
         if (this.leftBadge) this.leftBadge.style.display = 'none';
         if (this.rightBadge) this.rightBadge.style.display = 'none';
+    }
+
+    static startCinematic() {
+        this.init();
+        this.hideTopHUD();
+        if (typeof document !== 'undefined') {
+            document.body.classList.add('hd-cinematic-active');
+        }
+    }
+
+    static stopCinematic() {
+        this.init();
+        this.showTopHUD();
+        if (typeof document !== 'undefined') {
+            document.body.classList.remove('hd-cinematic-active');
+        }
     }
 
     static formatHTML(rawText) {

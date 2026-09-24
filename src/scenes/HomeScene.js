@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
 import { getInventory, getQuestState, setQuestState } from '../utils/gameState.js';
 import { GameAudio } from '../audio/GameAudio.js';
+import { HDHudManager } from '../utils/HDHudManager.js';
 
 export class HomeScene extends BaseScene {
     constructor() {
@@ -225,6 +226,7 @@ export class HomeScene extends BaseScene {
     triggerIntroCutscene() {
         this.isIntroCutsceneRunning = true;
         this.isTalking = true;
+        HDHudManager.startCinematic();
 
         if (this.promptText) this.promptText.setVisible(false);
 
@@ -270,6 +272,8 @@ export class HomeScene extends BaseScene {
                 { speaker: 'Nenek Linda', text: 'Terima kasih, Aksel. Hati-hati di jalan ya, jangan pulang terlalu larut. Rachael sedang istirahat di kursi goyang.' },
                 { speaker: 'Rachael', text: '(Tersenyum lembut dari kursi goyang) Hati-hati di jalan ya, Kak Aksel... jangan sampai kedinginan.' }
             ], () => {
+                HDHudManager.stopCinematic();
+
                 // Return camera to normal player follow
                 const defaultZoom = this.currentZoom || 0.85;
                 this.cameras.main.zoomTo(defaultZoom, 800, 'Sine.easeInOut');
@@ -297,6 +301,7 @@ export class HomeScene extends BaseScene {
         if (this.isEndingTriggered) return;
         this.isEndingTriggered = true;
         this.isTalking = true;
+        HDHudManager.startCinematic();
 
         if (this.promptText) this.promptText.setVisible(false);
         this.nearTarget = null;
@@ -445,6 +450,7 @@ export class HomeScene extends BaseScene {
                 // Fade out to EndingScene (Epilogue & Credits Roll)
                 this.cameras.main.fadeOut(2000, 9, 13, 22);
                 this.time.delayedCall(2200, () => {
+                    HDHudManager.stopCinematic();
                     this.scene.start('EndingScene');
                 });
             });
