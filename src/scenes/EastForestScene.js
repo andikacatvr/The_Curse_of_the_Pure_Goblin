@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { BaseScene } from './BaseScene.js';
-import { getInventory, getQuestState, setQuestState } from '../utils/gameState.js';
+import { getInventory, getQuestState, setQuestState, isMobileDevice } from '../utils/gameState.js';
 import { GameAudio } from '../audio/GameAudio.js';
 import { HDNoticeManager } from '../utils/HDNoticeManager.js';
 
@@ -67,6 +67,12 @@ export class EastForestScene extends BaseScene {
         this.input.keyboard.on('keydown-F', () => this.attackMonster());
         this.input.keyboard.on('keydown-I', () => { if (!this.isTalking) this.toggleInventoryModal(); });
         this.input.keyboard.on('keydown-Q', () => { if (!this.isTalking) this.toggleQuestModal(); });
+
+        this.events.once('shutdown', () => {
+            if (isMobileDevice()) {
+                this.hideMobileCombatButton();
+            }
+        });
 
         this.createDialogueUI();
         this.createVisualInventoryUI();
@@ -148,15 +154,19 @@ export class EastForestScene extends BaseScene {
             this.saffronFlower.aura = aura;
         }
 
-        // 2. Guard Monster (Forest Shadow Beast at x: 520, y: 385)
+        // 2. Guard Monster (Forest Shadow Beast at x: 520, y: 365)
         if (!this.isMonsterDefeated) {
             this.monsterHP = 3;
-            this.monster = this.physics.add.sprite(520, 385, 'monster_shadow').setDepth(5).setScale(0.24);
+            this.monster = this.physics.add.sprite(520, 365, 'monster_shadow').setDepth(5);
+            this.monster.setScale(0.18); // Ukuran proporsional mengintimidasi
             this.monster.setFlipX(true);
-            this.physics.add.collider(this.monster, this.platforms);
+            this.monster.body.setAllowGravity(false); // Menonaktifkan gravitasi agar monster bayangan tidak jatuh menembus tanah!
+            this.monster.body.setImmovable(true);
+            this.monster.body.setSize(380, 420);
+            this.monster.body.setOffset(60, 60);
 
-            // Menacing dark purple glow
-            const mGlow = this.add.circle(520, 385, 28, 0x581c87, 0.4).setDepth(4);
+            // Menacing dark purple glow aura
+            const mGlow = this.add.circle(520, 365, 30, 0x581c87, 0.45).setDepth(4);
             this.tweens.add({
                 targets: mGlow,
                 scale: { from: 0.9, to: 1.25 },
@@ -168,13 +178,37 @@ export class EastForestScene extends BaseScene {
             });
             this.monster.glow = mGlow;
 
-            this.hpText = this.add.text(520, 335, '❤️ MONSTER HUTAN HP: 3/3', {
+            // Animasi melayang / bernapas monster bayangan
+            this.tweens.add({
+                targets: [this.monster, mGlow],
+                y: '-=10',
+                duration: 1100,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+
+            this.hpText = this.add.text(520, 305, '❤️ MONSTER HUTAN HP: 3/3', {
                 fontSize: '11px',
                 fontStyle: 'bold',
                 fill: '#ef4444',
                 backgroundColor: '#000000bb',
                 padding: { x: 5, y: 2 }
             }).setOrigin(0.5).setDepth(20);
+
+            // Jadikan monster interaktif (bisa diklik/tap di PC maupun mobile)
+            this.monster.setInteractive({ useHandCursor: true });
+            this.monster.on('pointerdown', () => this.attackMonster());
+
+            // Tampilkan tombol serangan mobile jika perangkat sentuh
+            if (isMobileDevice()) {
+                this.showMobileCombatButton(() => this.attackMonster());
+            }
+
+            const hintText = isMobileDevice()
+                ? 'Dekati & ketuk monster untuk menebasnya!'
+                : 'Tekan [F] / [SPACE] di dekat monster untuk menyerang!';
+            HDNoticeManager.showBattleHint(hintText, '⚔️ PERTEMPURAN MONSTER');
         }
     }
 
@@ -182,7 +216,7 @@ export class EastForestScene extends BaseScene {
         if (this.isMonsterDefeated || !this.monster || !this.monster.active || this.isTalking) return;
 
         const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.monster.x, this.monster.y);
-        if (dist < 85) {
+        if (dist < 90) {
             this.monsterHP--;
 
             // Slash FX
@@ -199,11 +233,14 @@ export class EastForestScene extends BaseScene {
                 this.registry.set('saffronMonsterDefeated', true);
                 if (this.hpText) this.hpText.destroy();
                 if (this.monster.glow) this.monster.glow.destroy();
+                if (isMobileDevice()) {
+                    this.hideMobileCombatButton();
+                }
 
                 this.tweens.add({
                     targets: this.monster,
                     alpha: 0,
-                    y: this.monster.y + 20,
+                    scale: 0,
                     duration: 600,
                     onComplete: () => {
                         this.monster.destroy();
