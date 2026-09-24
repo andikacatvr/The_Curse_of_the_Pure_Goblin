@@ -148,17 +148,17 @@ export class HomeScene extends BaseScene {
             this.registry.set('prologueIntroPlayed', true);
             this.time.delayedCall(450, () => {
                 this.startDialogue([
-                    { speaker: 'Aksel', text: 'Nenek, Rachael, aku sudah pulang! 4 ikat kayu bakar dari tepi danau dan kaki gunung sudah kutaruh di teras...' },
+                    { speaker: 'Aksel', text: 'Nenek Linda, Rachael, aku sudah pulang! 4 ikat kayu bakar dari tepi danau dan kaki gunung sudah kutaruh di teras...' },
                     { speaker: 'Rachael', text: '(Duduk lemas di kursi goyang, tiba-tiba terbatuk hebat) Uhukk... uhukk!! Khh-...' },
                     { speaker: 'Narator', text: '(Setitik darah segar menetes di telapak tangan Rachael... Wajahnya semakin pucat pasi, nafasnya tercekat lemas.)' },
                     { speaker: 'Aksel', text: '(Panik berlari mendekat) Rachael! Bertahanlah! Rachael, kau baik-baik saja?!' },
-                    { speaker: 'Nenek', text: '(Tergopoh-gopoh mendekat cemas) Astaga, Rachael cucuku! Rachael... apa yang terasa sakit, Nak?!' },
-                    { speaker: 'Rachael', text: '(Suara parau dan sangat pelan) Kak Aksel... Nenek... tubuhku rasanya semakin lemas... dadaku sesak sekali...' },
+                    { speaker: 'Nenek Linda', text: '(Tergopoh-gopoh mendekat cemas) Astaga, Rachael cucuku! Rachael... apa yang terasa sakit, Nak?!' },
+                    { speaker: 'Rachael', text: '(Suara parau dan sangat pelan) Kak Aksel... Nenek Linda... tubuhku rasanya semakin lemas... dadaku sesak sekali...' },
                     { speaker: 'Aksel', text: 'Rachael, aku akan pergi ke kota untuk mencarikanmu obat!' },
-                    { speaker: 'Nenek', text: 'Aksel.. jangan pergi, aku tahu niatmu ingin menyelamatkan adikmu ta tapi... jarak ke kota sangat jauh, kau akan kehabisan uang sebelum sampai sana.' },
-                    { speaker: 'Aksel', text: 'Nenek.. aku tahu kau mengkhawatirkanku tapi aku janji aku akan segera kembali. Tolong jaga Rachael ya.' },
-                    { speaker: 'Nenek', text: 'Baiklah, nenek akan menyiapkan bekal untukmu.' },
-                    { speaker: 'Aksel', text: 'Terima kasih nenek!' }
+                    { speaker: 'Nenek Linda', text: 'Aksel.. jangan pergi, aku tahu niatmu ingin menyelamatkan adikmu ta tapi... jarak ke kota sangat jauh, kau akan kehabisan uang sebelum sampai sana.' },
+                    { speaker: 'Aksel', text: 'Nenek Linda.. aku tahu kau mengkhawatirkanku tapi aku janji aku akan segera kembali. Tolong jaga Rachael ya.' },
+                    { speaker: 'Nenek Linda', text: 'Baiklah, nenek akan menyiapkan bekal untukmu.' },
+                    { speaker: 'Aksel', text: 'Terima kasih Nenek Linda!' }
                 ], () => {
                     // Nenek memberikan item bekal makanan ke Aksel
                     const curInv = getInventory(this.registry);
@@ -270,10 +270,10 @@ export class HomeScene extends BaseScene {
         // 4. Start dialogue after camera glide and auto-walk
         this.time.delayedCall(2500, () => {
             this.startDialogue([
-                { speaker: 'Nenek', text: 'Aksel, hari sudah mulai sore dan udara malam nanti akan sangat dingin...' },
-                { speaker: 'Nenek', text: 'Maukah kau tolong carikan 4 ikat kayu bakar kering di tepi Hutan Danau dan Ujung Danau Kaki Gunung sebelah barat [◀]? Perapian kita sudah hampir habis.' },
-                { speaker: 'Aksel', text: 'Tentu Nenek! Aku akan segera pergi ke Hutan Danau dan Ujung Danau Kaki Gunung di sebelah barat dan segera kembali membawa kayu bakar.' },
-                { speaker: 'Nenek', text: 'Terima kasih, Aksel. Hati-hati di jalan ya, jangan pulang terlalu larut. Rachael sedang istirahat di kursi goyang.' },
+                { speaker: 'Nenek Linda', text: 'Aksel, hari sudah mulai sore dan udara malam nanti akan sangat dingin...' },
+                { speaker: 'Nenek Linda', text: 'Maukah kau tolong carikan 4 ikat kayu bakar kering di tepi Hutan Danau dan Ujung Danau Kaki Gunung sebelah barat [◀]? Perapian kita sudah hampir habis.' },
+                { speaker: 'Aksel', text: 'Tentu Nenek Linda! Aku akan segera pergi ke Hutan Danau dan Ujung Danau Kaki Gunung di sebelah barat dan segera kembali membawa kayu bakar.' },
+                { speaker: 'Nenek Linda', text: 'Terima kasih, Aksel. Hati-hati di jalan ya, jangan pulang terlalu larut. Rachael sedang istirahat di kursi goyang.' },
                 { speaker: 'Rachael', text: '(Tersenyum lembut dari kursi goyang) Hati-hati di jalan ya, Kak Aksel... jangan sampai kedinginan.' }
             ], () => {
                 // Retract letterbox bars
@@ -449,9 +449,9 @@ export class HomeScene extends BaseScene {
                 { speaker: 'Rachael', text: '(Meminum ramuan magis perlahan) ... *Glek... Glek...*' },
                 { speaker: 'Rachael', portrait: 'portrait_rachael_sembuh', text: '✨ (Cahaya keemasan menyelimuti tubuhnya, rona merah segar kembali ke pipinya) K-kehangatan ini... Rasa lemas dan nyeri di dadaku... semuanya hilang, Abang?!' },
                 { speaker: 'Rachael', portrait: 'portrait_rachael_sembuh', text: '(Perlahan bangkit berdiri dari kursi goyang, menangis bahagia sambil memeluk Aksel) Abang! Kakiku tidak gemetar lagi! Aku bisa berdiri tegak! Aku sembuh, Abang... Aku sembuh total!!' },
-                { speaker: 'Nenek', text: '(Menangis haru memeluk Aksel dan Rachael) Syukurlah ya Tuhan... Rachael cucuku sembuh! Aksel, kau cucu yang paling berani dan berbakti... Nenek bangga sekali padamu, Nak!' },
+                { speaker: 'Nenek Linda', text: '(Menangis haru memeluk Aksel dan Rachael) Syukurlah ya Tuhan... Rachael cucuku sembuh! Aksel, kau cucu yang paling berani dan berbakti... Nenek bangga sekali padamu, Nak!' },
                 { speaker: 'Aksel (Dalam Hati)', text: '(Mengepalkan tangan dengan air mata kelegaan) Semua penderitaan menjadi Goblin, cemoohan, dan kerja keras tanpa henti itu... semuanya terbayar lunas. Rachael... adikku terselamatkan.' },
-                { speaker: 'Aksel', text: 'Mulai hari ini, kita akan hidup bahagia bersama, Rachael, Nenek. Dan abang berjanji, abang akan selalu menjaga keluarga kita dengan jalan yang jujur dan benar!' }
+                { speaker: 'Aksel', text: 'Mulai hari ini, kita akan hidup bahagia bersama, Rachael, Nenek Linda. Dan abang berjanji, abang akan selalu menjaga keluarga kita dengan jalan yang jujur dan benar!' }
             ], () => {
                 this.registry.set('rachaelHealed', true);
                 this.showChapterBanner('🎉 TAMAT: THE GOOD GOBLIN 🎉', 'Kutukan Terlepas - Rachael Sembuh Total!');
@@ -858,17 +858,17 @@ export class HomeScene extends BaseScene {
             let grandmaDialogue;
             if (!hasWood) {
                 grandmaDialogue = [
-                    { speaker: 'Nenek', text: 'Aksel, pergilah ke arah barat [◀] melintasi Hutan Danau & Ujung Danau Kaki Gunung untuk mencari 4 ikat kayu bakar ya, Nak.' }
+                    { speaker: 'Nenek Linda', text: 'Aksel, pergilah ke arah barat [◀] melintasi Hutan Danau & Ujung Danau Kaki Gunung untuk mencari 4 ikat kayu bakar ya, Nak.' }
                 ];
             } else {
                 const hasDagger = inv.some(i => i.id === 'Pisau Belati');
                 grandmaDialogue = hasDagger ? [
-                    { speaker: 'Nenek', text: 'Hati-hati di jalan ya cucuku tersayang... Bawakan obat penawar untuk adikmu dan kembalilah dengan selamat. Doa Nenek selalu menyertaimu.' }
+                    { speaker: 'Nenek Linda', text: 'Hati-hati di jalan ya cucuku tersayang... Bawakan obat penawar untuk adikmu dan kembalilah dengan selamat. Doa Nenek selalu menyertaimu.' }
                 ] : [
-                    { speaker: 'Nenek', text: 'Aksel, jangan lupa bawa sebilah [Pisau Belati] di atas meja teras untuk melindungimu di perjalanan.' }
+                    { speaker: 'Nenek Linda', text: 'Aksel, jangan lupa bawa sebilah [Pisau Belati] di atas meja teras untuk melindungimu di perjalanan.' }
                 ];
             }
-            found = { type: 'npc', dialogue: grandmaDialogue, x: this.grandma.x, y: this.grandma.y - 35, prompt: 'Tekan [E] Bicara dengan Nenek' };
+            found = { type: 'npc', dialogue: grandmaDialogue, x: this.grandma.x, y: this.grandma.y - 35, prompt: 'Tekan [E] Bicara dengan Nenek Linda' };
         } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.rachael.x, this.rachael.y) < 65) {
             if (this.registry.get('rachaelHealed')) {
                 const healedDialogue = [

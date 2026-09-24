@@ -82,7 +82,7 @@ export class IntroScene extends BaseScene {
                 badgeColor: '#f59e0b',
                 icon: '🏡',
                 title: 'Pondok Sunyi di Kaki Gunung',
-                text: 'Jauh di pedalaman lereng pegunungan yang sunyi dan damai, hiduplah seorang pemuda berhati tulus bernama <strong style="color:#fef08a;">Aksel</strong>. Bersama Nenek Mary, ia mengurus sebuah pondok kecil dan merawat adik tercintanya, <strong style="color:#f472b6;">Rachael</strong>.'
+                text: 'Jauh di pedalaman lereng pegunungan yang sunyi dan damai, hiduplah seorang pemuda berhati tulus bernama <strong style="color:#fef08a;">Aksel</strong>. Bersama <strong style="color:#fbbf24;">Nenek Linda</strong>, ia mengurus sebuah pondok kecil dan merawat adik tercintanya, <strong style="color:#f472b6;">Rachael</strong>.'
             },
             {
                 badge: 'KASIH SEORANG KAKAK',
@@ -96,7 +96,7 @@ export class IntroScene extends BaseScene {
                 badgeColor: '#38bdf8',
                 icon: '❄️',
                 title: 'Udara Dingin Menjelang Malam',
-                text: 'Sore ini, hawa dingin pegunungan menusuk tulang lebih tajam dari biasanya, sementara perapian di rumah hampir kehabisan kayu bakar. Dari teras depan, <strong style="color:#fbbf24;">Nenek Mary</strong> memanggil Aksel...'
+                text: 'Sore ini, hawa dingin pegunungan menusuk tulang lebih tajam dari biasanya, sementara perapian di rumah hampir kehabisan kayu bakar. Dari teras depan, <strong style="color:#fbbf24;">Nenek Linda</strong> memanggil Aksel...'
             }
         ];
 

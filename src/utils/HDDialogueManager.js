@@ -16,6 +16,9 @@ export class HDDialogueManager {
         this._portraitMap = {
             'Rachael': '/assets/karakter_rachael.png',
             'Nenek': '/assets/karakter_nenek.png',
+            'Nenek Linda': '/assets/karakter_nenek.png',
+            'Linda': '/assets/karakter_nenek.png',
+            'Grandma Linda': '/assets/karakter_nenek.png',
             'Aksel': '/assets/karakter_aksel.png',
             'Aksel (Goblin)': '/assets/karakter_aksel_goblin.png',
             'Aksel (Dalam Hati)': '/assets/karakter_aksel.png',
@@ -43,6 +46,7 @@ export class HDDialogueManager {
         this._textureKeyMap = {
             'portrait_rachael': '/assets/karakter_rachael.png',
             'portrait_nenek': '/assets/karakter_nenek.png',
+            'portrait_linda': '/assets/karakter_nenek.png',
             'portrait_aksel': '/assets/karakter_aksel.png',
             'portrait_aksel_goblin': '/assets/karakter_aksel_goblin.png',
             'portrait_penyihir': '/assets/karakter_penyihir.png',
