@@ -228,13 +228,7 @@ export class HomeScene extends BaseScene {
 
         if (this.promptText) this.promptText.setVisible(false);
 
-        // 1. Cinematic Letterbox Bars
-        const topBar = this.add.rectangle(0, -60, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
-        const bottomBar = this.add.rectangle(0, 450, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
-        this.tweens.add({ targets: topBar, y: 0, duration: 900, ease: 'Cubic.easeOut' });
-        this.tweens.add({ targets: bottomBar, y: 395, duration: 900, ease: 'Cubic.easeOut' });
-
-        // 2. Camera sweeps from high sky down to terrace
+        // 1. Camera sweeps from high sky down to terrace
         this.cameras.main.stopFollow();
         this.cameras.main.centerOn(600, 180);
         this.cameras.main.setZoom(0.95);
@@ -276,22 +270,6 @@ export class HomeScene extends BaseScene {
                 { speaker: 'Nenek Linda', text: 'Terima kasih, Aksel. Hati-hati di jalan ya, jangan pulang terlalu larut. Rachael sedang istirahat di kursi goyang.' },
                 { speaker: 'Rachael', text: '(Tersenyum lembut dari kursi goyang) Hati-hati di jalan ya, Kak Aksel... jangan sampai kedinginan.' }
             ], () => {
-                // Retract letterbox bars
-                this.tweens.add({
-                    targets: topBar,
-                    y: -60,
-                    duration: 600,
-                    ease: 'Cubic.easeIn',
-                    onComplete: () => topBar.destroy()
-                });
-                this.tweens.add({
-                    targets: bottomBar,
-                    y: 450,
-                    duration: 600,
-                    ease: 'Cubic.easeIn',
-                    onComplete: () => bottomBar.destroy()
-                });
-
                 // Return camera to normal player follow
                 const defaultZoom = this.currentZoom || 0.85;
                 this.cameras.main.zoomTo(defaultZoom, 800, 'Sine.easeInOut');
@@ -323,14 +301,7 @@ export class HomeScene extends BaseScene {
         if (this.promptText) this.promptText.setVisible(false);
         this.nearTarget = null;
 
-        // 1. Cinematic Letterbox Bars
-        const topBar = this.add.rectangle(0, -60, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
-        const bottomBar = this.add.rectangle(0, 450, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
-        this.tweens.add({ targets: topBar, y: 0, duration: 800, ease: 'Cubic.easeOut' });
-        this.tweens.add({ targets: bottomBar, y: 395, duration: 800, ease: 'Cubic.easeOut' });
-        this.letterboxBars = [topBar, bottomBar];
-
-        // 2. Camera Director: Stop follow, smooth pan & zoom to the family
+        // 1. Camera Director: Stop follow, smooth pan & zoom to the family
         this.cameras.main.stopFollow();
         this.cameras.main.pan(330, 370, 1500, 'Sine.easeInOut');
         this.cameras.main.zoomTo(1.35, 1500, 'Sine.easeInOut');
@@ -474,10 +445,6 @@ export class HomeScene extends BaseScene {
                 // Fade out to EndingScene (Epilogue & Credits Roll)
                 this.cameras.main.fadeOut(2000, 9, 13, 22);
                 this.time.delayedCall(2200, () => {
-                    if (this.letterboxBars) {
-                        this.letterboxBars.forEach(b => b.destroy());
-                        this.letterboxBars = null;
-                    }
                     this.scene.start('EndingScene');
                 });
             });
