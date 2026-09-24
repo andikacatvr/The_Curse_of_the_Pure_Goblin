@@ -18,6 +18,7 @@ import { BakeryMillScene } from './scenes/BakeryMillScene.js';
 import { VillageResidentialScene } from './scenes/VillageResidentialScene.js';
 import { SaffronFarmScene } from './scenes/SaffronFarmScene.js';
 import { EastForestScene } from './scenes/EastForestScene.js';
+import { EndingScene } from './scenes/EndingScene.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -48,7 +49,7 @@ const config = {
             debug: false
         }
     },
-    scene: [BootScene, TitleScene, HomeScene, LakeForestScene, MountainFootLakeScene, ForestTrailScene, WaterfallGorgeScene, WitchYardScene, WitchCottageScene, GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, BakeryMillScene, VillageResidentialScene, SaffronFarmScene, EastForestScene]
+    scene: [BootScene, TitleScene, HomeScene, LakeForestScene, MountainFootLakeScene, ForestTrailScene, WaterfallGorgeScene, WitchYardScene, WitchCottageScene, GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, BakeryMillScene, VillageResidentialScene, SaffronFarmScene, EastForestScene, EndingScene]
 };
 
 // Ensure Google Fonts (Fredoka & Pirata One) are fully loaded before rendering

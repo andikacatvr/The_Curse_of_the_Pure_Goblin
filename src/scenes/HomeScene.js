@@ -43,6 +43,10 @@ export class HomeScene extends BaseScene {
         if (hasCure && data && data.ending === true) {
             startX = 320;
         }
+        if (data && data.endingDone === true) {
+            this.registry.set('rachaelHealed', true);
+            startX = 260;
+        }
 
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
@@ -51,11 +55,15 @@ export class HomeScene extends BaseScene {
         this.cameras.main._isFollowing = true;
 
         // Rachael di Kursi Goyang (Teras Depan Rumah)
-        this.rachael = this.physics.add.staticSprite(320, 418, 'npc_rachael').setDepth(5).setScale(0.28);
+        const isRachaelHealed = !!this.registry.get('rachaelHealed');
+        const rachaelY = isRachaelHealed ? 406 : 418;
+        this.rachael = this.physics.add.staticSprite(320, rachaelY, 'npc_rachael').setDepth(5).setScale(0.28);
         this.rachael.setOrigin(0.5, 1);
         this.rachael.refreshBody();
-        if (this.anims.exists('rachael_idle')) {
+        if (!isRachaelHealed && this.anims.exists('rachael_idle')) {
             this.rachael.anims.play('rachael_idle', true);
+        } else if (isRachaelHealed) {
+            this.rachael.setFrame(0);
         }
         this.rachael.type = 'npc';
         this.rachael.dialogue = [
@@ -226,26 +234,133 @@ export class HomeScene extends BaseScene {
     triggerEndingCutscene() {
         if (this.isEndingTriggered) return;
         this.isEndingTriggered = true;
+        this.isTalking = true;
 
         if (this.promptText) this.promptText.setVisible(false);
         this.nearTarget = null;
 
-        this.cameras.main.setBackgroundColor('#0f172a');
+        // 1. Cinematic Letterbox Bars
+        const topBar = this.add.rectangle(0, -60, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
+        const bottomBar = this.add.rectangle(0, 450, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
+        this.tweens.add({ targets: topBar, y: 0, duration: 800, ease: 'Cubic.easeOut' });
+        this.tweens.add({ targets: bottomBar, y: 395, duration: 800, ease: 'Cubic.easeOut' });
+        this.letterboxBars = [topBar, bottomBar];
 
+        // 2. Camera Director: Stop follow, smooth pan & zoom to the family
+        this.cameras.main.stopFollow();
+        this.cameras.main.pan(330, 370, 1500, 'Sine.easeInOut');
+        this.cameras.main.zoomTo(1.35, 1500, 'Sine.easeInOut');
+
+        // 3. Player auto-walks to front of Rachael
         if (this.player) {
             this.player.setVelocity(0, 0);
-            this.player.setX(160);
-            this.player.setY(380);
             this.player.setTexture('player_human');
+            this.tweens.add({
+                targets: this.player,
+                x: 275,
+                duration: 1200,
+                ease: 'Power1',
+                onComplete: () => {
+                    if (this.player) this.player.setFlipX(false);
+                }
+            });
         }
 
-        this.time.delayedCall(500, () => {
+        // 4. Hook for step-by-step cinematic events during dialogue
+        let floatingVial = null;
+
+        this.onDialogueLine = (index, currentData) => {
+            // Line 4: Aksel reveals the glowing Ramuan Kesembuhan Asli
+            if (index === 4 && !floatingVial) {
+                floatingVial = this.add.container(298, 370).setDepth(10);
+                const bottleGlow = this.add.circle(0, 0, 16, 0xfde047, 0.6);
+                const bottleG = this.add.graphics();
+                bottleG.fillStyle(0xfbbf24, 0.95);
+                bottleG.fillRoundedRect(-6, -10, 12, 18, 3);
+                bottleG.fillStyle(0x78350f, 1);
+                bottleG.fillRect(-3, -14, 6, 4);
+                floatingVial.add([bottleGlow, bottleG]);
+
+                this.tweens.add({
+                    targets: floatingVial,
+                    y: floatingVial.y - 8,
+                    duration: 900,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut'
+                });
+            }
+
+            // Line 6: Rachael drinks the potion
+            if (index === 6 && floatingVial) {
+                GameAudio.playCollect();
+                this.tweens.add({
+                    targets: floatingVial,
+                    alpha: 0,
+                    scale: 0,
+                    duration: 500,
+                    onComplete: () => {
+                        floatingVial.destroy();
+                        floatingVial = null;
+                    }
+                });
+                this.createHealingAuraBurst(320, 380);
+            }
+
+            // Line 7: Miracle healing golden warmth
+            if (index === 7) {
+                this.cameras.main.flash(1100, 255, 255, 210);
+                this.createHealingAuraBurst(320, 380);
+
+                if (this.rachael) {
+                    if (this.anims.exists('rachael_idle')) {
+                        this.rachael.anims.stop();
+                    }
+                    this.rachael.setFrame(0);
+                    // Rachael rises from the rocking chair
+                    this.tweens.add({
+                        targets: this.rachael,
+                        y: 406,
+                        scaleX: 0.30,
+                        scaleY: 0.30,
+                        duration: 800,
+                        ease: 'Back.easeOut'
+                    });
+                }
+            }
+
+            // Line 8: Rachael embraces Aksel
+            if (index === 8) {
+                this.spawnHugHearts(295, 365);
+                if (this.rachael) {
+                    this.tweens.add({
+                        targets: this.rachael,
+                        x: 295,
+                        duration: 700,
+                        ease: 'Sine.easeOut'
+                    });
+                }
+            }
+
+            // Line 9: Nenek joins the warm hug
+            if (index === 9 && this.grandma) {
+                this.tweens.add({
+                    targets: this.grandma,
+                    x: 345,
+                    duration: 800,
+                    ease: 'Sine.easeOut'
+                });
+            }
+        };
+
+        // 5. Start emotional cutscene dialogue
+        this.time.delayedCall(700, () => {
             this.startDialogue([
                 { speaker: 'Rachael', text: '(Air mata menetes, suara bergetar lemah) Abang... kau sudah kembali... Aku menunggumu, Abang... Aku takut kau tidak kembali...' },
                 { speaker: 'Aksel', text: '(Berlari mendekat dan memeluk Rachael erat) Rachael... Maafkan aku membuatmu menunggu begitu lama. Aku sudah berjanji, kan? Aku tidak akan pernah meninggalkanmu!' },
                 { speaker: 'Rachael', text: '(Menatap wajah abangnya yang tampak begitu lelah dan penuh luka kecil) Nafasmu terengah-engah... pakaianmu kotor dan robek... Abang, apa yang terjadi di luar sana? Kau pergi ke mana saja demi aku...?' },
                 { speaker: 'Aksel', text: '(Tersenyum hangat menahan haru, menyembunyikan semua penderitaan kutukannya) Tidak ada apa-apa, Dik. Hanya sedikit perjalanan panjang di desa... Orang-orang baik di desa membantuku mendapatkan obat ini.' },
-                { speaker: 'Aksel', text: 'Lihat, ini [Ramuan Kesembuhan Asli] untukmu. Minumlah sekarang, Rachael... Semua rasa sakit ini akan segera berakhir.' },
+                { speaker: 'Aksel', text: 'Lihat, ini [Ramuan Kesembuhan Asli] dari Madam Joanne untukmu. Minumlah sekarang, Rachael... Semua rasa sakit ini akan segera berakhir.' },
                 { speaker: 'Rachael', text: '(Menerima botol ramuan magis yang berkilau keemasan) Botol ini... terasa sangat hangat di tanganku...' },
                 { speaker: 'Rachael', text: '(Meminum ramuan magis perlahan) ... *Glek... Glek...*' },
                 { speaker: 'Rachael', portrait: 'portrait_rachael_sembuh', text: '✨ (Cahaya keemasan menyelimuti tubuhnya, rona merah segar kembali ke pipinya) K-kehangatan ini... Rasa lemas dan nyeri di dadaku... semuanya hilang, Abang?!' },
@@ -256,6 +371,7 @@ export class HomeScene extends BaseScene {
             ], () => {
                 this.registry.set('rachaelHealed', true);
                 this.showChapterBanner('🎉 TAMAT: THE GOOD GOBLIN 🎉', 'Kutukan Terlepas - Rachael Sembuh Total!');
+
                 setQuestState(this.registry, {
                     chapter: 'EPILOG (TAMAT)',
                     title: '🎉 GAME TAMAT! SELAMAT!',
@@ -270,8 +386,75 @@ export class HomeScene extends BaseScene {
                     ]
                 });
                 this.updateQuestHUD();
+
+                // Fade out to EndingScene (Epilogue & Credits Roll)
+                this.cameras.main.fadeOut(2000, 9, 13, 22);
+                this.time.delayedCall(2200, () => {
+                    if (this.letterboxBars) {
+                        this.letterboxBars.forEach(b => b.destroy());
+                        this.letterboxBars = null;
+                    }
+                    this.scene.start('EndingScene');
+                });
             });
         });
+    }
+
+    createHealingAuraBurst(x, y) {
+        for (let r = 0; r < 3; r++) {
+            const ring = this.add.circle(x, y, 12, 0xfde047, 0.85).setDepth(8);
+            this.tweens.add({
+                targets: ring,
+                scale: 4.8 + r * 1.6,
+                alpha: 0,
+                duration: 1100 + r * 280,
+                delay: r * 200,
+                ease: 'Cubic.easeOut',
+                onComplete: () => ring.destroy()
+            });
+        }
+
+        const colors = [0xfef08a, 0xfbbf24, 0xf59e0b, 0x34d399, 0xffffff];
+        for (let p = 0; p < 36; p++) {
+            const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            const speed = Phaser.Math.Between(45, 140);
+            const col = Phaser.Utils.Array.GetRandom(colors);
+            const sparkle = this.add.circle(x, y, Phaser.Math.Between(2, 5), col, 1).setDepth(9);
+
+            this.tweens.add({
+                targets: sparkle,
+                x: x + Math.cos(angle) * speed,
+                y: y + Math.sin(angle) * speed - 25,
+                alpha: 0,
+                scale: 0.2,
+                duration: Phaser.Math.Between(900, 1600),
+                ease: 'Power2',
+                onComplete: () => sparkle.destroy()
+            });
+        }
+    }
+
+    spawnHugHearts(x, y) {
+        for (let h = 0; h < 9; h++) {
+            const heart = this.add.text(
+                x + Phaser.Math.Between(-25, 25),
+                y + Phaser.Math.Between(-10, 10),
+                '❤️',
+                { fontSize: `${Phaser.Math.Between(15, 24)}px` }
+            ).setOrigin(0.5).setDepth(12);
+
+            this.tweens.add({
+                targets: heart,
+                y: heart.y - Phaser.Math.Between(40, 75),
+                x: heart.x + Phaser.Math.Between(-20, 20),
+                alpha: 0,
+                scale: { from: 0.6, to: 1.35 },
+                duration: Phaser.Math.Between(1200, 1800),
+                delay: h * 140,
+                ease: 'Sine.easeOut',
+                onComplete: () => heart.destroy()
+            });
+        }
     }
 
     handleActionKey() {

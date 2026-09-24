@@ -117,6 +117,33 @@ function setPlayerHP(registry, hp) {
     return clamped;
 }
 
+function resetGameState(registry) {
+    if (!registry) return;
+    registry.set('inventory', []);
+    registry.set('questState', {
+        chapter: 'PROLOG',
+        title: 'Mencari Kayu Bakar di Hutan Danau',
+        objective: 'Jalan ke arah barat [◀] melintasi Hutan Danau hingga Ujung Danau Kaki Gunung untuk mencari 4 kayu bakar suruhan Nenek.',
+        questNumber: 0,
+        completedQuests: []
+    });
+    registry.set('collectedFirewoodIds', []);
+    registry.set('lakeFirewoodCount', 0);
+    registry.set('hasCollectedFirewood', false);
+    registry.set('playerHP', MAX_PLAYER_HP);
+    registry.set('hasSaffron', false);
+    registry.set('hasBlackPepper', false);
+    registry.set('hasWhiteFlour', false);
+    registry.set('hasBread', false);
+    registry.set('deliveredBreadWarga1', false);
+    registry.set('deliveredBreadWarga2', false);
+    registry.set('hasPureHoney', false);
+    registry.set('hasMythicalSeed', false);
+    registry.set('hasMagicBread', false);
+    registry.set('hasCurePotion', false);
+    registry.set('rachael_cured', false);
+}
+
 export {
     FONT_TITLE,
     FONT_BODY,
@@ -131,5 +158,6 @@ export {
     isAllFirewoodCollected,
     MAX_PLAYER_HP,
     getPlayerHP,
-    setPlayerHP
+    setPlayerHP,
+    resetGameState
 };
