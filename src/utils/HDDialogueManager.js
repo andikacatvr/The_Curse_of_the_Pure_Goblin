@@ -218,16 +218,17 @@ export class HDDialogueManager {
                 display: block;
             }
 
-            /* Dim background overlay */
+            /* Dim background overlay with cinematic soft vignette */
             .hd-dialogue-dimmer {
                 position: absolute;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.45);
+                background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0.12) 0%, rgba(3, 7, 18, 0.45) 70%, rgba(2, 6, 23, 0.72) 100%),
+                            linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, transparent 18%, transparent 70%, rgba(0, 0, 0, 0.55) 100%);
                 opacity: 0;
-                transition: opacity 0.25s ease;
+                transition: opacity 0.35s ease;
                 pointer-events: auto;
             }
 

@@ -900,11 +900,19 @@ export class HDHudManager {
         this.init();
         if (this.topLeftContainer) this.topLeftContainer.style.display = 'flex';
         if (this.topRightContainer) this.topRightContainer.style.display = 'flex';
+        if (this.leftBadge && this.leftBadge.classList.contains('visible')) {
+            this.leftBadge.style.display = 'flex';
+        }
+        if (this.rightBadge && this.rightBadge.classList.contains('visible')) {
+            this.rightBadge.style.display = 'flex';
+        }
     }
 
     static hideTopHUD() {
         if (this.topLeftContainer) this.topLeftContainer.style.display = 'none';
         if (this.topRightContainer) this.topRightContainer.style.display = 'none';
+        if (this.leftBadge) this.leftBadge.style.display = 'none';
+        if (this.rightBadge) this.rightBadge.style.display = 'none';
     }
 
     static formatHTML(rawText) {
