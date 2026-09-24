@@ -93,10 +93,6 @@ export class HDHudManager {
                         </div>
                         <span id="hd-hp-num" class="hd-hp-num">3/3</span>
                     </div>
-                    <button id="hd-btn-quest" class="hd-hud-btn hd-btn-quest" title="Buka Catatan Quest & Objektif (Q)">
-                        <span class="hd-btn-icon">📜</span>
-                        <span class="hd-btn-label">Catatan Quest</span>
-                    </button>
                 </div>
                 <!-- ON-SCREEN QUEST OBJECTIVE TRACKER WIDGET -->
                 <div id="hd-quest-tracker" class="hd-quest-tracker" title="Klik untuk membuka detail quest lengkap (Q)">
@@ -186,18 +182,6 @@ export class HDHudManager {
                 GameAudio.playClick();
                 if (this.activeScene && this.activeScene.showToastNotice) {
                     this.activeScene.showToastNotice(`❤️ Kesehatan Aksel: ${this._currentHP}/${this._maxHP} HP`);
-                }
-            });
-        }
-
-        const questBtn = document.getElementById('hd-btn-quest');
-        if (questBtn) {
-            questBtn.addEventListener('pointerenter', () => GameAudio.playHover());
-            questBtn.addEventListener('pointerdown', (e) => {
-                e.stopPropagation();
-                GameAudio.playClick();
-                if (this.activeScene && this.activeScene.toggleQuestModal) {
-                    this.activeScene.toggleQuestModal();
                 }
             });
         }
