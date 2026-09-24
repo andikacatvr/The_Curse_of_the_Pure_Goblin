@@ -81,23 +81,23 @@ export class WaterfallGorgeScene extends BaseScene {
             this.takeDamage(1, knock);
         });
 
-        // Healing Crystal Fruit on Mid Platform (Platform 3 at y = 360)
-        this.fruitGlow = this.add.circle(400, 305, 16, 0x38bdf8, 0.3).setDepth(4);
+        // Healing Crystal Fruit on Mid Platform (Platform 3 top at y = 289)
+        this.fruitGlow = this.add.circle(400, 268, 16, 0x38bdf8, 0.35).setDepth(4);
         this.tweens.add({
             targets: this.fruitGlow,
-            alpha: 0.7,
-            scaleX: 1.3,
-            scaleY: 1.3,
+            alpha: 0.75,
+            scaleX: 1.35,
+            scaleY: 1.35,
             duration: 900,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
 
-        this.crystalFruit = this.physics.add.staticSprite(400, 305, 'crystal_fruit').setDepth(5);
+        this.crystalFruit = this.physics.add.staticSprite(400, 268, 'crystal_fruit').setDepth(5);
         this.tweens.add({
-            targets: this.crystalFruit,
-            y: 297,
+            targets: [this.crystalFruit, this.fruitGlow],
+            y: 260,
             duration: 1100,
             yoyo: true,
             repeat: -1,
@@ -114,12 +114,12 @@ export class WaterfallGorgeScene extends BaseScene {
                 this.healPlayer(1);
 
                 // Spawn floating sparkle text
-                const spark = this.add.text(400, 205, '+1 HP PULIH!', {
+                const spark = this.add.text(400, 240, '+1 HP PULIH!', {
                     fontSize: '12px', fontStyle: 'bold', fill: '#4ade80'
                 }).setOrigin(0.5).setDepth(15);
                 this.tweens.add({
                     targets: spark,
-                    y: 170,
+                    y: 200,
                     alpha: 0,
                     duration: 1200,
                     onComplete: () => spark.destroy()
