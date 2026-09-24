@@ -29,12 +29,21 @@ export class BaseScene extends Phaser.Scene {
         this._lastPinchDist = null;
         this._hdHudShutdownAttached = false;
         this._promptText = null;
+        this._letterboxBars = null;
 
         this.events.once('shutdown', () => {
+            if (this._letterboxBars) {
+                this._letterboxBars.forEach(b => { if (b && b.destroy) b.destroy(); });
+                this._letterboxBars = null;
+            }
             HDPromptManager.hide();
             HDNoticeManager.hide();
         });
         this.events.once('destroy', () => {
+            if (this._letterboxBars) {
+                this._letterboxBars.forEach(b => { if (b && b.destroy) b.destroy(); });
+                this._letterboxBars = null;
+            }
             HDPromptManager.hide();
             HDNoticeManager.hide();
         });
@@ -1641,7 +1650,80 @@ export class BaseScene extends Phaser.Scene {
         this.isTalking = false;
     }
 
-    startDialogue(dialogueList, onCompleteCallback = null) {
+    startCinematicMode({ zoom = 1.22, targetX = null, targetY = null, duration = 800 } = {}) {
+        this.isCinematicActive = true;
+
+        if (this._letterboxBars) {
+            this._letterboxBars.forEach(b => { if (b && b.destroy) b.destroy(); });
+            this._letterboxBars = null;
+        }
+
+        const topBar = this.add.rectangle(0, -60, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
+        const bottomBar = this.add.rectangle(0, 450, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
+        this.tweens.add({ targets: topBar, y: 0, duration: duration, ease: 'Cubic.easeOut' });
+        this.tweens.add({ targets: bottomBar, y: 395, duration: duration, ease: 'Cubic.easeOut' });
+        this._letterboxBars = [topBar, bottomBar];
+
+        const cam = this.cameras.main;
+        if (cam) {
+            cam.stopFollow();
+            const px = targetX !== null ? targetX : (this.player ? this.player.x : 400);
+            const py = targetY !== null ? targetY : (this.player ? this.player.y - 15 : 225);
+            cam.pan(px, py, duration, 'Sine.easeInOut');
+            cam.zoomTo(zoom, duration, 'Sine.easeInOut');
+        }
+
+        if (this.promptText) this.promptText.setVisible(false);
+        this.updateMobileControlsVisibility();
+    }
+
+    stopCinematicMode({ duration = 650 } = {}) {
+        this.isCinematicActive = false;
+
+        if (this._letterboxBars) {
+            const [topBar, bottomBar] = this._letterboxBars;
+            if (topBar) {
+                this.tweens.add({ targets: topBar, y: -60, duration: duration, ease: 'Cubic.easeIn', onComplete: () => topBar.destroy() });
+            }
+            if (bottomBar) {
+                this.tweens.add({ targets: bottomBar, y: 450, duration: duration, ease: 'Cubic.easeIn', onComplete: () => bottomBar.destroy() });
+            }
+            this._letterboxBars = null;
+        }
+
+        const cam = this.cameras.main;
+        if (cam) {
+            const defZoom = this.currentZoom || 0.85;
+            cam.zoomTo(defZoom, duration, 'Sine.easeInOut');
+            if (this.player) {
+                cam.startFollow(this.player, false, 0.045, 0.025);
+                cam.setDeadzone(80, 40);
+                cam._isFollowing = true;
+            }
+        }
+        this.updateMobileControlsVisibility();
+    }
+
+    startCinematicDialogue(dialogueList, onCompleteCallback = null, options = {}) {
+        const zoom = options.zoom !== undefined ? options.zoom : 1.22;
+        const targetX = options.targetX !== undefined ? options.targetX : null;
+        const targetY = options.targetY !== undefined ? options.targetY : null;
+        const duration = options.duration || 800;
+
+        this.startCinematicMode({ zoom, targetX, targetY, duration });
+
+        this.startDialogue(dialogueList, () => {
+            this.stopCinematicMode({ duration: 650 });
+            if (onCompleteCallback) onCompleteCallback();
+        });
+    }
+
+    startDialogue(dialogueList, onCompleteCallback = null, options = null) {
+        if (options && (options.cinematic || options.zoom)) {
+            this.startCinematicDialogue(dialogueList, onCompleteCallback, options);
+            return;
+        }
+
         if (!dialogueList || dialogueList.length === 0) {
             if (onCompleteCallback) onCompleteCallback();
             return;

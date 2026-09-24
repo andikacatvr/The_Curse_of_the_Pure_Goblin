@@ -147,7 +147,7 @@ export class HomeScene extends BaseScene {
             this.registry.set('coughCutscenePlayed', true);
             this.registry.set('prologueIntroPlayed', true);
             this.time.delayedCall(450, () => {
-                this.startDialogue([
+                this.startCinematicDialogue([
                     { speaker: 'Aksel', text: 'Nenek Linda, Rachael, aku sudah pulang! 4 ikat kayu bakar dari tepi danau dan kaki gunung sudah kutaruh di teras...' },
                     { speaker: 'Rachael', text: '(Duduk lemas di kursi goyang, tiba-tiba terbatuk hebat) Uhukk... uhukk!! Khh-...' },
                     { speaker: 'Narator', text: '(Setitik darah segar menetes di telapak tangan Rachael... Wajahnya semakin pucat pasi, nafasnya tercekat lemas.)' },
@@ -589,10 +589,10 @@ export class HomeScene extends BaseScene {
             this.updateQuestHUD();
 
             this.time.delayedCall(400, () => {
-                this.startDialogue([
+                this.startCinematicDialogue([
                     { speaker: 'Aksel (Dalam Hati)', text: 'Bekal dan belati sudah kubawa... Rachael, aku berjanji akan membawamu obat, tunggulah sebentar...' },
-                    { speaker: 'Aksel', text: 'Aku pergi dulu ya Rachael adikku... Bertahanlah!' }
-                ]);
+                    { speaker: 'Aksel', text: 'Aku pergi dulu ya Rachael adikku, Nenek Linda... Bertahanlah!' }
+                ], null, { zoom: 1.25 });
             });
         }
     }

@@ -173,12 +173,12 @@ export class BakeryMillScene extends BaseScene {
                     // Flame & aroma burst in Magic Oven
                     this.spawnOvenBakingFX();
 
-                    this.startDialogue([
+                    this.startCinematicDialogue([
                         { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Tepung Gandum Murni, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Kebun Saffron sudah terkumpul lengkap!' },
                         { speaker: 'Mr. Breado', text: 'Luar biasa! Harumnya semerbak luar biasa! Sekarang aku akan menguleni adonannya dan memanggang Magic Bread di Oven Magis.' },
                         { speaker: 'Mr. Breado', text: 'Sembari menunggu rotinya matang, tolong bantu aku mengantarkan 3 Keranjang Roti Pagi ini ke 3 rumah warga desa di sebelah kanan [➔] ya!' },
                         { speaker: 'Aksel (Goblin)', text: 'Siap Mr. Breado! Keranjang rotinya sudah kubawa, aku akan langsung mengantarkannya ke rumah Pak Thomas, Ibu Sarah, dan Paman Bob!' }
-                    ]);
+                    ], null, { zoom: 1.25, targetX: this.breado.x, targetY: this.breado.y - 25 });
                 } else {
                     this.startDialogue(this.breado.dialogue);
                 }
@@ -343,13 +343,13 @@ export class BakeryMillScene extends BaseScene {
         this.updateQuestHUD();
         this.updateDialogueState();
 
-        this.startDialogue([
+        this.startCinematicDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Semua 3 keranjang roti pagi sudah berhasil kuantarkan ke seluruh rumah warga desa!' },
             { speaker: 'Mr. Breado', text: 'Luar biasa! Terima kasih banyak ya, Goblin kecil yang baik hati! Warga desa sangat terbantu olehmu.' },
             { speaker: 'Mr. Breado', text: 'Sebagai hadiah atas kebaikan dan perjuangan kerasmu, ini aku serahkan [Bahan 3: Magic Bread] yang baru saja matang sempurna di oven!' },
             { speaker: 'Aksel (Goblin)', text: 'HOREEE!! [Bahan 3: Magic Bread] akhirnya kudapatkan! Terima kasih banyak Mr. Breado!' },
             { speaker: 'Aksel (Dalam Hati)', text: '(Ketiga Bahan Magis akhirnya lengkap: Madu Murni, Mythical Seed, dan Magic Bread! Sekarang aku bisa kembali ke Madam Joanne untuk melepaskan kutukan dan menyembuhkan Rachael!)' }
-        ]);
+        ], null, { zoom: 1.25, targetX: this.breado.x, targetY: this.breado.y - 25 });
     }
 
     update() {

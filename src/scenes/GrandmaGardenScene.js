@@ -121,6 +121,7 @@ export class GrandmaGardenScene extends BaseScene {
             this.nextDialogue();
         } else if (this.nearTarget) {
             if (this.nearTarget.type === 'npc') {
+                const isFirst = !this.registry.get('talkedToMary');
                 this.startDialogue(this.nearTarget.dialogue, () => {
                     const inv = getInventory(this.registry);
                     const hasHoney = inv.some(i => i.id === 'Bahan 1: Madu Murni');
@@ -142,7 +143,7 @@ export class GrandmaGardenScene extends BaseScene {
                         });
                         this.updateQuestHUD();
                     }
-                });
+                }, { cinematic: isFirst, zoom: 1.25, targetX: 250, targetY: 370 });
             }
         }
     }

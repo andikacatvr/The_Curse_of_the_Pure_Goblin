@@ -131,12 +131,13 @@ export class WoodshopScene extends BaseScene {
             this.nextDialogue();
         } else if (this.nearTarget) {
             if (this.nearTarget.type === 'npc') {
+                const isImportant = this.nearTarget.dialogue && this.nearTarget.dialogue.length > 2;
                 this.startDialogue(this.nearTarget.dialogue, () => {
                     const qState = getQuestState(this.registry);
                     if (qState.questNumber === 6) {
                         this.giveMythicalSeed();
                     }
-                });
+                }, { cinematic: isImportant, zoom: 1.25, targetX: this.heinreich.x, targetY: this.heinreich.y - 30 });
             } else if (this.nearTarget.type === 'smoker_item') {
                 this.collectSmoker();
             } else if (this.nearTarget.type === 'bag') {
@@ -248,11 +249,11 @@ export class WoodshopScene extends BaseScene {
         });
         this.updateQuestHUD();
 
-        this.startDialogue([
+        this.startCinematicDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Hore!! Aku mendapatkan [Bahan 2: Mythical Seed]!' },
             { speaker: 'Mr. Heinreich', text: 'Simpan baik-baik benih magis itu dan bawa ke Mr. Breado si koki roti desa untuk diolah menjadi Magic Bread!' },
             { speaker: 'Aksel (Goblin)', text: 'Terima kasih banyak atas kebaikan dan kemurahan hatimu, Mr. Heinreich! 2 Bahan Magis selesai, sekarang aku menuju Mr. Breado!' }
-        ]);
+        ], null, { zoom: 1.25, targetX: this.heinreich.x, targetY: this.heinreich.y - 30 });
     }
 
     update() {

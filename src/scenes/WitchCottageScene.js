@@ -186,7 +186,7 @@ export class WitchCottageScene extends BaseScene {
         this.isEpilogueDialogueActive = true;
         if (this.promptText) this.promptText.setVisible(false);
 
-        this.startDialogue([
+        this.startCinematicDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Halo? Madam Joanne?! Aku sudah membawa apa yang engkau suruh... Kau di mana?' },
             { speaker: 'Aksel (Goblin)', text: 'Kualinya masih mengepul panas, tapi seisi pondok sepi sekali...' },
             { speaker: 'Madam Joanne', text: 'Fufufu... Kau tidak perlu berteriak sekeras itu, Goblin kecil! Aku selalu mengawasimu...' },
@@ -325,7 +325,7 @@ export class WitchCottageScene extends BaseScene {
         this.joanneHasEmerged = false;
         if (this.joanne) this.joanne.setVisible(false);
 
-        this.startDialogue([
+        this.startCinematicDialogue([
             { speaker: 'Aksel', text: 'Ini dia ramuannya! Aku berhasil mengambilnya—' },
             { speaker: 'Madam Joanne', text: 'BOCAH PENCURI! Berani sekali kau menyelinap masuk ke rumahku!!' },
             { speaker: 'Aksel', text: 'Aaaah! Madam Joanne?! A-ampun! Aku hanya ingin menyelamatkan adik perempuanku yang sakit parah!' },
