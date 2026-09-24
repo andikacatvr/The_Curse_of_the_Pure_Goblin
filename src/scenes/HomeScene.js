@@ -291,8 +291,6 @@ export class HomeScene extends BaseScene {
                     questNumber: 0
                 });
                 this.updateQuestHUD();
-
-                this.showToastNotice('🚶 Gunakan tombol [A][D] atau Panah untuk melangkah ke Barat [◀]!');
             });
         });
     }
