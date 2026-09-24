@@ -64,6 +64,9 @@ function setQuestState(registry, newQuestObj) {
     const currentState = getQuestState(registry);
     const updated = { ...currentState, ...newQuestObj };
     registry.set('questState', updated);
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('questStateChanged', { detail: updated }));
+    }
 }
 
 const TOTAL_FIREWOOD = 4;

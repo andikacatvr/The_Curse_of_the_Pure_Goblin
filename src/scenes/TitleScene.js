@@ -80,16 +80,6 @@ export class TitleScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Subtitle badge
-        const badgeBg = this.add.rectangle(400, 236, 360, 24, 0x0f172a, 0.85)
-            .setStrokeStyle(1.5, 0xf59e0b);
-        const subText = this.add.text(400, 236, "✦ A BROTHER'S TRIUMPH ✦", {
-            fontSize: '11px',
-            fontStyle: 'bold',
-            fill: '#fbbf24',
-            fontFamily: FONT_BODY
-        }).setOrigin(0.5);
-
         // 3. Interactive HTML Buttons (Play & Settings)
         HDMenuButtons.show({
             onPlay: () => {

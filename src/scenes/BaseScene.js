@@ -1599,7 +1599,10 @@ export class BaseScene extends Phaser.Scene {
     }
 
     updateQuestHUD() {
-        // Quest details live in HDQuestModal HTML overlay
+        const qState = getQuestState(this.registry);
+        if (qState) {
+            HDHudManager.updateQuestTracker(qState);
+        }
     }
 
     toggleQuestModal(forceState = null) {
@@ -1652,6 +1655,7 @@ export class BaseScene extends Phaser.Scene {
 
     startCinematicMode({ zoom = 1.22, targetX = null, targetY = null, duration = 800 } = {}) {
         this.isCinematicActive = true;
+        HDHudManager.hideTopHUD();
 
         if (this._letterboxBars) {
             this._letterboxBars.forEach(b => { if (b && b.destroy) b.destroy(); });
@@ -1679,6 +1683,7 @@ export class BaseScene extends Phaser.Scene {
 
     stopCinematicMode({ duration = 650 } = {}) {
         this.isCinematicActive = false;
+        HDHudManager.showTopHUD();
 
         if (this._letterboxBars) {
             const [topBar, bottomBar] = this._letterboxBars;

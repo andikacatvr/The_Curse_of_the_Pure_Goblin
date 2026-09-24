@@ -56,6 +56,14 @@ export class HDHudManager {
         this.injectStyles();
         this.createDOM();
 
+        if (typeof window !== 'undefined') {
+            window.addEventListener('questStateChanged', (e) => {
+                if (e && e.detail) {
+                    this.updateQuestTracker(e.detail);
+                }
+            });
+        }
+
         window.addEventListener('resize', () => this.updateBadgePositioning());
     }
 
@@ -68,30 +76,50 @@ export class HDHudManager {
         }
         this.overlay = overlay;
 
-        // 1. Top-Left HUD Container (HP & Quest)
+        // 1. Top-Left HUD Container (HP & Quest & Objective Tracker)
         let topLeft = document.getElementById('hd-top-hud-left');
         if (!topLeft) {
             topLeft = document.createElement('div');
             topLeft.id = 'hd-top-hud-left';
             topLeft.className = 'hd-hud-group hd-top-left';
             topLeft.innerHTML = `
-                <div id="hd-hp-pill" class="hd-hud-pill hd-hp-pill" title="Kesehatan Aksel (Klik untuk info)">
-                    <span class="hd-hp-tag">HP</span>
-                    <div id="hd-hp-hearts" class="hd-hp-hearts">
-                        <span class="hd-heart">❤️</span>
-                        <span class="hd-heart">❤️</span>
-                        <span class="hd-heart">❤️</span>
+                <div class="hd-top-left-row">
+                    <div id="hd-hp-pill" class="hd-hud-pill hd-hp-pill" title="Kesehatan Aksel (Klik untuk info)">
+                        <span class="hd-hp-tag">HP</span>
+                        <div id="hd-hp-hearts" class="hd-hp-hearts">
+                            <span class="hd-heart">❤️</span>
+                            <span class="hd-heart">❤️</span>
+                            <span class="hd-heart">❤️</span>
+                        </div>
+                        <span id="hd-hp-num" class="hd-hp-num">3/3</span>
                     </div>
-                    <span id="hd-hp-num" class="hd-hp-num">3/3</span>
+                    <button id="hd-btn-quest" class="hd-hud-btn hd-btn-quest" title="Buka Catatan Quest & Objektif (Q)">
+                        <span class="hd-btn-icon">📜</span>
+                        <span class="hd-btn-label">Catatan Quest</span>
+                    </button>
                 </div>
-                <button id="hd-btn-quest" class="hd-hud-btn hd-btn-quest" title="Buka Catatan Quest & Objektif (Q)">
-                    <span class="hd-btn-icon">📜</span>
-                    <span class="hd-btn-label">Quest</span>
-                </button>
+                <!-- ON-SCREEN QUEST OBJECTIVE TRACKER WIDGET -->
+                <div id="hd-quest-tracker" class="hd-quest-tracker" title="Klik untuk membuka detail quest lengkap (Q)">
+                    <div class="hd-qt-header">
+                        <div class="hd-qt-tag">
+                            <span class="hd-qt-dot"></span>
+                            <span class="hd-qt-icon">🎯</span>
+                            <span id="hd-qt-chapter">MISI AKTIF</span>
+                        </div>
+                        <button id="hd-qt-toggle" class="hd-qt-toggle-btn" title="Kecilkan / Perbesar Tampilan Objektif" type="button">
+                            <span id="hd-qt-toggle-icon">−</span>
+                        </button>
+                    </div>
+                    <div id="hd-qt-body" class="hd-qt-body">
+                        <div id="hd-qt-title" class="hd-qt-title">Mencari Kayu Bakar di Hutan Danau</div>
+                        <div id="hd-qt-objective" class="hd-qt-objective">Jalan ke arah barat [◀] melintasi Hutan Danau hingga Ujung Danau Kaki Gunung untuk mencari 4 kayu bakar suruhan Nenek.</div>
+                    </div>
+                </div>
             `;
             overlay.appendChild(topLeft);
         }
         this.topLeftContainer = topLeft;
+        this.questTracker = document.getElementById('hd-quest-tracker');
 
         // 2. Top-Right HUD Container (Zoom, Bag, Menu, Mobile)
         let topRight = document.getElementById('hd-top-hud-right');
@@ -223,6 +251,52 @@ export class HDHudManager {
                 }
             });
         }
+
+        // Quest Tracker Widget Interactions
+        const tracker = document.getElementById('hd-quest-tracker');
+        const toggleBtn = document.getElementById('hd-qt-toggle');
+        const toggleIcon = document.getElementById('hd-qt-toggle-icon');
+
+        // Check saved collapsed preference
+        try {
+            const isCollapsedSaved = localStorage.getItem('hd_quest_tracker_collapsed') === 'true';
+            if (isCollapsedSaved && tracker && toggleIcon) {
+                tracker.classList.add('collapsed');
+                toggleIcon.textContent = '＋';
+            }
+        } catch (err) {}
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('pointerenter', () => {
+                if (GameAudio && GameAudio.playHover) GameAudio.playHover();
+            });
+            toggleBtn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation();
+                if (!tracker) return;
+                const isCollapsed = tracker.classList.toggle('collapsed');
+                if (toggleIcon) toggleIcon.textContent = isCollapsed ? '＋' : '−';
+                try {
+                    localStorage.setItem('hd_quest_tracker_collapsed', isCollapsed ? 'true' : 'false');
+                } catch (err) {}
+                if (GameAudio && GameAudio.playClick) GameAudio.playClick();
+                this.updateBadgePositioning();
+            });
+        }
+
+        if (tracker) {
+            tracker.addEventListener('pointerenter', () => {
+                if (GameAudio && GameAudio.playHover) GameAudio.playHover();
+            });
+            tracker.addEventListener('pointerdown', (e) => {
+                // If clicking toggle button, let toggleBtn handle it
+                if (e.target && e.target.closest('#hd-qt-toggle')) return;
+                e.stopPropagation();
+                if (GameAudio && GameAudio.playClick) GameAudio.playClick();
+                if (this.activeScene && this.activeScene.toggleQuestModal) {
+                    this.activeScene.toggleQuestModal();
+                }
+            });
+        }
     }
 
     static updateBadgePositioning() {
@@ -232,16 +306,29 @@ export class HDHudManager {
             const rect = canvas.getBoundingClientRect();
             const padX = Math.max(16, Math.round(rect.left + 16));
             const padRight = Math.max(16, Math.round(window.innerWidth - rect.right + 16));
-            const padY = Math.max(66, Math.round(rect.top + 60));
+
+            let leftTop = Math.max(66, Math.round(rect.top + 60));
+            if (this.topLeftContainer) {
+                const b = this.topLeftContainer.getBoundingClientRect();
+                if (b.bottom > 0) {
+                    leftTop = Math.max(leftTop, Math.round(b.bottom + 8));
+                }
+            }
 
             this.leftBadge.style.left = `${padX}px`;
-            this.leftBadge.style.top = `${padY}px`;
+            this.leftBadge.style.top = `${leftTop}px`;
 
+            const rightTop = Math.max(66, Math.round(rect.top + 60));
             this.rightBadge.style.right = `${padRight}px`;
-            this.rightBadge.style.top = `${padY}px`;
+            this.rightBadge.style.top = `${rightTop}px`;
         } else {
+            let leftTop = 135;
+            if (this.topLeftContainer) {
+                const b = this.topLeftContainer.getBoundingClientRect();
+                if (b.bottom > 0) leftTop = Math.max(leftTop, Math.round(b.bottom + 8));
+            }
             this.leftBadge.style.left = '18px';
-            this.leftBadge.style.top = '66px';
+            this.leftBadge.style.top = `${leftTop}px`;
             this.rightBadge.style.right = '18px';
             this.rightBadge.style.top = '66px';
         }
@@ -281,10 +368,167 @@ export class HDHudManager {
 
             .hd-top-left {
                 left: 16px;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                pointer-events: none;
+            }
+            .hd-top-left > * {
+                pointer-events: auto;
+            }
+
+            .hd-top-left-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
             }
 
             .hd-top-right {
                 right: 16px;
+            }
+
+            /* --- QUEST OBJECTIVE TRACKER ON SCREEN --- */
+            .hd-quest-tracker {
+                position: relative;
+                width: auto;
+                min-width: 250px;
+                max-width: 330px;
+                background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.88) 100%);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1.5px solid rgba(245, 158, 11, 0.5);
+                border-radius: 12px;
+                padding: 7px 12px 9px 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55), 0 0 12px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+                cursor: pointer;
+                transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                box-sizing: border-box;
+            }
+
+            .hd-quest-tracker:hover {
+                border-color: #f59e0b;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65), 0 0 16px rgba(245, 158, 11, 0.32);
+            }
+
+            .hd-quest-tracker.quest-flash {
+                animation: hdQuestFlash 1.2s ease-out;
+            }
+
+            @keyframes hdQuestFlash {
+                0% {
+                    border-color: #fde047;
+                    box-shadow: 0 0 24px rgba(253, 224, 71, 0.8), 0 4px 16px rgba(0, 0, 0, 0.6);
+                    transform: scale(1.03);
+                }
+                50% {
+                    border-color: #f59e0b;
+                    box-shadow: 0 0 16px rgba(245, 158, 11, 0.5), 0 4px 16px rgba(0, 0, 0, 0.6);
+                }
+                100% {
+                    border-color: rgba(245, 158, 11, 0.5);
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55), 0 0 12px rgba(245, 158, 11, 0.15);
+                    transform: scale(1);
+                }
+            }
+
+            .hd-qt-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                margin-bottom: 3px;
+            }
+
+            .hd-qt-tag {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 10px;
+                font-weight: 800;
+                color: #38bdf8;
+                text-transform: uppercase;
+                letter-spacing: 0.6px;
+            }
+
+            .hd-qt-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #10b981;
+                box-shadow: 0 0 6px #10b981;
+                animation: hdQtPulse 2s infinite ease-in-out;
+            }
+
+            @keyframes hdQtPulse {
+                0%, 100% { opacity: 0.6; transform: scale(0.9); }
+                50% { opacity: 1; transform: scale(1.2); }
+            }
+
+            .hd-qt-icon {
+                font-size: 12px;
+            }
+
+            .hd-qt-toggle-btn {
+                background: rgba(255, 255, 255, 0.08);
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                border-radius: 4px;
+                width: 19px;
+                height: 19px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #cbd5e1;
+                font-size: 12px;
+                font-weight: 800;
+                cursor: pointer;
+                padding: 0;
+                line-height: 1;
+                transition: all 0.15s ease;
+            }
+
+            .hd-qt-toggle-btn:hover {
+                background: rgba(245, 158, 11, 0.25);
+                border-color: #f59e0b;
+                color: #fde047;
+            }
+
+            .hd-qt-body {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                transition: all 0.2s ease;
+            }
+
+            .hd-qt-title {
+                font-size: 12px;
+                font-weight: 800;
+                color: #fde047;
+                line-height: 1.3;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            }
+
+            .hd-qt-objective {
+                font-size: 11.5px;
+                font-weight: 500;
+                color: #e2e8f0;
+                line-height: 1.35;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            }
+
+            /* Collapsed state */
+            .hd-quest-tracker.collapsed {
+                padding-bottom: 7px;
+            }
+            .hd-quest-tracker.collapsed .hd-qt-objective {
+                display: none;
+            }
+            .hd-quest-tracker.collapsed .hd-qt-title {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 250px;
             }
 
             /* --- HP PILL --- */
@@ -538,6 +782,14 @@ export class HDHudManager {
                 .hd-nav-badge { padding: 5px 10px; max-width: 220px; }
                 .hd-nav-title { font-size: 11px; }
                 .hd-nav-sub { font-size: 9.5px; }
+                .hd-quest-tracker {
+                    min-width: 190px;
+                    max-width: 250px;
+                    padding: 5px 9px 7px 9px;
+                }
+                .hd-qt-tag { font-size: 9px; }
+                .hd-qt-title { font-size: 11px; }
+                .hd-qt-objective { font-size: 10px; }
             }
         `;
         document.head.appendChild(style);
@@ -563,11 +815,49 @@ export class HDHudManager {
             this.updateHealth(hp, 3);
             const inv = scene.registry.get('inventory') || [];
             this.updateBagCount(inv.length);
+            const qState = scene.registry.get('questState');
+            if (qState) {
+                this.updateQuestTracker(qState);
+            }
+            if (scene.registry.events) {
+                scene.registry.events.on('changedata-questState', (parent, val) => {
+                    this.updateQuestTracker(val);
+                });
+                scene.registry.events.on('setdata', (parent, key, data) => {
+                    if (key === 'questState') this.updateQuestTracker(data);
+                });
+            }
         }
         if (scene.currentZoom) {
             this.updateZoom(scene.currentZoom);
         }
 
+        this.updateBadgePositioning();
+    }
+
+    static updateQuestTracker(qState) {
+        this.init();
+        if (!qState) return;
+        const chapterEl = document.getElementById('hd-qt-chapter');
+        const titleEl = document.getElementById('hd-qt-title');
+        const objEl = document.getElementById('hd-qt-objective');
+        const tracker = document.getElementById('hd-quest-tracker');
+
+        const chText = qState.chapter ? `MISI ${qState.chapter}` : 'MISI AKTIF';
+        if (chapterEl) chapterEl.textContent = chText;
+        if (titleEl) titleEl.textContent = qState.title || 'Petualangan Baru';
+        if (objEl) objEl.textContent = qState.objective || 'Jelajahi area dan bicaralah dengan penduduk desa.';
+
+        // Glow flash & collect sound when objective actually updates
+        if (tracker && this._lastObjective && this._lastObjective !== qState.objective) {
+            tracker.classList.remove('quest-flash');
+            void tracker.offsetWidth; // trigger reflow
+            tracker.classList.add('quest-flash');
+            if (GameAudio && GameAudio.playCollect) {
+                GameAudio.playCollect();
+            }
+        }
+        this._lastObjective = qState.objective;
         this.updateBadgePositioning();
     }
 
