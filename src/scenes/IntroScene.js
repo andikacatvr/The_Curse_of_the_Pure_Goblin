@@ -21,10 +21,10 @@ export class IntroScene extends BaseScene {
             GameAudio.startAmbientBGM();
         }
 
-        // 1. Dreamy Atmosphere Background
+        // 1. Atmosphere: Aksel & Rachael's Cottage House + Glowing Fireflies
         this.createAtmosphere();
 
-        // 2. Vintage Scroll Paper Storybook UI
+        // 2. Vintage Scroll Paper Storybook UI with Backdrop Blur
         this.createStorybookUI();
 
         // 3. Keyboard Shortcuts
@@ -34,42 +34,99 @@ export class IntroScene extends BaseScene {
     }
 
     createAtmosphere() {
+        // Multi-Layer Cottage Background
+        // Layer 0: Sky & Mountains
         if (this.textures.exists('home_parallax_sky')) {
-            const bg = this.add.image(400, 225, 'home_parallax_sky').setDisplaySize(1000, 450);
+            const sky = this.add.image(400, 215, 'home_parallax_sky').setDisplaySize(1000, 460);
             this.tweens.add({
-                targets: bg,
-                scaleX: 1.06,
-                scaleY: 1.06,
-                duration: 10000,
+                targets: sky,
+                scaleX: 1.04,
+                scaleY: 1.04,
+                duration: 9000,
                 yoyo: true,
                 repeat: -1,
                 ease: 'Sine.easeInOut'
             });
         }
 
-        // Dark Vignette
+        // Layer 1: Midground Rolling Pine Forests
+        if (this.textures.exists('home_parallax_mid')) {
+            this.add.image(400, 215, 'home_parallax_mid').setDisplaySize(1000, 460);
+        }
+
+        // Layer 2: Framing Forest Trees
+        if (this.textures.exists('home_parallax_trees')) {
+            this.add.image(400, 215, 'home_parallax_trees').setDisplaySize(1000, 460);
+        }
+
+        // Ground Sprites across width
+        if (this.textures.exists('tanah_home')) {
+            for (let gx = -100; gx <= 900; gx += 385) {
+                const groundSprite = this.add.image(gx, 418, 'tanah_home');
+                groundSprite.setOrigin(0, 117 / 250);
+                groundSprite.setScale(386 / 770);
+            }
+        }
+
+        // Aksel & Rachael's Cottage House (Centered)
+        if (this.textures.exists('building_rumah')) {
+            const house = this.add.image(400, 418, 'building_rumah');
+            house.setOrigin(0.5, 1);
+            const scale = 360 / house.width;
+            house.setScale(scale);
+
+            // Gentle Chimney Smoke Puffs
+            const smokeX = 400 - (house.displayWidth / 2) + (60 * scale);
+            const smokeY = 418 - house.displayHeight + (18 * scale);
+            for (let i = 0; i < 4; i++) {
+                const smoke = this.add.circle(smokeX, smokeY, 6 + i * 2, 0xe2e8f0, 0.4);
+                this.tweens.add({
+                    targets: smoke,
+                    x: { from: smokeX, to: smokeX + 26 + i * 15 },
+                    y: { from: smokeY, to: smokeY - 56 },
+                    scale: { from: 0.8, to: 2.2 },
+                    alpha: { from: 0.45, to: 0 },
+                    duration: 3200 + i * 600,
+                    delay: i * 900,
+                    repeat: -1,
+                    ease: 'Sine.easeOut'
+                });
+            }
+
+            // Warm Window Glow
+            const winGlow = this.add.circle(320, 350, 32, 0xfbbf24, 0.16);
+            this.tweens.add({
+                targets: winGlow,
+                alpha: { from: 0.12, to: 0.28 },
+                duration: 2200,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        }
+
+        // Ambient Dark Vignette
         const vignette = this.add.graphics();
-        vignette.fillGradientStyle(0x020617, 0x020617, 0x020617, 0x020617, 0.5, 0.5, 0.85, 0.85);
+        vignette.fillGradientStyle(0x020617, 0x020617, 0x020617, 0x020617, 0.4, 0.4, 0.8, 0.8);
         vignette.fillRect(-100, 0, 1000, 450);
 
-        // Golden & Magical floating dust
-        for (let i = 0; i < 30; i++) {
-            const p = this.add.circle(
-                Phaser.Math.Between(20, 780),
-                Phaser.Math.Between(30, 420),
-                Phaser.Math.FloatBetween(1.2, 3),
-                Phaser.Utils.Array.GetRandom([0xfef08a, 0xfbbf24, 0x38bdf8, 0xa78bfa]),
-                Phaser.Math.FloatBetween(0.25, 0.8)
-            );
+        // Canvas Level Fireflies (Kunang-Kunang Lembah)
+        for (let i = 0; i < 26; i++) {
+            const fx = Phaser.Math.Between(30, 770);
+            const fy = Phaser.Math.Between(60, 420);
+            const firefly = this.add.circle(fx, fy, Phaser.Math.FloatBetween(2, 3.5), 0xfef08a, 0.95);
+            const glow = this.add.circle(fx, fy, Phaser.Math.Between(8, 14), 0xa3e635, 0.35);
+
             this.tweens.add({
-                targets: p,
-                y: p.y - Phaser.Math.Between(30, 65),
-                x: p.x + Phaser.Math.Between(-25, 25),
-                alpha: { from: 0.8, to: 0.15 },
-                duration: Phaser.Math.Between(3500, 6500),
+                targets: [firefly, glow],
+                x: fx + Phaser.Math.Between(-35, 35),
+                y: fy + Phaser.Math.Between(-30, 30),
+                alpha: { from: 0.25, to: 1 },
+                scale: { from: 0.7, to: 1.35 },
+                duration: Phaser.Math.Between(2200, 4000),
                 repeat: -1,
                 yoyo: true,
-                delay: i * 110,
+                delay: i * 140,
                 ease: 'Sine.easeInOut'
             });
         }
@@ -113,10 +170,11 @@ export class IntroScene extends BaseScene {
         overlay.style.alignItems = 'center';
         overlay.style.justifyContent = 'center';
         overlay.style.padding = '20px';
-        // Dreamy Cinematic Blur Backdrop
-        overlay.style.background = 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.45) 0%, rgba(2, 6, 23, 0.88) 100%)';
-        overlay.style.backdropFilter = 'blur(16px) saturate(1.2)';
-        overlay.style.webkitBackdropFilter = 'blur(16px) saturate(1.2)';
+        overlay.style.overflow = 'hidden';
+        // Cinematic Depth of Field: Soft Blur showing the house behind!
+        overlay.style.background = 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.35) 0%, rgba(3, 7, 18, 0.75) 100%)';
+        overlay.style.backdropFilter = 'blur(7px) saturate(1.15)';
+        overlay.style.webkitBackdropFilter = 'blur(7px) saturate(1.15)';
         overlay.style.fontFamily = "'Fredoka', 'Georgia', serif, sans-serif";
         overlay.style.color = '#381e05';
         overlay.style.animation = 'introFadeIn 0.8s ease-out forwards';
@@ -135,6 +193,31 @@ export class IntroScene extends BaseScene {
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0; }
             }
+            @keyframes fireflyFloat {
+                0% {
+                    transform: translate(0, 0) scale(0.8);
+                    opacity: 0.2;
+                }
+                50% {
+                    transform: translate(var(--dx), var(--dy)) scale(1.3);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(var(--dx2), var(--dy2)) scale(0.65);
+                    opacity: 0.15;
+                }
+            }
+
+            /* Floating Fireflies (Kunang-Kunang) in Overlay */
+            .dom-firefly {
+                position: absolute;
+                border-radius: 50%;
+                background: #fef08a;
+                box-shadow: 0 0 8px #facc15, 0 0 16px #84cc16;
+                pointer-events: none;
+                z-index: 99;
+                animation: fireflyFloat var(--dur) ease-in-out infinite alternate;
+            }
 
             /* Scroll Wrapper Container */
             .scroll-wrapper {
@@ -146,6 +229,7 @@ export class IntroScene extends BaseScene {
                 align-items: center;
                 filter: drop-shadow(0 20px 35px rgba(0, 0, 0, 0.85));
                 animation: scrollUnroll 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 10;
             }
 
             /* Top and Bottom Wooden Rollers */
@@ -160,7 +244,7 @@ export class IntroScene extends BaseScene {
                 align-items: center;
                 padding: 0 4px;
                 position: relative;
-                z-index: 3;
+                z-index: 12;
                 box-sizing: border-box;
             }
             .scroll-finial {
@@ -180,7 +264,7 @@ export class IntroScene extends BaseScene {
                 border-right: 3px solid #b45309;
                 padding: 26px 32px 30px 32px;
                 position: relative;
-                z-index: 2;
+                z-index: 11;
                 box-sizing: border-box;
                 margin: -2px 0;
             }
@@ -260,11 +344,29 @@ export class IntroScene extends BaseScene {
         `;
         overlay.appendChild(style);
 
+        // Spawn Magical Fireflies in the DOM Overlay around the screen
+        for (let f = 0; f < 20; f++) {
+            const fly = document.createElement('div');
+            fly.className = 'dom-firefly';
+            const size = Math.random() * 3 + 3.5;
+            fly.style.width = `${size}px`;
+            fly.style.height = `${size}px`;
+            fly.style.left = `${Math.random() * 94 + 3}%`;
+            fly.style.top = `${Math.random() * 90 + 5}%`;
+            fly.style.setProperty('--dx', `${(Math.random() - 0.5) * 70}px`);
+            fly.style.setProperty('--dy', `${(Math.random() - 0.5) * 60}px`);
+            fly.style.setProperty('--dx2', `${(Math.random() - 0.5) * 90}px`);
+            fly.style.setProperty('--dy2', `${(Math.random() - 0.5) * 80}px`);
+            fly.style.setProperty('--dur', `${Math.random() * 3 + 2.5}s`);
+            fly.style.animationDelay = `${Math.random() * 2}s`;
+            overlay.appendChild(fly);
+        }
+
         // Header Tag
         const headerTag = document.createElement('div');
         headerTag.style.marginBottom = '18px';
         headerTag.innerHTML = `
-            <div style="display: inline-block; padding: 5px 18px; background: rgba(15, 23, 42, 0.6); border: 1.5px solid rgba(245, 158, 11, 0.6); border-radius: 9999px; color: #fbbf24; font-size: 11px; font-weight: 700; letter-spacing: 2px; backdrop-filter: blur(6px); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+            <div style="display: inline-block; padding: 5px 18px; background: rgba(15, 23, 42, 0.65); border: 1.5px solid rgba(245, 158, 11, 0.6); border-radius: 9999px; color: #fbbf24; font-size: 11px; font-weight: 700; letter-spacing: 2px; backdrop-filter: blur(6px); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
                 📜 KISAH AWAL SANG GOBLIN MURNI 📜
             </div>
         `;
@@ -306,6 +408,7 @@ export class IntroScene extends BaseScene {
         footer.style.gap = '14px';
         footer.style.width = '100%';
         footer.style.maxWidth = '660px';
+        footer.style.zIndex = '20';
 
         // Dots Container
         const dotsBox = document.createElement('div');
@@ -462,7 +565,6 @@ export class IntroScene extends BaseScene {
             const curSpan = this.charSpans[charIdx];
             if (curSpan) {
                 curSpan.style.opacity = '1';
-                // Move cursor after current span
                 curSpan.after(cursor);
             }
 
@@ -493,10 +595,8 @@ export class IntroScene extends BaseScene {
     handleProceed() {
         GameAudio.playClick();
         if (this.isTyping) {
-            // First click skips the typing animation to show the full text instantly
             this.completeTyping();
         } else {
-            // Second click proceeds to the next slide
             this.nextSlide();
         }
     }
