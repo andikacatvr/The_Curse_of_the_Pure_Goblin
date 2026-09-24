@@ -47,12 +47,18 @@ export class HomeScene extends BaseScene {
             this.registry.set('rachaelHealed', true);
             startX = 260;
         }
+        const isFirstIntro = !hasWood && !data.from && !this.registry.get('woodQuestIntroPlayed');
+        if (isFirstIntro) {
+            startX = 650;
+        }
 
         this.player = this.physics.add.sprite(startX, 380, 'player_human').setDepth(5);
         this.physics.add.collider(this.player, this.platforms);
-        this.cameras.main.startFollow(this.player, false, 0.045, 0.025);
-        this.cameras.main.setDeadzone(80, 40);
-        this.cameras.main._isFollowing = true;
+        if (!isFirstIntro) {
+            this.cameras.main.startFollow(this.player, false, 0.045, 0.025);
+            this.cameras.main.setDeadzone(80, 40);
+            this.cameras.main._isFollowing = true;
+        }
 
         // Rachael di Kursi Goyang (Teras Depan Rumah)
         const isRachaelHealed = !!this.registry.get('rachaelHealed');
@@ -131,24 +137,9 @@ export class HomeScene extends BaseScene {
         this.createQuestUI();
 
         // 1. Prolog Bagian 1: Suruhan Nenek Mengambil Kayu Bakar di Hutan Danau & Ujung Danau Kaki Gunung
-        if (!hasWood && !data.from && !this.registry.get('woodQuestIntroPlayed')) {
+        if (isFirstIntro) {
             this.registry.set('woodQuestIntroPlayed', true);
-            this.time.delayedCall(450, () => {
-                this.startDialogue([
-                    { speaker: 'Nenek', text: 'Aksel, hari sudah mulai sore dan udara malam nanti akan sangat dingin...' },
-                    { speaker: 'Nenek', text: 'Maukah kau tolong carikan 4 ikat kayu bakar kering di tepi Hutan Danau dan Ujung Danau Kaki Gunung sebelah barat [◀]? Perapian kita sudah hampir habis.' },
-                    { speaker: 'Aksel', text: 'Tentu Nenek! Aku akan segera pergi ke Hutan Danau dan Ujung Danau Kaki Gunung di sebelah barat dan segera kembali membawa kayu bakar.' },
-                    { speaker: 'Nenek', text: 'Terima kasih, Aksel. Hati-hati di jalan ya, jangan pulang terlalu larut. Rachael sedang istirahat di kursi goyang.' },
-                    { speaker: 'Rachael', text: '(Tersenyum lembut dari kursi goyang) Hati-hati di jalan ya, Kak Aksel...' }
-                ]);
-                setQuestState(this.registry, {
-                    chapter: 'PROLOG',
-                    title: 'Mencari Kayu Bakar di Hutan Danau',
-                    objective: 'Jalan ke arah barat [◀] melintasi Hutan Danau hingga Ujung Danau Kaki Gunung untuk mencari 4 kayu bakar suruhan Nenek.',
-                    questNumber: 0
-                });
-                this.updateQuestHUD();
-            });
+            this.triggerIntroCutscene();
         }
 
         // 2. Prolog Bagian 2: Aksel Pulang Membawa Kayu Bakar -> Rachael Batuk Darah
@@ -229,6 +220,99 @@ export class HomeScene extends BaseScene {
         this.input.keyboard.on('keydown-SPACE', () => { if (this.isTalking) this.nextDialogue(); });
         this.input.keyboard.on('keydown-I', () => { if (!this.isTalking) this.toggleInventoryModal(); });
         this.input.keyboard.on('keydown-Q', () => { if (!this.isTalking) this.toggleQuestModal(); });
+    }
+
+    triggerIntroCutscene() {
+        this.isIntroCutsceneRunning = true;
+        this.isTalking = true;
+
+        if (this.promptText) this.promptText.setVisible(false);
+
+        // 1. Cinematic Letterbox Bars
+        const topBar = this.add.rectangle(0, -60, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
+        const bottomBar = this.add.rectangle(0, 450, 1600, 60, 0x000000).setOrigin(0, 0).setDepth(200).setScrollFactor(0);
+        this.tweens.add({ targets: topBar, y: 0, duration: 900, ease: 'Cubic.easeOut' });
+        this.tweens.add({ targets: bottomBar, y: 395, duration: 900, ease: 'Cubic.easeOut' });
+
+        // 2. Camera sweeps from high sky down to terrace
+        this.cameras.main.stopFollow();
+        this.cameras.main.centerOn(600, 180);
+        this.cameras.main.setZoom(0.95);
+
+        // 3. Player auto-walks towards Nenek & Rachael
+        if (this.player) {
+            this.player.setFlipX(true);
+            if (this.anims.exists('player_walk')) {
+                this.player.anims.play('player_walk', true);
+            }
+            this.tweens.add({
+                targets: this.player,
+                x: 485,
+                duration: 2200,
+                ease: 'Linear',
+                onComplete: () => {
+                    if (this.player) {
+                        this.player.setVelocity(0, 0);
+                        if (this.anims.exists('player_idle')) {
+                            this.player.anims.play('player_idle', true);
+                        } else {
+                            this.player.setFrame(0);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Camera smoothly glides down over 2400ms
+        this.cameras.main.pan(430, 360, 2400, 'Cubic.easeInOut');
+        this.cameras.main.zoomTo(1.15, 2400, 'Cubic.easeInOut');
+
+        // 4. Start dialogue after camera glide and auto-walk
+        this.time.delayedCall(2500, () => {
+            this.startDialogue([
+                { speaker: 'Nenek', text: 'Aksel, hari sudah mulai sore dan udara malam nanti akan sangat dingin...' },
+                { speaker: 'Nenek', text: 'Maukah kau tolong carikan 4 ikat kayu bakar kering di tepi Hutan Danau dan Ujung Danau Kaki Gunung sebelah barat [◀]? Perapian kita sudah hampir habis.' },
+                { speaker: 'Aksel', text: 'Tentu Nenek! Aku akan segera pergi ke Hutan Danau dan Ujung Danau Kaki Gunung di sebelah barat dan segera kembali membawa kayu bakar.' },
+                { speaker: 'Nenek', text: 'Terima kasih, Aksel. Hati-hati di jalan ya, jangan pulang terlalu larut. Rachael sedang istirahat di kursi goyang.' },
+                { speaker: 'Rachael', text: '(Tersenyum lembut dari kursi goyang) Hati-hati di jalan ya, Kak Aksel... jangan sampai kedinginan.' }
+            ], () => {
+                // Retract letterbox bars
+                this.tweens.add({
+                    targets: topBar,
+                    y: -60,
+                    duration: 600,
+                    ease: 'Cubic.easeIn',
+                    onComplete: () => topBar.destroy()
+                });
+                this.tweens.add({
+                    targets: bottomBar,
+                    y: 450,
+                    duration: 600,
+                    ease: 'Cubic.easeIn',
+                    onComplete: () => bottomBar.destroy()
+                });
+
+                // Return camera to normal player follow
+                const defaultZoom = this.currentZoom || 0.85;
+                this.cameras.main.zoomTo(defaultZoom, 800, 'Sine.easeInOut');
+                this.cameras.main.startFollow(this.player, false, 0.045, 0.025);
+                this.cameras.main.setDeadzone(80, 40);
+                this.cameras.main._isFollowing = true;
+
+                this.isIntroCutsceneRunning = false;
+                this.isTalking = false;
+
+                setQuestState(this.registry, {
+                    chapter: 'PROLOG',
+                    title: 'Mencari Kayu Bakar di Hutan Danau',
+                    objective: 'Jalan ke arah barat [◀] melintasi Hutan Danau hingga Ujung Danau Kaki Gunung untuk mencari 4 kayu bakar suruhan Nenek.',
+                    questNumber: 0
+                });
+                this.updateQuestHUD();
+
+                this.showToastNotice('🚶 Gunakan tombol [A][D] atau Panah untuk melangkah ke Barat [◀]!');
+            });
+        });
     }
 
     triggerEndingCutscene() {
@@ -815,7 +899,7 @@ export class HomeScene extends BaseScene {
             this.promptText.setVisible(false);
         }
 
-        if (this.isEndingTriggered) {
+        if (this.isEndingTriggered || this.isIntroCutsceneRunning) {
             if (this.player) this.player.setVelocityX(0);
             return;
         }

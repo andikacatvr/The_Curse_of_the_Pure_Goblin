@@ -158,7 +158,7 @@ export class TitleScene extends Phaser.Scene {
         this.cameras.main.fadeOut(400, 0, 0, 0);
         this.time.delayedCall(450, () => {
             HDMenuButtons.hide();
-            this.scene.start('HomeScene');
+            this.scene.start('IntroScene');
         });
     }
 
