@@ -54,6 +54,7 @@ export class BootScene extends Phaser.Scene {
         this.load.image('firewood_forest_bg', '/assets/latarbelakangpinggirhutanbackgr.png');
         this.load.image('bakery_mill_bg', '/assets/latarbelakangmrbreado.jpg');
         this.load.image('village_residential_bg', '/assets/latarbelakangrumahwargahutanbackgr.png');
+        this.load.image('saffron_farm_bg', '/assets/saffron_farm_bg.png');
         this.load.image('east_forest_bg', '/assets/hutanmenujugpenyihir.png');
         this.load.image('belati_pixel', '/assets/belati_pixel.png');
         this.load.image('item_dagger', '/assets/belati_pixel.png');

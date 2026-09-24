@@ -16,6 +16,7 @@ import { WoodshopScene } from './scenes/WoodshopScene.js';
 import { FirewoodForestScene } from './scenes/FirewoodForestScene.js';
 import { BakeryMillScene } from './scenes/BakeryMillScene.js';
 import { VillageResidentialScene } from './scenes/VillageResidentialScene.js';
+import { SaffronFarmScene } from './scenes/SaffronFarmScene.js';
 import { EastForestScene } from './scenes/EastForestScene.js';
 
 const config = {
@@ -47,7 +48,7 @@ const config = {
             debug: false
         }
     },
-    scene: [BootScene, TitleScene, HomeScene, LakeForestScene, MountainFootLakeScene, ForestTrailScene, WaterfallGorgeScene, WitchYardScene, WitchCottageScene, GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, BakeryMillScene, VillageResidentialScene, EastForestScene]
+    scene: [BootScene, TitleScene, HomeScene, LakeForestScene, MountainFootLakeScene, ForestTrailScene, WaterfallGorgeScene, WitchYardScene, WitchCottageScene, GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, BakeryMillScene, VillageResidentialScene, SaffronFarmScene, EastForestScene]
 };
 
 // Ensure Google Fonts (Fredoka & Pirata One) are fully loaded before rendering

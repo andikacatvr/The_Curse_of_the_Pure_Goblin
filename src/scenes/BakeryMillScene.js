@@ -108,10 +108,10 @@ export class BakeryMillScene extends BaseScene {
         } else if (hasFlour) {
             const missing = [];
             if (!hasPepper) missing.push('[Lada Hitam Pilihan] dari Ibu Sarah di Pemukiman');
-            if (!hasSaffron) missing.push('[Bunga Saffron Langka] dari monster di Hutan Timur');
+            if (!hasSaffron) missing.push('[Bunga Saffron Langka] dari monster di Kebun Saffron');
             this.breado.dialogue = [
                 { speaker: 'Mr. Breado', text: 'Tepung Gandum Murni sudah siap! Sekarang kamu masih membutuhkan: ' + missing.join(' dan ') + '!' },
-                { speaker: 'Mr. Breado', text: 'Pergilah ke arah kanan [➔] menuju Pemukiman Warga dan Hutan Timur!' }
+                { speaker: 'Mr. Breado', text: 'Pergilah ke arah kanan [➔] menuju Pemukiman Warga dan Kebun Saffron!' }
             ];
         } else {
             this.breado.dialogue = [
@@ -174,7 +174,7 @@ export class BakeryMillScene extends BaseScene {
                     this.spawnOvenBakingFX();
 
                     this.startDialogue([
-                        { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Tepung Gandum Murni, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Hutan Timur sudah terkumpul lengkap!' },
+                        { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Tepung Gandum Murni, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Kebun Saffron sudah terkumpul lengkap!' },
                         { speaker: 'Mr. Breado', text: 'Luar biasa! Harumnya semerbak luar biasa! Sekarang aku akan menguleni adonannya dan memanggang Magic Bread di Oven Magis.' },
                         { speaker: 'Mr. Breado', text: 'Sembari menunggu rotinya matang, tolong bantu aku mengantarkan 3 Keranjang Roti Pagi ini ke 3 rumah warga desa di sebelah kanan [➔] ya!' },
                         { speaker: 'Aksel (Goblin)', text: 'Siap Mr. Breado! Keranjang rotinya sudah kubawa, aku akan langsung mengantarkannya ke rumah Pak Thomas, Ibu Sarah, dan Paman Bob!' }
@@ -244,7 +244,7 @@ export class BakeryMillScene extends BaseScene {
         setQuestState(this.registry, {
             chapter: 'BAB 3',
             title: 'Quest 8: Kumpulkan Rempah & Saffron',
-            objective: 'Minta [Lada Hitam Pilihan] ke Ibu Sarah di Pemukiman dan kalahkan monster untuk memetik [Bunga Saffron Langka] di Hutan Timur [➔].',
+            objective: 'Minta [Lada Hitam Pilihan] ke Ibu Sarah di Pemukiman dan kalahkan monster untuk memetik [Bunga Saffron Langka] di Kebun Saffron [➔].',
             questNumber: 8,
             completedQuests: [
                 'Quest 1-3: Bahan 1 Madu Murni',
@@ -257,7 +257,7 @@ export class BakeryMillScene extends BaseScene {
 
         this.startDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Berhasil! Bulir gandum sudah digiling halus menjadi [Tepung Gandum Murni]!' },
-            { speaker: 'Mr. Breado', text: 'Bagus sekali! Sekarang tugas berikutnya: Minta [Lada Hitam Pilihan] ke Ibu Sarah di Pemukiman Warga (sebelah kanan), dan kalahkan monster buas untuk memetik [Bunga Saffron Langka] di Hutan Timur!' }
+            { speaker: 'Mr. Breado', text: 'Bagus sekali! Sekarang tugas berikutnya: Minta [Lada Hitam Pilihan] ke Ibu Sarah di Pemukiman Warga (sebelah kanan), dan kalahkan monster buas untuk memetik [Bunga Saffron Langka] di Kebun Saffron!' }
         ]);
     }
 
@@ -280,7 +280,7 @@ export class BakeryMillScene extends BaseScene {
             if (!hasFlour || !hasPepper || !hasSaffron) {
                 this.startDialogue([
                     { speaker: 'Aksel (Goblin)', text: 'Wah, keranjang ini penuh dengan roti sarapan yang baru selesai dibakar!' },
-                    { speaker: 'Mr. Breado', text: 'Itu pesanan warga pagi ini! Tapi sebelum mengantarkannya, bantu aku kumpulkan dulu 3 bahan racikan Magic Bread: Tepung Gandum, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Hutan Timur!' }
+                    { speaker: 'Mr. Breado', text: 'Itu pesanan warga pagi ini! Tapi sebelum mengantarkannya, bantu aku kumpulkan dulu 3 bahan racikan Magic Bread: Tepung Gandum, Lada Hitam dari Bu Sarah, dan Bunga Saffron dari Kebun Saffron!' }
                 ]);
             } else {
                 this.startDialogue([

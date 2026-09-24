@@ -22,7 +22,7 @@ export class VillageResidentialScene extends BaseScene {
         this.createSeamlessGround('tanah_home', 1);
 
         let startX = 60;
-        if (data && data.from === 'EastForestScene') {
+        if (data && (data.from === 'EastForestScene' || data.from === 'SaffronFarmScene')) {
             startX = 740;
         } else if (data && data.from === 'BakeryMillScene') {
             startX = 60;
@@ -52,7 +52,7 @@ export class VillageResidentialScene extends BaseScene {
         }).setOrigin(0.5).setDepth(20);
 
         this.createLeftNavHint('◀ Toko Roti Mr. Breado', true);
-        this.createRightNavHint('Hutan Timur ➔', true);
+        this.createRightNavHint('Kebun Saffron ➔', true);
 
         this.promptText = this.add.text(0, 0, '', {
             fontSize: '12px', fontStyle: 'bold', fill: '#f1c40f', backgroundColor: '#000000cc', padding: { x: 6, y: 3 }
@@ -138,7 +138,7 @@ export class VillageResidentialScene extends BaseScene {
 
         if (!isDeliveryActive) {
             this.startDialogue([
-                { speaker: name, text: 'Halo Goblin kecil! Kami sedang menunggu pesanan roti pagi dari Mr. Breado. Kudengar beliau sedang membutuhkan bahan rempah & saffron langka dari monster di Hutan Timur sebelah kanan [➔]!' }
+                { speaker: name, text: 'Halo Goblin kecil! Kami sedang menunggu pesanan roti pagi dari Mr. Breado. Kudengar beliau sedang membutuhkan bahan rempah & saffron langka dari monster di Kebun Saffron sebelah kanan [➔]!' }
             ]);
             return;
         }
@@ -279,9 +279,9 @@ export class VillageResidentialScene extends BaseScene {
                     return;
                 }
 
-                // Jika belum masuk fase antar roti (masih cari Saffron di Hutan Timur),
-                // ATAU jika sudah memiliki Magic Bread -> Boleh masuk ke EastForestScene!
-                this.scene.start('EastForestScene', { from: 'VillageResidentialScene' });
+                // Jika belum masuk fase antar roti (masih cari Saffron di Kebun Saffron),
+                // ATAU jika sudah memiliki Magic Bread -> Boleh masuk ke SaffronFarmScene!
+                this.scene.start('SaffronFarmScene', { from: 'VillageResidentialScene' });
             }
         });
     }
