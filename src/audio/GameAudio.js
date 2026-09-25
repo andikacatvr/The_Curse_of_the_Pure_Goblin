@@ -321,54 +321,218 @@ export class GameAudio {
         } catch (e) {}
     }
 
-    // --- BGM: SIMPLE CHILL MINIMALIST BACKSOUND ---
+    // --- BGM: NOSTALGIC TAIWANESE / HONG KONG NATURE SOUNDSCAPE ---
+    // Menggabungkan petikan Guzheng/Pipa, suling bambu Dizi, desiran angin sejuk & kicau burung alami
+    static playGuzheng(f, startTime, dur, vol = 0.24, bendTo = null) {
+        if (!this.ctx || !this.bgmPlaying || !this.bgmEnabled) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const oscHarmonic = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            // Karakteristik petikan senar sutra / kawat Guzheng:
+            // Gelombang triangle hangat + sine harmonik oktaf atas
+            osc.type = 'triangle';
+            oscHarmonic.type = 'sine';
+
+            osc.frequency.setValueAtTime(f, startTime);
+            oscHarmonic.frequency.setValueAtTime(f * 2, startTime);
+
+            // Efek sliding note khas musik tradisional (hua-yin)
+            if (bendTo) {
+                osc.frequency.linearRampToValueAtTime(bendTo, startTime + dur * 0.5);
+                oscHarmonic.frequency.linearRampToValueAtTime(bendTo * 2, startTime + dur * 0.5);
+            }
+
+            // Envelope petikan senar: attack cepat (pluck), lalu peluruhan lembut
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.linearRampToValueAtTime(vol, startTime + 0.008);
+            gain.gain.exponentialRampToValueAtTime(vol * 0.45, startTime + 0.22);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+
+            osc.connect(gain);
+            oscHarmonic.connect(gain);
+            gain.connect(this.bgmGain);
+
+            osc.start(startTime);
+            oscHarmonic.start(startTime);
+            osc.stop(startTime + dur + 0.05);
+            oscHarmonic.stop(startTime + dur + 0.05);
+        } catch (e) {}
+    }
+
+    static playBambooFlute(f, startTime, dur, vol = 0.15) {
+        if (!this.ctx || !this.bgmPlaying || !this.bgmEnabled) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, startTime);
+
+            // Vibrato LFO lembut khas tiupan seruling bambu pegunungan
+            const lfo = this.ctx.createOscillator();
+            const lfoGain = this.ctx.createGain();
+            lfo.frequency.setValueAtTime(4.6, startTime);
+            lfoGain.gain.setValueAtTime(3.2, startTime);
+            lfo.connect(osc.frequency);
+
+            // Breath swell attack & release
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.linearRampToValueAtTime(vol, startTime + 0.25);
+            gain.gain.setValueAtTime(vol * 0.9, startTime + dur - 0.3);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+
+            osc.connect(gain);
+            gain.connect(this.bgmGain);
+
+            lfo.start(startTime);
+            osc.start(startTime);
+            lfo.stop(startTime + dur + 0.05);
+            osc.stop(startTime + dur + 0.05);
+        } catch (e) {}
+    }
+
+    static playNatureChirp(startTime) {
+        if (!this.ctx || !this.bgmPlaying || !this.bgmEnabled) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+
+            const baseF = 2600 + Math.random() * 600;
+            osc.frequency.setValueAtTime(baseF, startTime);
+            osc.frequency.exponentialRampToValueAtTime(baseF + 500, startTime + 0.05);
+            osc.frequency.exponentialRampToValueAtTime(baseF - 250, startTime + 0.12);
+
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.linearRampToValueAtTime(0.035, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.15);
+
+            osc.connect(gain);
+            gain.connect(this.bgmGain);
+            osc.start(startTime);
+            osc.stop(startTime + 0.16);
+        } catch (e) {}
+    }
+
+    static startBreezeAmbience() {
+        if (!this.ctx || this.breezeNode) return;
+        try {
+            // Buffer pink noise 2 detik di-loop untuk hembusan angin sejuk hutan
+            const bufferSize = this.ctx.sampleRate * 2;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            let lastOut = 0.0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                data[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = data[i];
+            }
+
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            noise.loop = true;
+
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(420, this.ctx.currentTime);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.022, this.ctx.currentTime);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.bgmGain);
+
+            noise.start();
+            this.breezeNode = noise;
+        } catch (e) {}
+    }
+
+    static stopBreezeAmbience() {
+        if (this.breezeNode) {
+            try { this.breezeNode.stop(); } catch (e) {}
+            this.breezeNode = null;
+        }
+    }
+
     static startAmbientBGM() {
         this.init();
         this.resume();
         if (!this.bgmEnabled || !this.ctx || this.bgmPlaying) return;
         try {
-            // Melodi sederhana, tenang & minimalis (nada lembut ala music box / piano santai)
-            const melody = [
-                { f: 261.63, dur: 2.2 }, // C4
-                { f: 329.63, dur: 2.2 }, // E4
-                { f: 392.00, dur: 2.5 }, // G4
-                { f: 329.63, dur: 2.0 }, // E4
-                { f: 349.23, dur: 2.2 }, // F4
-                { f: 392.00, dur: 2.2 }, // G4
-                { f: 440.00, dur: 2.5 }, // A4
-                { f: 392.00, dur: 3.0 }  // G4
-            ];
-
-            let noteIdx = 0;
             this.bgmPlaying = true;
             this.updateGainValues();
 
-            const playNextNote = () => {
-                if (!this.bgmPlaying || !this.bgmEnabled || !this.ctx) return;
-                const item = melody[noteIdx % melody.length];
-                noteIdx++;
+            // Desiran angin sepoi-sepoi alam pegunungan
+            this.startBreezeAmbience();
 
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(item.f, now);
-
-                // Nada bersih dan terdengar jelas, volume diatur oleh master bgmGain
-                gain.gain.setValueAtTime(0.0001, now);
-                gain.gain.linearRampToValueAtTime(0.4, now + 0.15);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + item.dur);
-
-                osc.connect(gain);
-                gain.connect(this.bgmGain);
-                osc.start(now);
-                osc.stop(now + item.dur + 0.05);
-
-                this.bgmTimer = setTimeout(playNextNote, (item.dur - 0.4) * 1000);
+            // Tangga nada pentatonik G / D (Gong / Yu mode: D - E - G - A - B)
+            const N = {
+                D3: 146.83, G3: 196.00, A3: 220.00,
+                D4: 293.66, E4: 329.63, G4: 392.00, A4: 440.00, B4: 493.88,
+                D5: 587.33, E5: 659.25, G5: 783.99, A5: 880.00
             };
 
-            playNextNote();
+            // Frasa melodi santai & syahdu khas drama/pedesaan Taiwan & Hong Kong
+            const sequence = [
+                // 1. Petikan Guzheng Pembuka
+                { guzheng: [N.D3, N.D4], flute: null, dur: 2.2, chirp: true },
+                { guzheng: [N.G4, N.A4], flute: null, dur: 2.0 },
+                { guzheng: [N.B4], flute: null, dur: 1.8, bend: N.D5 },
+                { guzheng: [N.D5, N.B4], flute: N.D5, dur: 2.4 },
+
+                // 2. Suling Bambu (Dizi) Masuk Mengalir Lembut
+                { guzheng: [N.G3, N.A4], flute: N.B4, dur: 2.2 },
+                { guzheng: [N.G4, N.E4], flute: N.A4, dur: 2.0, chirp: true },
+                { guzheng: [N.G4], flute: N.G4, dur: 2.6, bend: N.A4 },
+                { guzheng: [N.D4], flute: null, dur: 2.0 },
+
+                // 3. Puncak Suasana Alam yang Tenang
+                { guzheng: [N.G3, N.D4], flute: N.G4, dur: 2.2 },
+                { guzheng: [N.B4], flute: N.B4, dur: 1.8 },
+                { guzheng: [N.D5, N.E5], flute: N.D5, dur: 2.4, chirp: true },
+                { guzheng: [N.G5], flute: N.E5, dur: 2.2, bend: N.D5 },
+
+                // 4. Arpeggio Penutup & Harmoni Hangat
+                { guzheng: [N.D5, N.B4], flute: N.D5, dur: 2.2 },
+                { guzheng: [N.A4, N.G4], flute: N.B4, dur: 2.0 },
+                { guzheng: [N.E4, N.G4], flute: N.G4, dur: 2.8 },
+                { guzheng: [N.D3, N.G3, N.D4], flute: null, dur: 3.2, chirp: true }
+            ];
+
+            let seqIdx = 0;
+
+            const playNextSequence = () => {
+                if (!this.bgmPlaying || !this.bgmEnabled || !this.ctx) return;
+                const step = sequence[seqIdx % sequence.length];
+                seqIdx++;
+
+                const now = this.ctx.currentTime;
+
+                // Mainkan Petikan Guzheng / Pipa
+                if (step.guzheng && step.guzheng.length > 0) {
+                    step.guzheng.forEach((f, i) => {
+                        const noteTime = now + i * 0.08;
+                        this.playGuzheng(f, noteTime, step.dur, 0.22, (i === step.guzheng.length - 1 ? step.bend : null));
+                    });
+                }
+
+                // Mainkan Suling Bambu (Dizi)
+                if (step.flute) {
+                    this.playBambooFlute(step.flute, now + 0.1, step.dur * 0.9, 0.14);
+                }
+
+                // Kicau burung alami sesekali
+                if (step.chirp && Math.random() > 0.35) {
+                    this.playNatureChirp(now + Math.random() * 0.8 + 0.4);
+                }
+
+                this.bgmTimer = setTimeout(playNextSequence, (step.dur - 0.2) * 1000);
+            };
+
+            playNextSequence();
         } catch (e) {}
     }
 
@@ -378,5 +542,6 @@ export class GameAudio {
             clearTimeout(this.bgmTimer);
             this.bgmTimer = null;
         }
+        this.stopBreezeAmbience();
     }
 }
