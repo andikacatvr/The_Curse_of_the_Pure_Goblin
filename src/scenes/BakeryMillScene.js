@@ -32,17 +32,9 @@ export class BakeryMillScene extends BaseScene {
         this.breado = this.physics.add.staticSprite(200, 390, 'npc_breado').setDepth(5);
         this.breado.type = 'npc';
 
-        // Stone Mill (Interactive 1)
-        this.mill = this.physics.add.staticSprite(380, 395, 'stone_mill').setDepth(4);
-        this.mill.type = 'mill';
-
-        // Bread Baskets (Interactive 2)
-        this.basket = this.physics.add.staticSprite(550, 405, 'bread_basket').setDepth(4);
+        // Bread Baskets (Interactive)
+        this.basket = this.physics.add.staticSprite(245, 405, 'bread_basket').setDepth(4);
         this.basket.type = 'basket';
-
-        // Magic Oven (Interactive 3)
-        this.oven = this.physics.add.staticSprite(710, 380, 'magic_oven').setDepth(4);
-        this.oven.type = 'oven';
 
         this.createLeftNavHint('◀ Pinggir Hutan (Kayu)', true);
         this.createRightNavHint('Pemukiman Warga (3 Rumah) ➔', true);
@@ -92,7 +84,7 @@ export class BakeryMillScene extends BaseScene {
         } else if (delivered.length >= 3 && hasPepper && hasSaffron) {
             this.breado.dialogue = [
                 { speaker: 'Mr. Breado', text: 'Wah, kamu sudah kembali, Aksel! 3 roti warga sudah terantar dan kedua rempah langka sudah kau bawa!' },
-                { speaker: 'Mr. Breado', text: 'Tekan [E] untuk mulai memanggang mahakarya [Bahan 3: Magic Bread] di Oven Magis!' }
+                { speaker: 'Mr. Breado', text: 'Tekan [E] untuk mulai memanggang mahakarya [Bahan 3: Magic Bread]!' }
             ];
         } else if (isDeliveryActive) {
             const missing = [];
@@ -123,7 +115,7 @@ export class BakeryMillScene extends BaseScene {
         if (this.isTalking) {
             this.nextDialogue();
         } else if (this.nearTarget) {
-            if (this.nearTarget.type === 'npc' || this.nearTarget.type === 'oven') {
+            if (this.nearTarget.type === 'npc') {
                 const inv = getInventory(this.registry);
                 const hasPepper = inv.some(i => i.id === 'Lada Hitam Pilihan');
                 const hasSaffron = inv.some(i => i.id === 'Bunga Saffron Langka');
@@ -167,13 +159,9 @@ export class BakeryMillScene extends BaseScene {
                 } else {
                     this.startDialogue(this.breado.dialogue);
                 }
-            } else if (this.nearTarget.type === 'mill') {
-                this.startDialogue([
-                    { speaker: 'Aksel (Goblin)', text: 'Mesin gilingan batu milik Mr. Breado. Tepung gandum berkualitas tinggi untuk adonan roti digiling di sini.' }
-                ]);
             } else if (this.nearTarget.type === 'basket') {
                 this.startDialogue([
-                    { speaker: 'Aksel (Goblin)', text: 'Meja persiapan roti Mr. Breado yang selalu wangi semerbak adonan gandum segar.' }
+                    { speaker: 'Aksel (Goblin)', text: 'Keranjang roti hangat buatan Mr. Breado yang selalu harum semerbak aroma gandum segar.' }
                 ]);
             }
         }
@@ -183,7 +171,7 @@ export class BakeryMillScene extends BaseScene {
         const colors = [0xf59e0b, 0xef4444, 0xfde047, 0xfbbf24];
         for (let i = 0; i < 24; i++) {
             const col = Phaser.Utils.Array.GetRandom(colors);
-            const p = this.add.circle(this.oven.x + Phaser.Math.Between(-12, 12), this.oven.y - 10, Phaser.Math.Between(4, 9), col, 0.85).setDepth(6);
+            const p = this.add.circle(this.breado.x + Phaser.Math.Between(-15, 15), this.breado.y - 20, Phaser.Math.Between(4, 9), col, 0.85).setDepth(6);
             this.tweens.add({
                 targets: p,
                 y: p.y - Phaser.Math.Between(30, 65),
@@ -199,8 +187,8 @@ export class BakeryMillScene extends BaseScene {
         this.startCinematicDialogue([
             { speaker: 'Aksel (Goblin)', text: 'Mr. Breado! Semua 3 keranjang roti pagi sudah kuantarkan ke warga desa, dan ini rempah [Lada Hitam Pilihan] serta [Bunga Saffron Langka]!' },
             { speaker: 'Mr. Breado', text: 'Luar biasa sekali, Aksel! Semua warga memuji kehangatan rotimu, dan aroma kedua rempah ini sungguh harum semerbak!' },
-            { speaker: 'Mr. Breado', text: 'Lihatlah oven magisku! Nyala api keemasannya sudah siap memanggang resep legendaris ini!' },
-            { speaker: 'Mr. Breado', text: '(Mr. Breado menguleni adonan dengan cekatan dan memasukkannya ke dalam Oven Magis...)' }
+            { speaker: 'Mr. Breado', text: 'Aroma oven dapur tokoku sudah menyala hangat! Resep legendaris ini akan segera matang!' },
+            { speaker: 'Mr. Breado', text: '(Mr. Breado menguleni adonan dengan cekatan dan memasukkannya ke dalam oven pemanggang...)' }
         ], () => {
             this.spawnOvenBakingFX();
             GameAudio.playCollect();
@@ -208,7 +196,7 @@ export class BakeryMillScene extends BaseScene {
             this.time.delayedCall(1200, () => {
                 this.giveMagicBreadReward();
             });
-        }, { zoom: 1.25, targetX: this.oven.x, targetY: this.oven.y - 25 });
+        }, { zoom: 1.25, targetX: this.breado.x, targetY: this.breado.y - 25 });
     }
 
     giveMagicBreadReward() {
@@ -270,16 +258,8 @@ export class BakeryMillScene extends BaseScene {
                 prompt = 'Tekan [E] Panggang Magic Bread Bersama Mr. Breado';
             }
             found = { type: 'npc', x: this.breado.x, y: this.breado.y - 35, prompt: prompt };
-        } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.mill.x, this.mill.y) < 55) {
-            found = { type: 'mill', x: this.mill.x, y: this.mill.y - 30, prompt: 'Tekan [E] Periksa Mesin Gilingan' };
-        } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.basket.x, this.basket.y) < 55) {
-            found = { type: 'basket', x: this.basket.x, y: this.basket.y - 25, prompt: 'Tekan [E] Periksa Meja Adonan Roti' };
-        } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.oven.x, this.oven.y) < 60) {
-            let prompt = 'Tekan [E] Periksa Oven Magis';
-            if (delivered.length >= 3 && hasPepper && hasSaffron && !hasMagicBread) {
-                prompt = 'Tekan [E] Panggang Magic Bread Bersama Mr. Breado';
-            }
-            found = { type: 'oven', x: this.oven.x, y: this.oven.y - 35, prompt: prompt };
+        } else if (this.basket && Phaser.Math.Distance.Between(this.player.x, this.player.y, this.basket.x, this.basket.y) < 55) {
+            found = { type: 'basket', x: this.basket.x, y: this.basket.y - 25, prompt: 'Tekan [E] Periksa Keranjang Roti' };
         }
 
         if (found && !this.isTalking && !this.isInvOpen && !this.isQuestModalOpen) {
@@ -358,33 +338,7 @@ export class BakeryMillScene extends BaseScene {
         // 4. Mr. Breado's Artisan Bakery Shopfront (Left: X: 0 to 180)
         this.createBreadoBakeryShop();
 
-        // 5. Magic Oven Hearth & Warming Fire Glow on the Right (X: 710, Y: 380)
-        const ovenGlow = this.add.circle(710, 382, 35, 0xf97316, 0.3).setDepth(3);
-        this.tweens.add({
-            targets: ovenGlow,
-            scale: { from: 0.88, to: 1.18 },
-            alpha: { from: 0.2, to: 0.45 },
-            duration: 1100,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
 
-        // Oven Chimney Smoke (delicate baking bread aroma)
-        for (let o = 0; o < 3; o++) {
-            const ovenSmoke = this.add.circle(710, 340, Phaser.Math.Between(3, 5), 0xffedd5, 0.5).setDepth(3);
-            this.tweens.add({
-                targets: ovenSmoke,
-                x: 710 + Phaser.Math.Between(6, 18),
-                y: 340 - Phaser.Math.Between(30, 60),
-                scale: { from: 0.8, to: 2.2 },
-                alpha: { from: 0.5, to: 0 },
-                duration: 2000 + o * 400,
-                delay: o * 600,
-                repeat: -1,
-                ease: 'Sine.easeOut'
-            });
-        }
 
         // 6. Floating Golden Flour & Morning Sun Motes
         for (let f = 0; f < 16; f++) {

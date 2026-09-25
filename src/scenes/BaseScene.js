@@ -1895,6 +1895,9 @@ export class BaseScene extends Phaser.Scene {
 
         if (this.isTalking || this.isInvOpen || this.isQuestModalOpen || this.isSettingsOpen) {
             this.player.setVelocityX(0);
+            if (this.player.texture && this.player.texture.key === 'player_goblin') {
+                this.player.setRotation(0);
+            }
             if (this.player.texture && this.player.texture.key === 'player_human' && this.anims.exists('aksel_human_idle')) {
                 this.player.anims.play('aksel_human_idle', true);
             }
@@ -1911,26 +1914,69 @@ export class BaseScene extends Phaser.Scene {
         const right = (this.cursors && this.cursors.right && this.cursors.right.isDown) || (this.keys && this.keys.d && this.keys.d.isDown) || touchRight;
         const jump = (this.cursors && this.cursors.up && this.cursors.up.isDown) || (this.keys && this.keys.w && this.keys.w.isDown) || (this.keys && this.keys.space && this.keys.space.isDown) || touchJump;
 
-        const onGround = this.player.body.touching.down || this.player.body.blocked.down;
-
-        if (this._playerWasInAir && onGround) {
-            GameAudio.playLand();
+        // Pastikan scale sprite selalu kembali normal jika sebelumnya pernah terdistorsi
+        if (this.player.scaleX !== 1 || this.player.scaleY !== 1) {
+            this.player.setScale(1, 1);
         }
-        this._playerWasInAir = !onGround;
+
+        const onGround = this.player.body.touching.down || this.player.body.blocked.down;
+        const now = (this.time && this.time.now) ? this.time.now : Date.now();
+
+        // Deteksi pendaratan presisi: hanya aktif jika benar-benar jatuh dari lompatan (bukan flicker saat lari)
+        if (onGround) {
+            if (this._isPlayerAirborne) {
+                const airDuration = now - (this._airborneStartTime || 0);
+                const maxFallSpeed = this._maxFallVelocityY || 0;
+                if (airDuration > 180 && maxFallSpeed > 150) {
+                    GameAudio.playLand();
+                    this.spawnPlayerLandFX();
+                }
+                this._isPlayerAirborne = false;
+                this._maxFallVelocityY = 0;
+            }
+        } else {
+            if (!this._isPlayerAirborne) {
+                this._isPlayerAirborne = true;
+                this._airborneStartTime = now;
+                this._maxFallVelocityY = 0;
+            }
+            if (this.player.body.velocity.y > (this._maxFallVelocityY || 0)) {
+                this._maxFallVelocityY = this.player.body.velocity.y;
+            }
+        }
 
         if (left) {
             this.player.setVelocityX(-200);
             this.player.setFlipX(true);
+            if (onGround) {
+                this.triggerPlayerWalkFX(true);
+            }
         } else if (right) {
             this.player.setVelocityX(200);
             this.player.setFlipX(false);
+            if (onGround) {
+                this.triggerPlayerWalkFX(false);
+            }
         } else {
             this.player.setVelocityX(0);
+            if (this.player.texture && this.player.texture.key === 'player_goblin') {
+                this.player.setRotation(0);
+            }
         }
 
-        if (jump && onGround) {
+        if (!onGround && this.player.texture && this.player.texture.key === 'player_goblin') {
+            this.player.setRotation(0);
+        }
+
+        // Single trigger saat melompat dari tanah
+        if (jump && onGround && !this._jumpCooldown) {
             this.player.setVelocityY(-450);
             GameAudio.playJump();
+            this.spawnPlayerJumpFX();
+            this._jumpCooldown = true;
+        }
+        if (!jump) {
+            this._jumpCooldown = false;
         }
 
         // Animasi karakter Aksel Manusia
@@ -1978,6 +2024,107 @@ export class BaseScene extends Phaser.Scene {
                     this.player.setVelocityX(0);
                 }
             }
+        }
+    }
+
+    spawnPlayerJumpFX() {
+        if (!this.player || !this.player.body) return;
+        const footY = this.player.body.bottom;
+        const footX = this.player.x;
+        const depth = (this.player.depth || 5) - 1;
+
+        // Partikel debu tanah halus saat tolakan kaki (3-4 butir kecil, tanpa mengubah scale tubuh)
+        for (let i = 0; i < 4; i++) {
+            const side = (i % 2 === 0) ? -1 : 1;
+            const p = this.add.circle(
+                footX + side * Phaser.Math.Between(2, 6),
+                footY - 1,
+                Phaser.Math.FloatBetween(1.2, 1.8),
+                0xd1d5db,
+                Phaser.Math.FloatBetween(0.25, 0.40)
+            ).setDepth(depth);
+
+            this.tweens.add({
+                targets: p,
+                x: p.x + side * Phaser.Math.Between(5, 12),
+                y: p.y - Phaser.Math.Between(1, 4),
+                scale: { from: 1, to: 1.3 },
+                alpha: { from: p.alpha, to: 0 },
+                duration: Phaser.Math.Between(150, 210),
+                ease: 'Sine.easeOut',
+                onComplete: () => p.destroy()
+            });
+        }
+    }
+
+    spawnPlayerLandFX() {
+        if (!this.player || !this.player.body) return;
+        const footY = this.player.body.bottom;
+        const footX = this.player.x;
+        const depth = (this.player.depth || 5) - 1;
+
+        // Partikel debu mendarat menyebar ke samping (halus, transparan, tanpa squash sprite)
+        for (let i = 0; i < 5; i++) {
+            const side = (i % 2 === 0) ? -1 : 1;
+            const p = this.add.circle(
+                footX + side * Phaser.Math.Between(2, 7),
+                footY - 1,
+                Phaser.Math.FloatBetween(1.3, 2.0),
+                0xd1d5db,
+                Phaser.Math.FloatBetween(0.3, 0.45)
+            ).setDepth(depth);
+
+            this.tweens.add({
+                targets: p,
+                x: p.x + side * Phaser.Math.Between(8, 18),
+                y: p.y - Phaser.Math.Between(1, 3),
+                scale: { from: 1, to: 1.4 },
+                alpha: { from: p.alpha, to: 0 },
+                duration: Phaser.Math.Between(180, 250),
+                ease: 'Cubic.easeOut',
+                onComplete: () => p.destroy()
+            });
+        }
+    }
+
+    triggerPlayerWalkFX(isFacingLeft) {
+        if (!this.player || !this.player.body) return;
+        const now = (this.time && this.time.now) ? this.time.now : Date.now();
+
+        // 1. Goyangan langkah halus khusus Goblin (±2.5 derajat)
+        if (this.player.texture && this.player.texture.key === 'player_goblin') {
+            const tilt = Math.sin(now * 0.015) * 0.045;
+            this.player.setRotation(tilt);
+        } else if (this.player.rotation !== 0) {
+            this.player.setRotation(0);
+        }
+
+        // 2. Jejak debu tipis langkah kaki (interval 260ms, partikel mikro transparan)
+        if (!this._lastWalkDustTime || now - this._lastWalkDustTime > 260) {
+            this._lastWalkDustTime = now;
+            const footY = this.player.body.bottom;
+            const heelX = isFacingLeft ? (this.player.x + 6) : (this.player.x - 6);
+            const driftDir = isFacingLeft ? 1 : -1;
+            const depth = (this.player.depth || 5) - 1;
+
+            const p = this.add.circle(
+                heelX,
+                footY - 1,
+                Phaser.Math.FloatBetween(1.0, 1.5),
+                0xd1d5db,
+                0.25
+            ).setDepth(depth);
+
+            this.tweens.add({
+                targets: p,
+                x: p.x + driftDir * Phaser.Math.Between(3, 7),
+                y: p.y - Phaser.Math.Between(1, 3),
+                scale: { from: 0.9, to: 1.3 },
+                alpha: { from: p.alpha, to: 0 },
+                duration: 170,
+                ease: 'Sine.easeOut',
+                onComplete: () => p.destroy()
+            });
         }
     }
 
