@@ -169,15 +169,18 @@ export class IntroScene extends BaseScene {
         overlay.style.flexDirection = 'column';
         overlay.style.alignItems = 'center';
         overlay.style.justifyContent = 'center';
-        overlay.style.padding = '20px';
-        overlay.style.overflow = 'hidden';
+        overlay.style.padding = '14px';
+        overlay.style.overflowX = 'hidden';
+        overlay.style.overflowY = 'auto';
+        overlay.style.webkitOverflowScrolling = 'touch';
         // Cinematic Depth of Field: Soft Blur showing the house behind!
-        overlay.style.background = 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.35) 0%, rgba(3, 7, 18, 0.75) 100%)';
+        overlay.style.background = 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.8) 100%)';
         overlay.style.backdropFilter = 'blur(7px) saturate(1.15)';
         overlay.style.webkitBackdropFilter = 'blur(7px) saturate(1.15)';
         overlay.style.fontFamily = "'Fredoka', 'Georgia', serif, sans-serif";
         overlay.style.color = '#381e05';
         overlay.style.animation = 'introFadeIn 0.8s ease-out forwards';
+        overlay.style.boxSizing = 'border-box';
 
         const style = document.createElement('style');
         style.textContent = `
@@ -219,26 +222,42 @@ export class IntroScene extends BaseScene {
                 animation: fireflyFloat var(--dur) ease-in-out infinite alternate;
             }
 
+            .intro-header-tag {
+                margin-bottom: 12px;
+                display: inline-block;
+                padding: 4px 16px;
+                background: rgba(15, 23, 42, 0.65);
+                border: 1.5px solid rgba(245, 158, 11, 0.6);
+                border-radius: 9999px;
+                color: #fbbf24;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 2px;
+                backdrop-filter: blur(6px);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            }
+
             /* Scroll Wrapper Container */
             .scroll-wrapper {
                 position: relative;
-                max-width: 660px;
-                width: 100%;
+                max-width: 640px;
+                width: 95%;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                filter: drop-shadow(0 20px 35px rgba(0, 0, 0, 0.85));
+                filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.85));
                 animation: scrollUnroll 0.6s cubic-bezier(0.16, 1, 0.3, 1);
                 z-index: 10;
+                margin: auto 0;
             }
 
             /* Top and Bottom Wooden Rollers */
             .scroll-roller {
-                width: calc(100% + 40px);
-                height: 24px;
+                width: calc(100% + 30px);
+                height: 20px;
                 background: linear-gradient(90deg, #3f1d0b 0%, #78350f 18%, #b45309 50%, #78350f 82%, #3f1d0b 100%);
-                border-radius: 12px;
-                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.7), inset 0 2px 2px rgba(254, 240, 138, 0.4);
+                border-radius: 10px;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7), inset 0 2px 2px rgba(254, 240, 138, 0.4);
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -248,21 +267,28 @@ export class IntroScene extends BaseScene {
                 box-sizing: border-box;
             }
             .scroll-finial {
-                width: 14px;
-                height: 26px;
+                width: 12px;
+                height: 22px;
                 background: radial-gradient(circle at 35% 35%, #fde047 0%, #d97706 60%, #451a03 100%);
                 border-radius: 4px;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+            }
+            .scroll-roller-bar {
+                flex: 1;
+                height: 3px;
+                background: rgba(254,240,138,0.25);
+                margin: 0 10px;
+                border-radius: 2px;
             }
 
             /* Ancient Parchment Paper Body */
             .scroll-paper {
                 width: 100%;
                 background: linear-gradient(180deg, #fef3c7 0%, #fae8b4 10%, #fef3c7 50%, #f8e1a0 90%, #ecd083 100%);
-                box-shadow: inset 0 0 45px rgba(180, 83, 9, 0.3), inset 0 0 12px rgba(69, 26, 3, 0.18);
+                box-shadow: inset 0 0 35px rgba(180, 83, 9, 0.28), inset 0 0 10px rgba(69, 26, 3, 0.16);
                 border-left: 3px solid #b45309;
                 border-right: 3px solid #b45309;
-                padding: 26px 32px 30px 32px;
+                padding: 18px 24px 20px 24px;
                 position: relative;
                 z-index: 11;
                 box-sizing: border-box;
@@ -271,12 +297,46 @@ export class IntroScene extends BaseScene {
 
             /* Ornamental Inner Border on Paper */
             .scroll-inner-frame {
-                border: 2px dashed rgba(180, 83, 9, 0.45);
-                border-radius: 10px;
-                padding: 22px 20px;
+                border: 1.5px dashed rgba(180, 83, 9, 0.45);
+                border-radius: 8px;
+                padding: 14px 16px;
                 background: rgba(255, 251, 235, 0.45);
                 text-align: center;
                 position: relative;
+            }
+
+            .slide-icon {
+                font-size: 28px;
+                margin-bottom: 4px;
+                line-height: 1;
+            }
+            .slide-badge {
+                display: inline-block;
+                padding: 3px 12px;
+                background: rgba(180, 83, 9, 0.12);
+                border-radius: 9999px;
+                font-size: 10.5px;
+                font-weight: 800;
+                letter-spacing: 1.2px;
+                margin-bottom: 8px;
+                border: 1px solid rgba(180, 83, 9, 0.3);
+            }
+            .slide-title {
+                font-size: 20px;
+                font-weight: 800;
+                color: #78350f;
+                margin: 0 0 10px 0;
+                text-shadow: 0 1px 2px rgba(254, 240, 138, 0.8);
+                font-family: 'Fredoka', 'Cinzel', serif;
+            }
+            .slide-text {
+                font-size: 15px;
+                color: #381e05;
+                line-height: 1.6;
+                min-height: 56px;
+                max-width: 540px;
+                margin: 0 auto;
+                text-align: center;
             }
 
             /* Typewriter Cursor */
@@ -289,12 +349,35 @@ export class IntroScene extends BaseScene {
             }
 
             /* Buttons */
+            .intro-footer {
+                margin-top: 12px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                max-width: 640px;
+                z-index: 20;
+            }
+            .intro-dots {
+                display: flex;
+                gap: 7px;
+                justify-content: center;
+            }
+            .intro-btn-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                padding: 0 6px;
+                box-sizing: border-box;
+            }
             .intro-next-btn {
                 background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
                 color: #ffffff;
                 font-weight: 700;
-                font-size: 15px;
-                padding: 12px 32px;
+                font-size: 14px;
+                padding: 9px 24px;
                 border-radius: 9999px;
                 border: 1px solid rgba(254, 240, 138, 0.6);
                 box-shadow: 0 4px 15px rgba(180, 83, 9, 0.5);
@@ -313,8 +396,8 @@ export class IntroScene extends BaseScene {
                 background: rgba(30, 41, 59, 0.6);
                 color: #f1f5f9;
                 font-weight: 600;
-                font-size: 13px;
-                padding: 8px 18px;
+                font-size: 12.5px;
+                padding: 7px 16px;
                 border-radius: 9999px;
                 border: 1px solid rgba(251, 191, 36, 0.35);
                 backdrop-filter: blur(8px);
@@ -328,18 +411,132 @@ export class IntroScene extends BaseScene {
                 transform: scale(1.03);
             }
             .intro-dot {
-                width: 10px;
-                height: 10px;
+                width: 9px;
+                height: 9px;
                 border-radius: 9999px;
                 background: rgba(254, 243, 199, 0.35);
                 border: 1px solid rgba(180, 83, 9, 0.4);
                 transition: all 0.3s ease;
             }
             .intro-dot.active {
-                width: 26px;
+                width: 22px;
                 background: #f59e0b;
                 box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
                 border-color: #fef08a;
+            }
+
+            /* === MOBILE LANDSCAPE ADAPTATION (Height <= 480px, e.g. Phone Landscape) === */
+            @media (max-height: 480px) {
+                #intro-storybook-overlay {
+                    padding: 4px 10px !important;
+                    justify-content: center !important;
+                }
+                .intro-header-tag {
+                    display: none !important;
+                }
+                .scroll-wrapper {
+                    max-width: 580px !important;
+                    width: 98% !important;
+                }
+                .scroll-roller {
+                    height: 12px !important;
+                    width: calc(100% + 16px) !important;
+                    border-radius: 6px !important;
+                }
+                .scroll-finial {
+                    width: 8px !important;
+                    height: 14px !important;
+                    border-radius: 3px !important;
+                }
+                .scroll-paper {
+                    padding: 6px 14px 6px 14px !important;
+                }
+                .scroll-inner-frame {
+                    padding: 5px 10px !important;
+                    border-width: 1px !important;
+                }
+                .slide-icon {
+                    font-size: 18px !important;
+                    margin-bottom: 1px !important;
+                }
+                .slide-badge {
+                    font-size: 9px !important;
+                    padding: 1.5px 8px !important;
+                    margin-bottom: 3px !important;
+                    letter-spacing: 0.8px !important;
+                }
+                .slide-title {
+                    font-size: 14px !important;
+                    margin: 0 0 3px 0 !important;
+                }
+                .slide-text {
+                    font-size: 12px !important;
+                    line-height: 1.35 !important;
+                    min-height: 38px !important;
+                    max-width: 530px !important;
+                }
+                .intro-footer {
+                    margin-top: 5px !important;
+                    gap: 4px !important;
+                    max-width: 580px !important;
+                }
+                .intro-dot {
+                    width: 6px !important;
+                    height: 6px !important;
+                }
+                .intro-dot.active {
+                    width: 16px !important;
+                }
+                .intro-next-btn {
+                    font-size: 11px !important;
+                    padding: 5px 16px !important;
+                    gap: 5px !important;
+                }
+                .intro-skip-btn {
+                    font-size: 10.5px !important;
+                    padding: 4px 12px !important;
+                }
+            }
+
+            /* === MOBILE PORTRAIT ADAPTATION (Width <= 520px) === */
+            @media (max-width: 520px) and (min-height: 481px) {
+                #intro-storybook-overlay {
+                    padding: 14px 10px !important;
+                }
+                .intro-header-tag {
+                    font-size: 10px !important;
+                    letter-spacing: 1px !important;
+                    padding: 4px 12px !important;
+                }
+                .scroll-wrapper {
+                    width: 98% !important;
+                }
+                .scroll-roller {
+                    width: calc(100% + 14px) !important;
+                }
+                .scroll-paper {
+                    padding: 16px 14px 18px 14px !important;
+                }
+                .scroll-inner-frame {
+                    padding: 14px 10px !important;
+                }
+                .slide-icon {
+                    font-size: 26px !important;
+                }
+                .slide-title {
+                    font-size: 17px !important;
+                }
+                .slide-text {
+                    font-size: 13.5px !important;
+                    line-height: 1.5 !important;
+                }
+                .intro-next-btn {
+                    font-size: 12.5px !important;
+                    padding: 8px 18px !important;
+                }
+                .intro-skip-btn {
+                    font-size: 11.5px !important;
+                }
             }
         `;
         overlay.appendChild(style);
@@ -364,12 +561,8 @@ export class IntroScene extends BaseScene {
 
         // Header Tag
         const headerTag = document.createElement('div');
-        headerTag.style.marginBottom = '18px';
-        headerTag.innerHTML = `
-            <div style="display: inline-block; padding: 5px 18px; background: rgba(15, 23, 42, 0.65); border: 1.5px solid rgba(245, 158, 11, 0.6); border-radius: 9999px; color: #fbbf24; font-size: 11px; font-weight: 700; letter-spacing: 2px; backdrop-filter: blur(6px); box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-                📜 KISAH AWAL SANG GOBLIN MURNI 📜
-            </div>
-        `;
+        headerTag.className = 'intro-header-tag';
+        headerTag.innerHTML = `📜 KISAH AWAL SANG GOBLIN MURNI 📜`;
         overlay.appendChild(headerTag);
 
         // Scroll Parchment Wrapper
@@ -379,7 +572,7 @@ export class IntroScene extends BaseScene {
             <!-- Top Roller -->
             <div class="scroll-roller">
                 <div class="scroll-finial"></div>
-                <div style="flex:1; height:4px; background:rgba(254,240,138,0.25); margin:0 12px; border-radius:2px;"></div>
+                <div class="scroll-roller-bar"></div>
                 <div class="scroll-finial"></div>
             </div>
 
@@ -393,7 +586,7 @@ export class IntroScene extends BaseScene {
             <!-- Bottom Roller -->
             <div class="scroll-roller">
                 <div class="scroll-finial"></div>
-                <div style="flex:1; height:4px; background:rgba(254,240,138,0.25); margin:0 12px; border-radius:2px;"></div>
+                <div class="scroll-roller-bar"></div>
                 <div class="scroll-finial"></div>
             </div>
         `;
@@ -401,34 +594,21 @@ export class IntroScene extends BaseScene {
 
         // Navigation Footer
         const footer = document.createElement('div');
-        footer.style.marginTop = '22px';
-        footer.style.display = 'flex';
-        footer.style.flexDirection = 'column';
-        footer.style.alignItems = 'center';
-        footer.style.gap = '14px';
-        footer.style.width = '100%';
-        footer.style.maxWidth = '660px';
-        footer.style.zIndex = '20';
+        footer.className = 'intro-footer';
 
         // Dots Container
         const dotsBox = document.createElement('div');
         dotsBox.id = 'intro-dots';
-        dotsBox.style.display = 'flex';
-        dotsBox.style.gap = '8px';
-        dotsBox.style.justifyContent = 'center';
+        dotsBox.className = 'intro-dots';
         footer.appendChild(dotsBox);
 
         // Buttons Row
         const btnRow = document.createElement('div');
-        btnRow.style.display = 'flex';
-        btnRow.style.justifyContent = 'space-between';
-        btnRow.style.alignItems = 'center';
-        btnRow.style.width = '100%';
-        btnRow.style.padding = '0 10px';
+        btnRow.className = 'intro-btn-row';
 
         const skipBtn = document.createElement('button');
         skipBtn.className = 'intro-skip-btn';
-        skipBtn.innerHTML = `Lewati ⏩ [ESC]`;
+        skipBtn.innerHTML = `Lewati ⏩`;
         skipBtn.onclick = () => {
             GameAudio.playClick();
             this.finishIntro();
@@ -437,7 +617,7 @@ export class IntroScene extends BaseScene {
         const nextBtn = document.createElement('button');
         nextBtn.className = 'intro-next-btn';
         nextBtn.id = 'intro-next-btn';
-        nextBtn.innerHTML = `Lanjut ➔ [Spasi]`;
+        nextBtn.innerHTML = `Lanjut ➔`;
         nextBtn.onclick = () => {
             this.handleProceed();
         };
@@ -471,16 +651,16 @@ export class IntroScene extends BaseScene {
 
         if (!frame || !slide) return;
 
-        // Render Slide Header (Icon, Badge, Title)
+        // Render Slide Header (Icon, Badge, Title) using responsive classes
         frame.innerHTML = `
-            <div style="font-size: 34px; margin-bottom: 6px;">${slide.icon}</div>
-            <div style="display: inline-block; padding: 4px 14px; background: rgba(180, 83, 9, 0.12); border-radius: 9999px; color: ${slide.badgeColor}; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 10px; border: 1px solid rgba(180, 83, 9, 0.3);">
+            <div class="slide-icon">${slide.icon}</div>
+            <div class="slide-badge" style="color: ${slide.badgeColor};">
                 ${slide.badge}
             </div>
-            <h2 style="font-size: 24px; font-weight: 800; color: #78350f; margin: 0 0 14px 0; text-shadow: 0 1px 2px rgba(254, 240, 138, 0.8); font-family: 'Fredoka', 'Cinzel', serif;">
+            <h2 class="slide-title">
                 ${slide.title}
             </h2>
-            <div id="typewriter-text-target" style="font-size: 16.5px; color: #381e05; line-height: 1.75; min-height: 72px; max-width: 560px; margin: 0 auto; text-align: center;">
+            <div id="typewriter-text-target" class="slide-text">
             </div>
         `;
 
@@ -497,9 +677,9 @@ export class IntroScene extends BaseScene {
         // Update button text
         if (nextBtn) {
             if (this.currentSlide === this.slides.length - 1) {
-                nextBtn.innerHTML = `Mulai Petualangan ✦ [Spasi]`;
+                nextBtn.innerHTML = `Mulai Petualangan ✦`;
             } else {
-                nextBtn.innerHTML = `Lanjut ➔ [Spasi]`;
+                nextBtn.innerHTML = `Lanjut ➔`;
             }
         }
 
