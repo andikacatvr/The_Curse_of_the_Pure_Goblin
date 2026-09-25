@@ -50,9 +50,9 @@ export class TitleScene extends Phaser.Scene {
         // Golden glowing halo behind the scroll
         this.glowHalo = this.add.graphics();
         this.glowHalo.fillStyle(0xf59e0b, 0.16);
-        this.glowHalo.fillCircle(400, 135, 130);
+        this.glowHalo.fillCircle(400, 110, 120);
         this.glowHalo.fillStyle(0x38bdf8, 0.1);
-        this.glowHalo.fillCircle(400, 135, 170);
+        this.glowHalo.fillCircle(400, 110, 150);
 
         this.tweens.add({
             targets: this.glowHalo,
@@ -66,14 +66,14 @@ export class TitleScene extends Phaser.Scene {
         });
 
         // The banner itself
-        this.banner = this.add.image(400, 138, 'title_banner')
+        this.banner = this.add.image(400, 110, 'title_banner')
             .setOrigin(0.5, 0.5)
-            .setScale(1.15);
+            .setScale(1.05);
 
         // Floating Bobbing Animation
         this.tweens.add({
             targets: this.banner,
-            y: 146,
+            y: 116,
             duration: 2400,
             yoyo: true,
             repeat: -1,

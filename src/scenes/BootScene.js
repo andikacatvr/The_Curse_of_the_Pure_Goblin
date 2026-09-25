@@ -6,7 +6,70 @@ export class BootScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.svg('title_banner', '/assets/title_banner_v2.svg', { width: 900, height: 390 });
+        const { width, height } = this.cameras.main;
+
+        // Visual loading background & progress bar
+        const bgG = this.add.graphics();
+        bgG.fillStyle(0x050811, 1);
+        bgG.fillRect(0, 0, width, height);
+
+        const progressBox = this.add.graphics();
+        const progressBar = this.add.graphics();
+        
+        progressBox.fillStyle(0x0f172a, 0.88);
+        progressBox.fillRoundedRect(width / 2 - 150, height / 2 - 12, 300, 24, 7);
+        progressBox.lineStyle(2, 0xf59e0b, 0.9);
+        progressBox.strokeRoundedRect(width / 2 - 150, height / 2 - 12, 300, 24, 7);
+
+        const titleText = this.add.text(width / 2, height / 2 - 38, 'MEMUAT PETUALANGAN...', {
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: '15px',
+            color: '#fef08a',
+            fontStyle: 'bold'
+        }).setOrigin(0.5, 0.5);
+
+        const percentText = this.add.text(width / 2, height / 2, '0%', {
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: '12px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5, 0.5);
+
+        const statusText = this.add.text(width / 2, height / 2 + 34, 'Menyiapkan berkas dunia...', {
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: '11px',
+            color: '#94a3b8'
+        }).setOrigin(0.5, 0.5);
+
+        this.load.on('progress', (val) => {
+            progressBar.clear();
+            progressBar.fillStyle(0x22c55e, 1);
+            progressBar.fillRoundedRect(width / 2 - 146, height / 2 - 8, 292 * val, 16, 4);
+            percentText.setText(`${Math.round(val * 100)}%`);
+        });
+
+        this.load.on('fileprogress', (file) => {
+            if (file && file.key) {
+                statusText.setText(`Memuat: ${file.key}`);
+            }
+        });
+
+        this.load.on('complete', () => {
+            progressBar.destroy();
+            progressBox.destroy();
+            bgG.destroy();
+            titleText.destroy();
+            percentText.destroy();
+            statusText.destroy();
+
+            const domLoader = document.getElementById('html-loader');
+            if (domLoader) {
+                domLoader.style.opacity = '0';
+                setTimeout(() => domLoader.remove(), 250);
+            }
+        });
+
+        this.load.image('title_banner', '/assets/title_banner.png');
         this.load.image('menu_bg', '/assets/menu_bg.jpg');
 
         // Character portrait images for dialogue box

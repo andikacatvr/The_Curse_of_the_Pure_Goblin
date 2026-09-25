@@ -21,9 +21,9 @@ export class HDMenuButtons {
         style.textContent = `
             #hd-menu-buttons {
                 position: fixed;
-                left: 50%; top: 68%;
+                left: 50%; top: 74%;
                 transform: translate(-50%, -50%);
-                display: flex; flex-direction: column; align-items: center; gap: 14px;
+                display: flex; flex-direction: column; align-items: center; gap: 11px;
                 z-index: 99990;
                 opacity: 0; pointer-events: none;
                 transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -37,8 +37,8 @@ export class HDMenuButtons {
             /* === SHARED BUTTON BASE === */
             .hd-menu-btn {
                 position: relative; overflow: hidden;
-                min-width: 290px; padding: 15px 36px;
-                border-radius: 14px; cursor: pointer;
+                min-width: 250px; padding: 11px 32px;
+                border-radius: 12px; cursor: pointer;
                 display: flex; align-items: center; justify-content: center; gap: 10px;
                 font-weight: 800; letter-spacing: 1.2px;
                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);

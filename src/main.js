@@ -36,7 +36,7 @@ const config = {
     input: {
         activePointers: 3
     },
-    resolution: Math.max(2, window.devicePixelRatio || 2),
+    resolution: Math.min(window.devicePixelRatio || 1, 2),
     render: {
         antialias: false,
         antialiasGL: false,
@@ -53,12 +53,18 @@ const config = {
     scene: [BootScene, TitleScene, IntroScene, HomeScene, LakeForestScene, MountainFootLakeScene, ForestTrailScene, WaterfallGorgeScene, WitchYardScene, WitchCottageScene, GrandmaGardenScene, BeeGardenScene, WoodshopScene, FirewoodForestScene, BakeryMillScene, VillageResidentialScene, SaffronFarmScene, EastForestScene, EndingScene]
 };
 
-// Ensure Google Fonts (Fredoka & Pirata One) are fully loaded before rendering
-if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => {
-        window.__game = new Phaser.Game(config);
-    });
-} else {
+// Safe game launcher: ensure game boots within 800ms even if mobile network delays Google Fonts
+const initGame = () => {
+    if (window.__game) return;
     window.__game = new Phaser.Game(config);
+};
+
+if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    Promise.race([
+        document.fonts.ready,
+        new Promise(resolve => setTimeout(resolve, 800))
+    ]).then(initGame).catch(initGame);
+} else {
+    initGame();
 }
 
